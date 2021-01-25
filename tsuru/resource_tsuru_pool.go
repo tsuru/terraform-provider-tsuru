@@ -31,8 +31,9 @@ func resourceTsuruPool() *schema.Resource {
 			"tsuru_provisioner": {
 				Type:        schema.TypeString,
 				Description: "Provisioner of pool",
-				Required:    true,
+				Default:     "kubernetes",
 				ForceNew:    true, // there is no way to update this field
+				Optional:    true,
 			},
 			"public": {
 				Type:     schema.TypeBool,
