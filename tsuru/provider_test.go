@@ -5,10 +5,13 @@
 package tsuru
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,4 +36,14 @@ func TestProvider(t *testing.T) {
 func testAccPreCheck(t *testing.T) {
 	tsuruTarget := os.Getenv("TSURU_TARGET")
 	require.Contains(t, tsuruTarget, "http://127.0.0.1:")
+}
+
+func testAccResourceExists(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		_, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
+		return nil
+	}
 }

@@ -18,24 +18,28 @@ import (
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
-func TestAccTsuruPool_basic(t *testing.T) {
+func TestAccTsuruPoolConstraint_basic(t *testing.T) {
 	fakeServer := echo.New()
-	fakeServer.POST("/1.0/pools", func(c echo.Context) error {
-		p := &tsuru.PoolCreateData{}
-		err := c.Bind(&p)
+	fakeServer.PUT("/1.3/constraints", func(c echo.Context) error {
+		p := &tsuru.PoolConstraintSet{}
+		err := c.Bind(p)
 		require.NoError(t, err)
-		assert.Equal(t, p.Name, "my-pool")
-		assert.Equal(t, p.Provisioner, "kubernetes")
-		assert.False(t, p.Public)
-		assert.False(t, p.Default)
-
+		assert.Equal(t, p.PoolExpr, "my-pool")
+		assert.Equal(t, p.Field, "router")
+		if len(p.Values) > 1 {
+			assert.Equal(t, p.Values, []string{"ingress", "load-balancer"})
+		}
+		assert.False(t, p.Blacklist)
 		return nil
 	})
-	fakeServer.GET("/pools/:name", func(c echo.Context) error {
-		name := c.Param("name")
-		return c.JSON(http.StatusOK, &tsuru.Pool{
-			Name:        name,
-			Provisioner: "kubernetes",
+	fakeServer.GET("/1.3/constraints", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, []*tsuru.PoolConstraint{
+			{
+				PoolExpr:  "my-pool",
+				Field:     "router",
+				Values:    []string{"ingress", "load-balancer"},
+				Blacklist: false,
+			},
 		})
 	})
 	fakeServer.DELETE("/pools/:name", func(c echo.Context) error {
@@ -50,29 +54,34 @@ func TestAccTsuruPool_basic(t *testing.T) {
 	server := httptest.NewServer(fakeServer)
 	os.Setenv("TSURU_TARGET", server.URL)
 
-	resourceName := "tsuru_pool.test"
+	resourceName := "tsuru_pool_constraint.test_routers"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
-		IDRefreshName:     "tsuru_pool.test",
+		IDRefreshName:     "tsuru_pool_constraint.test",
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTsuruPoolConfig_basic(server.URL, "my-pool"),
+				Config: testAccTsuruPoolConstraintConfig_basic(server.URL, "my-pool"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccResourceExists(resourceName),
-					resource.TestCheckResourceAttr("tsuru_pool.test", "name", "my-pool"),
-					resource.TestCheckResourceAttr("tsuru_pool.test", "tsuru_provisioner", "kubernetes"),
+					resource.TestCheckResourceAttr("tsuru_pool_constraint.test_routers", "pool_expr", "my-pool"),
+					resource.TestCheckResourceAttr("tsuru_pool_constraint.test_routers", "field", "router"),
 				),
 			},
 		},
 	})
 }
 
-func testAccTsuruPoolConfig_basic(fakeServer, name string) string {
+func testAccTsuruPoolConstraintConfig_basic(fakeServer, poolExpr string) string {
 	return fmt.Sprintf(`
-resource "tsuru_pool" "test" {
-	name = "%s"
+resource "tsuru_pool_constraint" "test_routers" {
+	pool_expr = "%s"
+	field = "router"
+	values = [
+		"load-balancer",
+		"ingress"
+	]
 }
-`, name)
+`, poolExpr)
 }
