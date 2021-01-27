@@ -42,11 +42,6 @@ func TestAccTsuruPoolConstraint_basic(t *testing.T) {
 			},
 		})
 	})
-	fakeServer.DELETE("/pools/:name", func(c echo.Context) error {
-		name := c.Param("name")
-		require.Equal(t, name, "my-pool")
-		return c.NoContent(http.StatusNoContent)
-	})
 	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
 		t.Errorf("method=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
 	}
