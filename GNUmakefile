@@ -30,3 +30,6 @@ install: build
 
 test:
 	TF_ACC=1 TF_ACC_TERRAFORM_VERSION=0.14.4 go test ./... -v
+
+generate-docs:
+	go generate

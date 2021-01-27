@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
+	github.com/hashicorp/terraform-plugin-docs v0.3.1 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.1
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/sirupsen/logrus v1.4.2
