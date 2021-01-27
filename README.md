@@ -1,1 +1,1 @@
-# Terraform Provider Tsuru
+# Terraform Provider Tsuru [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/tsuru/terraform-provider-tsuru?label=release)](https://github.com/tsuru/terraform-provider-tsuru/releases) [![license](https://img.shields.io/github/license/tsuru/terraform-provider-tsuru.svg)]()
