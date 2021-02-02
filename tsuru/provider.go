@@ -35,6 +35,7 @@ func Provider() *schema.Provider {
 			"tsuru_pool":            resourceTsuruPool(),
 			"tsuru_pool_constraint": resourceTsuruPoolConstraint(),
 			"tsuru_cluster_pool":    resourceTsuruClusterPool(),
+			"tsuru_cluster":         resourceTsuruCluster(),
 		},
 	}
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
