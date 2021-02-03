@@ -20,59 +20,57 @@ func resourceTsuruCluster() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"nome": {
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 			"addresses": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Required: true,
+				Type:    schema.TypeString,
+				Default: "testcarlos",
+				//Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
-			"tsuru_tsuru_provisioner": {
-				Type:     schema.TypeString,
-				Required: true,
+			"tsuru_provisioner": {
+				Type: schema.TypeString,
+				//Required: true,
+				Optional: true,
 				ForceNew: true,
+				Default:  "kubernetes",
 			},
 			"ca_certificate": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Required: true,
+				Type:    schema.TypeString,
+				Default: "testcarlos",
+				//Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"client_key": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Required: true,
+				Type:    schema.TypeString,
+				Default: "testcarlos",
+				//Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"custom_data": {
-				Type: schema.TypeMap,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Required: true,
+				Type: schema.TypeString,
+				//Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"client_certificate": {
-				Type: schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Required: true,
+				Type:    schema.TypeString,
+				Default: "testcarlos",
+				//Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"default": {
-				Type:     schema.TypeBool,
-				Required: true,
+				Type: schema.TypeBool,
+				//Required: true,
+				Optional: true,
+				Default:  false,
 			},
 		},
 	}
@@ -80,40 +78,47 @@ func resourceTsuruCluster() *schema.Resource {
 
 func resourceTsuruClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	addresses := []string{}
-	CaCertificate := []byte{}
-	ClientCertificate := []byte{}
-	ClientKey := []byte{}
+	//addresses := []string{}
+	//CaCertificate := []byte{}
+	//ClientCertificate := []byte{}
+	//ClientKey := []byte{}
 	CustomData := make(map[string]string)
 
-	for _, item := range d.Get("addresses").(*schema.Set).List() {
-		addresses = append(addresses, item.(string))
-	}
+	//for _, item := range d.Get("addresses").(*schema.Set).List() {
+	//	addresses = append(addresses, item.(string))
+	//}
 
-	for _, item := range d.Get("ca_certificate").(*schema.Set).List() {
-		CaCertificate = append(CaCertificate, item.(byte))
-	}
+	//for _, item := range d.Get("ca_certificate").(*schema.Set).List() {
+	//	CaCertificate = append(CaCertificate, item.(byte))
+	//}
 
-	for c, item := range d.Get("custom_data").(map[string]interface{}) {
-		CustomData[c] = item.(string)
-	}
+	//for c, item := range d.Get("custom_data").(map[string]interface{}) {
+	//	CustomData[c] = item.(string)
+	//}
 
-	for _, item := range d.Get("client_certificate").(*schema.Set).List() {
-		ClientCertificate = append(ClientCertificate, item.(byte))
-	}
+	//for _, item := range d.Get("client_certificate").(*schema.Set).List() {
+	//	ClientCertificate = append(ClientCertificate, item.(byte))
+	//}
 
-	for _, item := range d.Get("client_key").(*schema.Set).List() {
-		ClientKey = append(ClientKey, item.(byte))
-	}
-	_, err := provider.TsuruClient.ClusterApi.ClusterCreate(ctx, tsuru.Cluster{
-		Name:        d.Get("nome").(string),
-		Addresses:   addresses,
+	//for _, item := range d.Get("client_key").(*schema.Set).List() {
+	//	ClientKey = append(ClientKey, item.(byte))
+	//}
+
+	cluster := tsuru.Cluster{
+		Name:        d.Get("name").(string),
+		Addresses:   []string{d.Get("addresses").(string)},
 		Provisioner: d.Get("tsuru_provisioner").(string),
-		Cacert:      CaCertificate,
+		Cacert:      []byte(d.Get("ca_certificate").(string)),
+		Clientcert:  []byte(d.Get("client_certificate").(string)),
+		Clientkey:   []byte(d.Get("client_key").(string)),
+		Pools:       []string{},
 		CustomData:  CustomData,
-		Clientcert:  ClientCertificate,
-		Clientkey:   ClientKey,
-	})
+		//CreateData:  map[string]string{},
+		Default: false,
+	}
+
+	_, err := provider.TsuruClient.ClusterApi.ClusterCreate(ctx, cluster)
+
 	if err != nil {
 		return diag.Errorf("Could not create tsuru cluster, err : %s", err.Error())
 	}

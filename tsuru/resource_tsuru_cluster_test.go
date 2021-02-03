@@ -16,7 +16,7 @@ import (
 
 func TestAccTsuruCluster_basic(t *testing.T) {
 	fakeServer := echo.New()
-	fakeServer.POST("/1.4/provisioner/clusters/:name", func(c echo.Context) error {
+	fakeServer.POST("1.3/provisioner/clusters", func(c echo.Context) error {
 		p := &tsuru.Cluster{}
 		err := c.Bind(&p)
 		require.NoError(t, err)
