@@ -37,7 +37,7 @@ func resourceTsuruPoolConstraint() *schema.Resource {
 				Required:    true,
 			},
 			"values": {
-				Type: schema.TypeSet,
+				Type: schema.TypeList,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -59,7 +59,7 @@ func resourceTsuruPoolConstraintSet(ctx context.Context, d *schema.ResourceData,
 
 	values := []string{}
 
-	for _, item := range d.Get("values").(*schema.Set).List() {
+	for _, item := range d.Get("values").([]interface{}) {
 		values = append(values, item.(string))
 	}
 
@@ -105,7 +105,7 @@ func resourceTsuruPoolConstraintRead(ctx context.Context, d *schema.ResourceData
 
 		d.Set("pool_expr", constraint.PoolExpr)
 		d.Set("field", constraint.Field)
-		d.Set("values", schema.NewSet(schema.HashString, values))
+		d.Set("values", values)
 		d.Set("blacklist", constraint.Blacklist)
 
 		return nil

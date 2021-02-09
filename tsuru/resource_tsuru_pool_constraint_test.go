@@ -27,7 +27,7 @@ func TestAccTsuruPoolConstraint_basic(t *testing.T) {
 		assert.Equal(t, p.PoolExpr, "my-pool")
 		assert.Equal(t, p.Field, "router")
 		if len(p.Values) > 1 {
-			assert.Equal(t, p.Values, []string{"ingress", "load-balancer"})
+			assert.Equal(t, p.Values, []string{"load-balancer", "ingress"})
 		}
 		assert.False(t, p.Blacklist)
 		return nil
@@ -37,7 +37,7 @@ func TestAccTsuruPoolConstraint_basic(t *testing.T) {
 			{
 				PoolExpr:  "my-pool",
 				Field:     "router",
-				Values:    []string{"ingress", "load-balancer"},
+				Values:    []string{"load-balancer", "ingress"},
 				Blacklist: false,
 			},
 		})
