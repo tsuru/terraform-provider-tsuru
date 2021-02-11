@@ -9,6 +9,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	echo "github.com/labstack/echo/v4"
+
+	//"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
@@ -18,13 +20,13 @@ func TestAccTsuruCluster_basic(t *testing.T) {
 	fakeServer.POST("1.3/provisioner/clusters", func(c echo.Context) error {
 		// p := &tsuru.Cluster{}
 		// err := c.Bind(&p)
-		//require.NoError(t, err)
+		// require.NoError(t, err)
 		// assert.Equal(t, p.Name, "name")
-		// assert.Equal(t, p.Addresses, "adresses")
-		// assert.Equal(t, p.Cacert, "ca_certificate")
-		//assert.Equal(t, p.Clientcert, "client_certificate")
-		//assert.Equal(t, p.Clientkey, "client_key")
-		//assert.Equal(t, p.CustomData, "custom_data")
+		// assert.Equal(t, p.Addresses, []string("addresses"))
+		// assert.Equal(t, p.Cacert, "ca_cert")
+		// assert.Equal(t, p.Clientcert, "client_cert")
+		// assert.Equal(t, p.Clientkey, "client_key")
+		// assert.Equal(t, p.CustomData, "custom_data")
 
 		return nil
 	})
