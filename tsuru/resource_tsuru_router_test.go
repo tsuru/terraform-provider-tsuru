@@ -18,23 +18,27 @@ import (
 func TestAccTsuruRouter_basic(t *testing.T) {
 	fakeServer := echo.New()
 	fakeServer.POST("/1.8/routers", func(c echo.Context) error {
-		p := &tsuru.Router{}
+		p := &tsuru.DynamicRouter{}
 		err := c.Bind(&p)
 		require.NoError(t, err)
 		assert.Equal(t, p.Name, "test_router")
+		assert.Equal(t, p.Type, "router")
+		assert.Equal(t, p.Config, map[string]interface{}{"config": "test_config"})
 
 		return nil
 	})
 	fakeServer.GET("/1.3/routers", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, []*tsuru.Router{
+		return c.JSON(http.StatusOK, []*tsuru.DynamicRouter{
 			{
-				Name: "test_router",
-				Type: "router"},
+				Name:   "test_router",
+				Type:   "router",
+				Config: map[string]interface{}{"config": "test_config"},
+			},
 		})
 	})
-	fakeServer.DELETE("/1.3/provisioner/clusters/test_router", func(c echo.Context) error {
-		name := c.Param("name")
-		require.Equal(t, name, "")
+	fakeServer.DELETE("/1.8/routers/:name", func(c echo.Context) error {
+		name := "test_router"
+		require.Equal(t, name, "test_router")
 		return c.NoContent(http.StatusNoContent)
 	})
 	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
@@ -55,6 +59,8 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccResourceExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", "test_router"),
+					resource.TestCheckResourceAttr(resourceName, "type", "router"),
+					resource.TestCheckResourceAttr(resourceName, "config.config", "test_config"),
 				),
 			},
 		},
@@ -66,6 +72,9 @@ func testAccTsuruRouterConfig_basic(fakeServer, name string) string {
 resource "tsuru_router"  "test_router"   {
 	name = "%s" 
 	type = "router"
+	config = {
+		"config" = "test_config"
+	}
 	
 }
 `, name)

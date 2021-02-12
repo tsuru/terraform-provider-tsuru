@@ -27,7 +27,6 @@ func resourceTsuruRouter() *schema.Resource {
 			"type": {
 				Type:     schema.TypeString,
 				Required: true,
-				//ForceNew: true,
 			},
 			"config": {
 				Type:     schema.TypeMap,
@@ -65,7 +64,7 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 	provider := meta.(*tsuruProvider)
 
 	name := d.Get("name").(string)
-	tipe := d.Get("type").(string)
+	typo := d.Get("type").(string)
 
 	router, _, err := provider.TsuruClient.RouterApi.RouterList(ctx)
 
@@ -74,23 +73,26 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	for _, router := range router {
-		if router.Name != name || router.Type != tipe {
+		if router.Name != name || router.Type != typo {
 			continue
 		}
 		d.Set("name", router.Name)
 		d.Set("type", router.Type)
+		d.Set("config", router.Config)
 		return nil
 	}
-	return diag.Errorf("Could not find tsuru router, name: %s,type: %s", name, tipe)
+	return diag.Errorf("Could not find tsuru router, name: %s,type: %s", name, typo)
 
 }
 
 func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
+	//config := make(map[string]interface{})
 
 	_, err := provider.TsuruClient.RouterApi.RouterUpdate(ctx, d.Id(), tsuru.DynamicRouter{
-		Name: d.Get("name").(string),
-		Type: d.Get("type").(string),
+		Name:   d.Get("name").(string),
+		Type:   d.Get("type").(string),
+		Config: d.Get("config").(map[string]interface{}),
 	})
 
 	if err != nil {
@@ -101,7 +103,7 @@ func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 func resourceTsuruRouterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	_, err := provider.TsuruClient.ClusterApi.ClusterDelete(ctx, d.Id())
+	_, err := provider.TsuruClient.RouterApi.RouterDelete(ctx, d.Id())
 	if err != nil {
 		return diag.Errorf("Could not delete tsuru router, err: %s", err.Error())
 	}
