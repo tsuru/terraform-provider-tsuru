@@ -52,7 +52,7 @@ func resourceTsuruRouterCreate(ctx context.Context, d *schema.ResourceData, meta
 	})
 
 	if err != nil {
-		return diag.Errorf("Could not create tsuru dynamic router, err : %s", err.Error())
+		return diag.Errorf("Could not create tsuru router, err : %s", err.Error())
 	}
 
 	d.SetId(name)
@@ -69,7 +69,7 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 	router, _, err := provider.TsuruClient.RouterApi.RouterList(ctx)
 
 	if err != nil {
-		return diag.Errorf("Could not read tsuru dynamic router, err : %s", err.Error())
+		return diag.Errorf("Could not read tsuru router, err : %s", err.Error())
 	}
 
 	for _, router := range router {
@@ -87,7 +87,6 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 
 func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	//config := make(map[string]interface{})
 
 	_, err := provider.TsuruClient.RouterApi.RouterUpdate(ctx, d.Id(), tsuru.DynamicRouter{
 		Name:   d.Get("name").(string),
