@@ -3,6 +3,7 @@ module github.com/tsuru/terraform-provider-tsuru
 go 1.15
 
 require (
+	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.3.1 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.1
@@ -14,5 +15,6 @@ require (
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
 	google.golang.org/genproto v0.0.0-20200904004341-0bd0a958aa1d // indirect
+	gopkg.in/yaml.v2 v2.2.8
 	istio.io/pkg v0.0.0-20210121190643-c0b54e78bf02
 )

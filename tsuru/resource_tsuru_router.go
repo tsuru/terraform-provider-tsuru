@@ -2,7 +2,9 @@ package tsuru
 
 import (
 	"context"
+	"reflect"
 
+	yaml "github.com/ghodss/yaml"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
@@ -29,9 +31,9 @@ func resourceTsuruRouter() *schema.Resource {
 				Required: true,
 			},
 			"config": {
-				Type:     schema.TypeMap,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "Configuration for router in YAML format",
+				Optional:    true,
 			},
 		},
 	}
@@ -40,12 +42,13 @@ func resourceTsuruRouter() *schema.Resource {
 func resourceTsuruRouterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 	name := d.Get("name").(string)
-	config := make(map[string]interface{})
 
-	for key, value := range d.Get("config").(map[string]interface{}) {
-		config[key] = value.(string)
+	config, err := parseRouterConfig(d.Get("config"))
+	if err != nil {
+		return diag.Errorf("Could not decode config, err : %s", err.Error())
 	}
-	_, err := provider.TsuruClient.RouterApi.RouterCreate(ctx, tsuru.DynamicRouter{
+
+	_, err = provider.TsuruClient.RouterApi.RouterCreate(ctx, tsuru.DynamicRouter{
 		Name:   name,
 		Type:   d.Get("type").(string),
 		Config: config,
@@ -78,7 +81,20 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		d.Set("name", router.Name)
 		d.Set("type", router.Type)
-		d.Set("config", router.Config)
+
+		config, err := parseRouterConfig(d.Get("config"))
+		if err != nil {
+			return diag.Errorf("Could not decode config, err : %s", err.Error())
+		}
+
+		if !reflect.DeepEqual(config, router.Config) {
+			b, err := yaml.Marshal(router.Config)
+			if err != nil {
+				return diag.Errorf("Could not encode config, err : %s", err.Error())
+			}
+			d.Set("config", string(b))
+		}
+
 		return nil
 	}
 	return diag.Errorf("Could not find tsuru router, name: %s,type: %s", name, typo)
@@ -87,11 +103,15 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 
 func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
+	config, err := parseRouterConfig(d.Get("config"))
+	if err != nil {
+		return diag.Errorf("Could not decode config, err : %s", err.Error())
+	}
 
-	_, err := provider.TsuruClient.RouterApi.RouterUpdate(ctx, d.Id(), tsuru.DynamicRouter{
+	_, err = provider.TsuruClient.RouterApi.RouterUpdate(ctx, d.Id(), tsuru.DynamicRouter{
 		Name:   d.Get("name").(string),
 		Type:   d.Get("type").(string),
-		Config: d.Get("config").(map[string]interface{}),
+		Config: config,
 	})
 
 	if err != nil {
@@ -108,4 +128,16 @@ func resourceTsuruRouterDelete(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	return nil
+}
+
+func parseRouterConfig(data interface{}) (map[string]interface{}, error) {
+	config := make(map[string]interface{})
+	rawConfig := data.(string)
+
+	err := yaml.Unmarshal([]byte(rawConfig), &config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

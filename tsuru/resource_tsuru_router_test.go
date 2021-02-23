@@ -21,18 +21,28 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 		p := &tsuru.DynamicRouter{}
 		err := c.Bind(&p)
 		require.NoError(t, err)
-		assert.Equal(t, p.Name, "test_router")
-		assert.Equal(t, p.Type, "router")
-		assert.Equal(t, p.Config, map[string]interface{}{"config": "test_config"})
+		assert.Equal(t, "test_router", p.Name)
+		assert.Equal(t, "router", p.Type)
+		assert.Equal(t, map[string]interface{}{
+			"url": "testing",
+			"headers": map[string]interface{}{
+				"x-my-header": "test",
+			},
+		}, p.Config)
 
 		return nil
 	})
 	fakeServer.GET("/1.3/routers", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, []*tsuru.DynamicRouter{
 			{
-				Name:   "test_router",
-				Type:   "router",
-				Config: map[string]interface{}{"config": "test_config"},
+				Name: "test_router",
+				Type: "router",
+				Config: map[string]interface{}{
+					"url": "testing",
+					"headers": map[string]interface{}{
+						"x-my-header": "test",
+					},
+				},
 			},
 		})
 	})
@@ -60,7 +70,6 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 					testAccResourceExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", "test_router"),
 					resource.TestCheckResourceAttr(resourceName, "type", "router"),
-					resource.TestCheckResourceAttr(resourceName, "config.config", "test_config"),
 				),
 			},
 		},
@@ -70,12 +79,14 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 func testAccTsuruRouterConfig_basic(fakeServer, name string) string {
 	return fmt.Sprintf(`
 resource "tsuru_router"  "test_router"   {
-	name = "%s" 
+	name = "%s"
 	type = "router"
-	config = {
-		"config" = "test_config"
-	}
-	
+
+	config = <<-EOT
+	url: "testing"
+	headers:
+	  "x-my-header": test
+	EOT
 }
 `, name)
 }
