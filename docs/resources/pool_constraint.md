@@ -19,7 +19,7 @@ description: |-
 
 - **field** (String) field of constraint
 - **pool_expr** (String) The name of pools, allow glob match style
-- **values** (Set of String)
+- **values** (List of String)
 
 ### Optional
 
