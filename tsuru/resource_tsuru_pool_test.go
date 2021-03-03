@@ -26,6 +26,9 @@ func TestAccTsuruPool_basic(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, p.Name, "my-pool")
 		assert.Equal(t, p.Provisioner, "kubernetes")
+		assert.Equal(t, p.Labels, map[string]string{
+			"my-label": "value",
+		})
 		assert.False(t, p.Public)
 		assert.False(t, p.Default)
 
@@ -36,6 +39,9 @@ func TestAccTsuruPool_basic(t *testing.T) {
 		return c.JSON(http.StatusOK, &tsuru.Pool{
 			Name:        name,
 			Provisioner: "kubernetes",
+			Labels: map[string]string{
+				"my-label": "value",
+			},
 		})
 	})
 	fakeServer.DELETE("/pools/:name", func(c echo.Context) error {
@@ -73,6 +79,9 @@ func testAccTsuruPoolConfig_basic(fakeServer, name string) string {
 	return fmt.Sprintf(`
 resource "tsuru_pool" "test" {
 	name = "%s"
+	labels = {
+		"my-label" = "value"
+	}
 }
 `, name)
 }

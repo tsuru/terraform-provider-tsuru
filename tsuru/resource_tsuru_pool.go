@@ -45,6 +45,12 @@ func resourceTsuruPool() *schema.Resource {
 				Default:  false,
 				Optional: true,
 			},
+			"labels": {
+				Type:        schema.TypeMap,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Description: "Key/value to store additional config",
+			},
 		},
 	}
 }
@@ -52,11 +58,18 @@ func resourceTsuruPool() *schema.Resource {
 func resourceTsuruPoolCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 	name := d.Get("name").(string)
+
+	labels := make(map[string]string)
+	for key, value := range d.Get("labels").(map[string]interface{}) {
+		labels[key] = value.(string)
+	}
+
 	_, err := provider.TsuruClient.PoolApi.PoolCreate(ctx, tsuru.PoolCreateData{
 		Name:        name,
 		Provisioner: d.Get("tsuru_provisioner").(string),
 		Public:      d.Get("public").(bool),
 		Default:     d.Get("default").(bool),
+		Labels:      labels,
 	})
 
 	if err != nil {
@@ -64,7 +77,6 @@ func resourceTsuruPoolCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	d.SetId(name)
 	return nil
-
 }
 
 func resourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -78,6 +90,7 @@ func resourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta int
 	d.Set("tsuru_provisioner", pool.Provisioner)
 	d.Set("default", pool.Default)
 	d.Set("public", pool.Public)
+	d.Set("labels", pool.Labels)
 
 	return nil
 }
