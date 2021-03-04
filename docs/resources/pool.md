@@ -6,7 +6,7 @@ description: |-
   
 ---
 
-# Resource `tsuru_pool`
+# tsuru_pool (Resource)
 
 
 
@@ -23,6 +23,7 @@ description: |-
 
 - **default** (Boolean)
 - **id** (String) The ID of this resource.
+- **labels** (Map of String) Key/value to store additional config
 - **public** (Boolean)
 - **tsuru_provisioner** (String) Provisioner of pool
 

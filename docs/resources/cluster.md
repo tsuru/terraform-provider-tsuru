@@ -6,7 +6,7 @@ description: |-
   
 ---
 
-# Resource `tsuru_cluster`
+# tsuru_cluster (Resource)
 
 
 
@@ -31,7 +31,7 @@ description: |-
 - **initial_pools** (List of String) Name of initial pools, required when is no default cluster
 - **tsuru_provisioner** (String) Provisioner of cluster
 
-### Read-only
+### Read-Only
 
 - **pools** (List of String) Name of pools that belongs to the cluster
 

@@ -6,7 +6,7 @@ description: |-
   Resource used to assign pools into clusters
 ---
 
-# Resource `tsuru_cluster_pool`
+# tsuru_cluster_pool (Resource)
 
 Resource used to assign pools into clusters
 

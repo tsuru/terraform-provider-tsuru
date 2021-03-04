@@ -6,7 +6,7 @@ description: |-
   
 ---
 
-# Resource `tsuru_pool_constraint`
+# tsuru_pool_constraint (Resource)
 
 
 

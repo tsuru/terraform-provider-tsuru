@@ -6,6 +6,7 @@ require (
 	github.com/antihax/optional v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/hcl/v2 v2.9.0 // indirect
+	github.com/hashicorp/terraform-plugin-docs v0.4.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/labstack/echo/v4 v4.2.0
