@@ -3,17 +3,19 @@ package tsuru
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func resourceTsuruPlan() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceTsuruPlanCreate,
 		ReadContext:   resourceTsuruPlanRead,
-		//UpdateContext: resourceTsuruPlanUpdate,
 		DeleteContext: resourceTsuruPlanDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -25,32 +27,21 @@ func resourceTsuruPlan() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"cpu": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"memory": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:     schema.TypeString,
+				Required: true,
 				ForceNew: true,
-			},
-			"swap": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
-			},
-			"cpumilli": {
-				Type:     schema.TypeInt,
-				ForceNew: true,
-				Optional: true,
 			},
 			"default": {
 				Type:     schema.TypeBool,
-				ForceNew: true,
 				Optional: true,
 				Default:  false,
-			},
-			"router": {
-				Type:     schema.TypeString,
 				ForceNew: true,
-				Optional: true,
-				Default:  "tsuru_router",
 			},
 		},
 	}
@@ -71,12 +62,24 @@ func resourceTsuruPlanCreate(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func planResourceData(d *schema.ResourceData) tsuru.Plan {
+	cpuString := d.Get("cpu").(string)
+	cpuFormat := cpuFormat(cpuString)
+	var cpuMilli int32
+	if cpuFormat == "unit" {
+		cpuMilli = cpuUnitToMilli(cpuString)
+	} else if cpuFormat == "percent" {
+		cpuMilli = cpuPercentToMilli(cpuString)
+	} else if cpuFormat == "milli" {
+		cpuMilli = cpuMilliInt32(cpuString)
+	}
+
+	memoryString := d.Get("memory").(string)
+	memoryBytes, _ := parseMemoryQuantity(memoryString)
+
 	return tsuru.Plan{
 		Name:     d.Get("name").(string),
-		Memory:   int64(d.Get("memory").(int)),
-		Swap:     int64(d.Get("swap").(int)),
-		Cpumilli: int32(d.Get("cpumilli").(int)),
-		Router:   d.Get("router").(string),
+		Memory:   memoryBytes,
+		Cpumilli: cpuMilli,
 		Default:  d.Get("default").(bool),
 	}
 }
@@ -84,8 +87,9 @@ func planResourceData(d *schema.ResourceData) tsuru.Plan {
 func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	//parts := strings.SplitN(d.Id(), "/", 2)
 	name := d.Get("name").(string)
+	cpu := d.Get("cpu").(string)
+	cpuFormat := cpuFormat(cpu)
 
 	plans, _, err := provider.TsuruClient.PlanApi.PlanList(ctx)
 
@@ -95,9 +99,16 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 		}
 
 		d.Set("name", plan.Name)
-		d.Set("memory", plan.Memory)
-		d.Set("swap", plan.Swap)
-		d.Set("cpumilli", plan.Cpumilli)
+		d.Set("memory", memoryBytesToString(plan.Memory))
+
+		if cpuFormat == "unit" {
+			d.Set("cpu", cpuMillisToUnitString(plan.Cpumilli))
+		} else if cpuFormat == "percent" {
+			d.Set("cpu", cpuMillisToPercentString(plan.Cpumilli))
+		} else if cpuFormat == "milli" {
+			d.Set("cpu", cpuMillisToString(plan.Cpumilli))
+		}
+
 		d.Set("default", plan.Default)
 
 		return nil
@@ -110,20 +121,69 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 
 }
 
-// func resourceTsuruPlanUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-// 	provider := metal.(*tsuruProvider)
-
-// }
-
 func resourceTsuruPlanDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
 	plan := planResourceData(d)
-	fmt.Println(" test", plan.Name)
 	_, err := provider.TsuruClient.PlanApi.DeletePlan(ctx, plan.Name)
 	if err != nil {
 		return diag.Errorf("Could not delete tsuru plan, err: %s", err.Error())
 	}
 
 	return nil
+}
+
+func memoryBytesToString(m int64) string {
+	return resource.NewQuantity(m, resource.BinarySI).String()
+}
+
+func cpuFormat(cpu string) string {
+	if strings.HasSuffix(cpu, "%") {
+		return "percent"
+	}
+	if strings.HasSuffix(cpu, "m") {
+		return "milli"
+	}
+
+	return "unit"
+}
+
+func cpuMillisToPercentString(c int32) string {
+	return fmt.Sprintf("%g%%", float32(c)/10.0)
+}
+
+func cpuMillisToUnitString(c int32) string {
+	return fmt.Sprintf("%g", float32(c)/1000.0)
+}
+
+func cpuMillisToString(c int32) string {
+	return fmt.Sprintf("%dm", c)
+}
+
+func cpuUnitToMilli(c string) int32 {
+	v, _ := strconv.ParseFloat(c, 32)
+	return int32(v * 1000)
+}
+
+func cpuPercentToMilli(c string) int32 {
+	v, _ := strconv.ParseFloat(c[0:len(c)-1], 32)
+	return int32(v * 10)
+}
+
+func cpuMilliInt32(c string) int32 {
+	v, _ := strconv.ParseFloat(c[0:len(c)-1], 32)
+	return int32(v)
+}
+
+func parseMemoryQuantity(m string) (numBytes int64, err error) {
+	if v, parseErr := strconv.Atoi(m); parseErr == nil {
+		return int64(v), nil
+	}
+	memoryQuantity, err := resource.ParseQuantity(m)
+	if err != nil {
+		return 0, err
+	}
+
+	numBytes, _ = memoryQuantity.AsInt64()
+	return numBytes, nil
 }

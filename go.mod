@@ -17,4 +17,5 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210220000619-9bb904979d93 // indirect
 	google.golang.org/genproto v0.0.0-20210224155714-063164c882e6 // indirect
 	istio.io/pkg v0.0.0-20210219215147-6639dbf1271c
+	k8s.io/apimachinery v0.20.4
 )
