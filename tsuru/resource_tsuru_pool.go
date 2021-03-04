@@ -102,9 +102,15 @@ func resourceTsuruPoolUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("Could not change property \"name\"")
 	}
 
+	labels := make(map[string]string)
+	for key, value := range d.Get("labels").(map[string]interface{}) {
+		labels[key] = value.(string)
+	}
+
 	_, err := provider.TsuruClient.PoolApi.PoolUpdate(ctx, d.Id(), tsuru.PoolUpdateData{
 		Default: d.Get("default").(bool),
 		Public:  d.Get("public").(bool),
+		Labels:  labels,
 	})
 	if err != nil {
 		return diag.Errorf("Could not update tsuru pool: %q, err: %s", d.Id(), err.Error())
