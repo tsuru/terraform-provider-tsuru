@@ -68,6 +68,12 @@ func resourceTsuruServiceInstance() *schema.Resource {
 				Optional:    true,
 				Description: "Service instance addicional parameters",
 			},
+			"unbind_on_delete": {
+				Type:        schema.TypeBool,
+				Default:     true,
+				Optional:    true,
+				Description: "Unbind service instance from apps on delete",
+			},
 		},
 	}
 }
@@ -181,7 +187,9 @@ func resourceTsuruServiceInstanceDelete(ctx context.Context, d *schema.ResourceD
 	provider := meta.(*tsuruProvider)
 	name := d.Get("name").(string)
 	serviceName := d.Get("service_name").(string)
-	_, err := provider.TsuruClient.ServiceApi.InstanceDelete(ctx, serviceName, name, true)
+	unbind := d.Get("unbind_on_delete").(bool)
+
+	_, err := provider.TsuruClient.ServiceApi.InstanceDelete(ctx, serviceName, name, unbind)
 	if err != nil {
 		return diag.Errorf("Could not delete tsuru service instance, err: %s", err.Error())
 	}
