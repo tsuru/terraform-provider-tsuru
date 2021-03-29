@@ -38,6 +38,8 @@ func Provider() *schema.Provider {
 			"tsuru_cluster":         resourceTsuruCluster(),
 			"tsuru_router":          resourceTsuruRouter(),
 			"tsuru_plan":            resourceTsuruPlan(),
+
+			"tsuru_service_instance": resourceTsuruServiceInstance(),
 		},
 	}
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
