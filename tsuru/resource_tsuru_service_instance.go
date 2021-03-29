@@ -33,6 +33,7 @@ func resourceTsuruServiceInstance() *schema.Resource {
 			"service_name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Name of service kind",
 			},
 			"plan": {
