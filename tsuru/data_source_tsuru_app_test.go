@@ -59,21 +59,21 @@ func TestAccDatasourceTsuruApp_basic(t *testing.T) {
 				InternalAddresses: []tsuru.AppInternalAddresses{
 					{
 						Domain:   "myapp-web.namespace.svc.cluster.local",
-						Port:     "8888",
+						Port:     8888,
 						Process:  "web",
 						Version:  "",
 						Protocol: "TCP",
 					},
 					{
 						Domain:   "myapp-subscriber.namespace.svc.cluster.local",
-						Port:     "8888",
+						Port:     8888,
 						Process:  "subscriber",
 						Version:  "",
 						Protocol: "TCP",
 					},
 					{
 						Domain:   "myapp-web-v2.namespace.svc.cluster.local",
-						Port:     "8888",
+						Port:     8888,
 						Process:  "web",
 						Version:  "2",
 						Protocol: "TCP",

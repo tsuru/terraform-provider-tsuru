@@ -69,7 +69,7 @@ func dataSourceTsuruApp() *schema.Resource {
 							Computed: true,
 						},
 						"port": {
-							Type:     schema.TypeString,
+							Type:     schema.TypeInt,
 							Computed: true,
 						},
 						"process": {
