@@ -58,7 +58,7 @@ func dataSourceTsuruApp() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
-			"internal_addresses": {
+			"internal_address": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
@@ -88,7 +88,7 @@ func dataSourceTsuruApp() *schema.Resource {
 				},
 			},
 
-			"routers": {
+			"router": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
@@ -99,7 +99,7 @@ func dataSourceTsuruApp() *schema.Resource {
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Computed: true,
 						},
-						"opts": {
+						"options": {
 							Type:     schema.TypeMap,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Computed: true,
@@ -135,8 +135,8 @@ func dataSourceTsuruAppRead(ctx context.Context, d *schema.ResourceData, meta in
 	d.Set("cluster", app.Cluster)
 	d.Set("tsuru_provisioner", app.Provisioner)
 
-	d.Set("internal_addresses", flattenInternalAddresses(app.InternalAddresses))
-	d.Set("routers", flattenRouters(app.Routers))
+	d.Set("internal_address", flattenInternalAddresses(app.InternalAddresses))
+	d.Set("router", flattenRouters(app.Routers))
 
 	d.Set("team_owner", app.TeamOwner)
 	d.Set("teams", app.Teams)
@@ -167,7 +167,7 @@ func flattenRouters(routers []tsuru.AppRouters) []interface{} {
 		result = append(result, map[string]interface{}{
 			"addresses": router.Addresses,
 			"name":      router.Name,
-			"opts":      router.Opts,
+			"options":   router.Opts,
 		})
 	}
 
