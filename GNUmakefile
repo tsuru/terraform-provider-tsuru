@@ -2,7 +2,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=tsuru
 NAME=tsuru
 BINARY=terraform-provider-${NAME}
-VERSION=0.1.4
+VERSION=0.1.7
 OS_ARCH=linux_amd64
 
 default: install

@@ -38,6 +38,7 @@ func Provider() *schema.Provider {
 			"tsuru_cluster":         resourceTsuruCluster(),
 			"tsuru_router":          resourceTsuruRouter(),
 			"tsuru_plan":            resourceTsuruPlan(),
+			"tsuru_webhook":         resourceTsuruWebhook(),
 
 			"tsuru_service_instance": resourceTsuruServiceInstance(),
 		},
