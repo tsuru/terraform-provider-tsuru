@@ -42,6 +42,9 @@ func Provider() *schema.Provider {
 
 			"tsuru_service_instance": resourceTsuruServiceInstance(),
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"tsuru_app": dataSourceTsuruApp(),
+		},
 	}
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		return providerConfigure(ctx, d, p.TerraformVersion)
