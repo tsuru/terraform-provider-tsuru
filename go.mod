@@ -15,19 +15,19 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/go-version v1.3.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.9.0 // indirect
+	github.com/hashicorp/hcl/v2 v2.9.1 // indirect
 	github.com/hashicorp/terraform-exec v0.13.1 // indirect
 	github.com/hashicorp/terraform-json v0.10.0 // indirect
-	github.com/hashicorp/terraform-plugin-docs v0.4.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/labstack/echo/v4 v4.2.0
 	github.com/mitchellh/copystructure v1.1.1 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
-	github.com/tsuru/go-tsuruclient v0.0.0-20210405203304-0630725e975e
+	github.com/tsuru/go-tsuruclient v0.0.0-20210412140010-53ab2ebbcfce
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/mod v0.4.2 // indirect
