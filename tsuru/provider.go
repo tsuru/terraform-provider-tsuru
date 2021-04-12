@@ -40,13 +40,19 @@ func Provider() *schema.Provider {
 			"tsuru_plan":            resourceTsuruPlan(),
 			"tsuru_webhook":         resourceTsuruWebhook(),
 
-			"tsuru_app":              resourceTsuruApplication(),
-			"tsuru_app_cname":        resourceTsuruApplicationCName(),
-			"tsuru_app_router":       resourceTsuruApplicationRouter(),
-			"tsuru_app_grant":        resourceTsuruApplicationGrant(),
-			"tsuru_app_unit":         resourceTsuruApplicationUnits(),
-			"tsuru_app_env":          resourceTsuruApplicationEnvironment(),
-			"tsuru_service_instance": resourceTsuruServiceInstance(),
+			"tsuru_app":           resourceTsuruApplication(),
+			"tsuru_app_autoscale": resourceTsuruApplicationAutoscale(),
+			"tsuru_app_cname":     resourceTsuruApplicationCName(),
+			"tsuru_app_router":    resourceTsuruApplicationRouter(),
+			"tsuru_app_grant":     resourceTsuruApplicationGrant(),
+			"tsuru_app_unit":      resourceTsuruApplicationUnits(),
+			"tsuru_app_env":       resourceTsuruApplicationEnvironment(),
+
+			"tsuru_service_instance":      resourceTsuruServiceInstance(),
+			"tsuru_service_instance_bind": resourceTsuruServiceInstance(),
+
+			"tsuru_volume":      resourceTsuruVolume(),
+			"tsuru_volume_bind": resourceTsuruVolumeBind(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"tsuru_app": dataSourceTsuruApp(),
