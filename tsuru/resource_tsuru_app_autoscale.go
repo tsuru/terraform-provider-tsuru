@@ -37,19 +37,19 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "minimum number of units",
 				Required:    true,
-				Default:     true,
+				DefaultFunc: func() (interface{}, error) {
+					return 1, nil
+				},
 			},
 			"max_units": {
 				Type:        schema.TypeInt,
 				Description: "maximum number of units",
 				Required:    true,
-				Default:     true,
 			},
 			"cpu_average": {
 				Type:        schema.TypeInt,
 				Description: "cpu average",
 				Required:    true,
-				Default:     true,
 			},
 		},
 	}

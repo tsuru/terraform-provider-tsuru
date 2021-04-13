@@ -49,7 +49,7 @@ func Provider() *schema.Provider {
 			"tsuru_app_env":       resourceTsuruApplicationEnvironment(),
 
 			"tsuru_service_instance":      resourceTsuruServiceInstance(),
-			"tsuru_service_instance_bind": resourceTsuruServiceInstance(),
+			"tsuru_service_instance_bind": resourceTsuruServiceInstanceBind(),
 
 			"tsuru_volume":      resourceTsuruVolume(),
 			"tsuru_volume_bind": resourceTsuruVolumeBind(),

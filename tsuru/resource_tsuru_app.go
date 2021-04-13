@@ -172,6 +172,10 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		Tags:      tags,
 	}
 
+	if desc, ok := d.GetOk("description"); ok {
+		app.Description = desc.(string)
+	}
+
 	restart := true
 	if r, ok := d.GetOk("restart_on_update"); ok {
 		restart = r.(bool)
@@ -179,10 +183,6 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 
 	if !restart {
 		app.NoRestart = true
-	}
-
-	if desc, ok := d.GetOk("description"); ok {
-		app.Description = desc.(string)
 	}
 
 	resp, err := provider.TsuruClient.AppApi.AppUpdate(ctx, name, app)
