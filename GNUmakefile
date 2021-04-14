@@ -3,7 +3,28 @@ NAMESPACE=tsuru
 NAME=tsuru
 BINARY=terraform-provider-${NAME}
 VERSION=0.1.9
-OS_ARCH=darwin_amd64
+
+UNAME_S := $(shell uname -s)
+UNAME_P := $(shell uname -p)
+ifeq ($(UNAME_S),Linux)
+	OS := linux
+endif
+ifeq ($(UNAME_S),Darwin)
+	OS := darwin
+	UNAME_P := $(shell uname -m)
+endif
+
+ifeq ($(UNAME_P),x86_64)
+	ARCH := amd64
+endif
+ifneq ($(filter %86,$(UNAME_P)),)
+	ARCH := a32
+endif
+ifneq ($(filter arm%,$(UNAME_P)),)
+	ARCH := arm
+endif
+
+OS_ARCH=${OS}_${ARCH}
 
 default: install
 
