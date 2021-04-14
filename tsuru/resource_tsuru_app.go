@@ -22,7 +22,7 @@ func resourceTsuruApplication() *schema.Resource {
 		ReadContext:   resourceTsuruApplicationRead,
 		DeleteContext: resourceTsuruApplicationDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceTsuruApplicationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -123,6 +123,13 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 		Tags:      tags,
 	}
 
+	if m, ok := d.GetOk("metadata"); ok {
+		metadata := metadataFromResourceData(m)
+		if metadata != nil {
+			app.Metadata = *metadata
+		}
+	}
+
 	if desc, ok := d.GetOk("description"); ok {
 		app.Description = desc.(string)
 	}
@@ -170,6 +177,13 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		Plan:      plan,
 		TeamOwner: d.Get("team_owner").(string),
 		Tags:      tags,
+	}
+
+	if m, ok := d.GetOk("metadata"); ok {
+		metadata := metadataFromResourceData(m)
+		if metadata != nil {
+			app.Metadata = *metadata
+		}
 	}
 
 	if desc, ok := d.GetOk("description"); ok {
@@ -241,6 +255,51 @@ func resourceTsuruApplicationDelete(ctx context.Context, d *schema.ResourceData,
 	}
 
 	return nil
+}
+
+func resourceTsuruApplicationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	provider := meta.(*tsuruProvider)
+
+	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	d.Set("name", app.Name)
+	d.SetId(app.Name)
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func metadataFromResourceData(meta interface{}) *tsuru_client.Metadata {
+	m := meta.([]interface{})
+	if len(m) == 0 || m[0] == nil {
+		return nil
+	}
+
+	cm := tsuru_client.Metadata{}
+
+	metadataMap := m[0].(map[string]interface{})
+	if v, ok := metadataMap["labels"]; ok && len(v.(map[string]interface{})) > 0 {
+		l := v.(map[string]interface{})
+
+		for key, value := range l {
+			cm.Labels = append(cm.Labels, tsuru_client.MetadataItem{Name: key, Value: value.(string)})
+		}
+	}
+
+	if v, ok := metadataMap["annotations"]; ok && len(v.(map[string]interface{})) > 0 {
+		l := v.(map[string]interface{})
+		for key, value := range l {
+			cm.Annotations = append(cm.Annotations, tsuru_client.MetadataItem{Name: key, Value: value.(string)})
+		}
+	}
+
+	if len(cm.Labels) == 0 && len(cm.Annotations) == 0 {
+		return nil
+	}
+
+	return &cm
 }
 
 func validPlatform(ctx context.Context, provider *tsuruProvider, platform string) error {

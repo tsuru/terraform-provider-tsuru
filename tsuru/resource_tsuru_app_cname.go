@@ -6,10 +6,14 @@ package tsuru
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/pkg/errors"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
@@ -22,6 +26,11 @@ func resourceTsuruApplicationCName() *schema.Resource {
 		DeleteContext: resourceTsuruApplicationCNameDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Update: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"app": {
@@ -47,17 +56,32 @@ func resourceTsuruApplicationCNameCreate(ctx context.Context, d *schema.Resource
 		Cname: []string{hostname},
 	}
 
-	resp, err := provider.TsuruClient.AppApi.AppCnameAdd(ctx, app, cname)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		resp, err := provider.TsuruClient.AppApi.AppCnameAdd(ctx, app, cname)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			if isLocked(string(body)) {
+				return resource.RetryableError(errors.Errorf("App locked"))
+			}
+			return resource.NonRetryableError(errors.Errorf("unable to add cname, error code: %d", resp.StatusCode))
+		}
+
+		d.SetId(hostname)
+		return nil
+	})
+
 	if err != nil {
-		return diag.Errorf("unable to add cname: %v", err)
+		return diag.FromErr(err)
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to add cname, error code: %d", resp.StatusCode)
-	}
-
-	d.SetId(hostname)
-
 	return resourceTsuruApplicationCNameRead(ctx, d, meta)
 }
 

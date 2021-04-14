@@ -71,11 +71,14 @@ func resourceTsuruApplicationRouterCreate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("unable to create router: %v", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusConflict:
+		fallthrough
+	case http.StatusOK:
+		d.SetId(name)
+	default:
 		return diag.Errorf("unable to create router, error code: %d", resp.StatusCode)
 	}
-
-	d.SetId(name)
 
 	return resourceTsuruApplicationRouterRead(ctx, d, meta)
 }

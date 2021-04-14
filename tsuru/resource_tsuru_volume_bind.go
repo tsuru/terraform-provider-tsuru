@@ -9,6 +9,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
 func resourceTsuruVolumeBind() *schema.Resource {
@@ -43,7 +45,7 @@ func resourceTsuruVolumeBind() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "restart app after applying",
 				Optional:    true,
-				Default:     true,
+				Default:     false,
 			},
 			"restart_on_update": {
 				Type:        schema.TypeBool,
@@ -56,7 +58,34 @@ func resourceTsuruVolumeBind() *schema.Resource {
 }
 
 func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
+	provider := meta.(*tsuruProvider)
+
+	name := d.Get("volume_name").(string)
+
+	bindData := tsuru_client.VolumeBindData{
+		App:        d.Get("app").(string),
+		Mountpoint: d.Get("mount_point").(string),
+		Readonly:   false,
+		Norestart:  false,
+	}
+
+	if roi, ok := d.GetOk("read_only"); ok {
+		ro := roi.(bool)
+		if ro {
+			bindData.Readonly = true
+		}
+	}
+
+	if ri, ok := d.GetOk("restart_on_update"); ok {
+		r := ri.(bool)
+		if !r {
+			bindData.Norestart = true
+		}
+	}
+
+	provider.TsuruClient.VolumeApi.VolumeBind(ctx, name, bindData)
+
+	return resourceTsuruVolumeBindRead(ctx, d, meta)
 }
 
 func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
