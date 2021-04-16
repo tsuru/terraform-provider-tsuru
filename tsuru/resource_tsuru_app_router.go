@@ -6,9 +6,12 @@ package tsuru
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
@@ -21,6 +24,11 @@ func resourceTsuruApplicationRouter() *schema.Resource {
 		ReadContext:   resourceTsuruApplicationRouterRead,
 		UpdateContext: resourceTsuruApplicationRouterUpdate,
 		DeleteContext: resourceTsuruApplicationRouterDelete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -66,18 +74,35 @@ func resourceTsuruApplicationRouterCreate(ctx context.Context, d *schema.Resourc
 		Opts: options,
 	}
 
-	resp, err := provider.TsuruClient.AppApi.AppRouterAdd(ctx, appName, router)
-	if err != nil {
-		return diag.Errorf("unable to create router: %v", err)
-	}
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		resp, err := provider.TsuruClient.AppApi.AppRouterAdd(ctx, appName, router)
+		if err != nil {
+			return resource.NonRetryableError(errors.Errorf("unable to create router: %v", err))
+		}
 
-	switch resp.StatusCode {
-	case http.StatusConflict:
-		fallthrough
-	case http.StatusOK:
-		d.SetId(name)
-	default:
-		return diag.Errorf("unable to create router, error code: %d", resp.StatusCode)
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		switch resp.StatusCode {
+		case http.StatusConflict:
+			fallthrough
+		case http.StatusOK:
+			d.SetId(name)
+		default:
+			if isLocked(string(body)) {
+				return resource.RetryableError(errors.Errorf("App locked"))
+			}
+			return resource.NonRetryableError(errors.Errorf("unable to create router, error code: %d", resp.StatusCode))
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceTsuruApplicationRouterRead(ctx, d, meta)
@@ -102,7 +127,7 @@ func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceD
 		return nil
 	}
 
-	return nil
+	return diag.Errorf("unable to find router %s on app %s", name, appName)
 }
 
 func resourceTsuruApplicationRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -120,13 +145,35 @@ func resourceTsuruApplicationRouterUpdate(ctx context.Context, d *schema.Resourc
 		Opts: options,
 	}
 
-	resp, err := provider.TsuruClient.AppApi.AppRouterUpdate(ctx, appName, name, router)
-	if err != nil {
-		return diag.Errorf("unable to update router: %v", err)
-	}
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+		resp, err := provider.TsuruClient.AppApi.AppRouterUpdate(ctx, appName, name, router)
+		if err != nil {
+			return resource.NonRetryableError(errors.Errorf("unable to update router: %v", err))
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to update router, error code: %d", resp.StatusCode)
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		switch resp.StatusCode {
+		case http.StatusConflict:
+			fallthrough
+		case http.StatusOK:
+			d.SetId(name)
+		default:
+			if isLocked(string(body)) {
+				return resource.RetryableError(errors.Errorf("App locked"))
+			}
+			return resource.NonRetryableError(errors.Errorf("unable to update router, error code: %d", resp.StatusCode))
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceTsuruApplicationRouterRead(ctx, d, meta)

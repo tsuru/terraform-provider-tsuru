@@ -21,27 +21,28 @@ func resourceTsuruApplicationCName() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Tsuru Application CName",
 		CreateContext: resourceTsuruApplicationCNameCreate,
-		UpdateContext: resourceTsuruApplicationCNameCreate,
 		ReadContext:   resourceTsuruApplicationCNameRead,
 		DeleteContext: resourceTsuruApplicationCNameDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"app": {
 				Type:        schema.TypeString,
 				Description: "Application name",
 				Required:    true,
+				ForceNew:    true,
 			},
 			"hostname": {
 				Type:        schema.TypeString,
 				Description: "Application description",
-				Optional:    true,
+				Required:    true,
+				ForceNew:    true,
 			},
 		},
 	}

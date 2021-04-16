@@ -18,7 +18,7 @@ ifeq ($(UNAME_P),x86_64)
 	ARCH := amd64
 endif
 ifneq ($(filter %86,$(UNAME_P)),)
-	ARCH := a32
+	ARCH := 386
 endif
 ifneq ($(filter arm%,$(UNAME_P)),)
 	ARCH := arm

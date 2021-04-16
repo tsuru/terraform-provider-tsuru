@@ -7,6 +7,7 @@ package tsuru
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -336,10 +337,14 @@ func validPlan(ctx context.Context, provider *tsuruProvider, plan string) error 
 		return err
 	}
 
+	availablePlans := []string{}
 	for _, p := range plans {
+		availablePlans = append(availablePlans, p.Name)
 		if p.Name == plan {
 			return nil
 		}
 	}
-	return errors.Errorf("invalid plan: %s", plan)
+	plansList := strings.Join(availablePlans, ",")
+
+	return errors.Errorf("invalid plan: %s available plans are [%s]", plan, plansList)
 }
