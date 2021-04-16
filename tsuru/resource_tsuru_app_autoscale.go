@@ -153,7 +153,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 		return nil
 	}
 
-	return diag.Errorf("Unable to read autoscale %s %p: process not found", app, process)
+	return diag.Errorf("Unable to read autoscale %s %s: process not found", app, process)
 }
 
 func resourceTsuruApplicationAutoscaleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

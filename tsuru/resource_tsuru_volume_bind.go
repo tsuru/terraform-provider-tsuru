@@ -152,7 +152,7 @@ func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, me
 		return nil
 	}
 
-	return diag.Errorf("unable to find bind for volume %s to %v", volume, app)
+	return diag.Errorf("unable to find bind for volume %s to %s", volume.Name, app)
 }
 
 func resourceTsuruVolumeBindDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

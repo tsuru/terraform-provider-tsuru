@@ -165,7 +165,7 @@ func resourceTsuruApplicationEnvironmentUpdate(ctx context.Context, d *schema.Re
 	privateEnvs, publicEnvs := envsFromResource(d.Get("environment_variable"))
 	curPrivate, curPublic, err := getRemoteEnvironment(ctx, provider.TsuruClient, app)
 	if err != nil {
-		return diag.Errorf("unable to get current environment variables for app %d: %v", app, err)
+		return diag.Errorf("unable to get current environment variables for app %s: %v", app, err)
 	}
 	privateUpdate, privateRemove := diffEnvSetData(privateEnvs.Envs, curPrivate)
 	publicUpdate, publicRemove := diffEnvSetData(publicEnvs.Envs, curPublic)
