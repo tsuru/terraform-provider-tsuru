@@ -27,17 +27,17 @@ description: |-
 
 - **cluster** (String)
 - **description** (String)
-- **internal_addresses** (Block List) (see [below for nested schema](#nestedblock--internal_addresses))
+- **internal_address** (Block List) (see [below for nested schema](#nestedblock--internal_address))
 - **platform** (String)
 - **pool** (String)
-- **routers** (Block List) (see [below for nested schema](#nestedblock--routers))
+- **router** (Block List) (see [below for nested schema](#nestedblock--router))
 - **tags** (List of String)
 - **team_owner** (String)
 - **teams** (List of String)
 - **tsuru_provisioner** (String)
 
-<a id="nestedblock--internal_addresses"></a>
-### Nested Schema for `internal_addresses`
+<a id="nestedblock--internal_address"></a>
+### Nested Schema for `internal_address`
 
 Read-Only:
 
@@ -48,13 +48,13 @@ Read-Only:
 - **version** (String)
 
 
-<a id="nestedblock--routers"></a>
-### Nested Schema for `routers`
+<a id="nestedblock--router"></a>
+### Nested Schema for `router`
 
 Read-Only:
 
 - **addresses** (List of String)
 - **name** (String)
-- **opts** (Map of String)
+- **options** (Map of String)
 
 
