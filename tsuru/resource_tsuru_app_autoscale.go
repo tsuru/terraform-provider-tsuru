@@ -115,16 +115,12 @@ func resourceTsuruApplicationAutoscaleCreate(ctx context.Context, d *schema.Reso
 		AverageCPU: cpu,
 	}
 
-	resp, err := provider.TsuruClient.AppApi.AutoScaleAdd(ctx, app, autoscale)
+	_, err = provider.TsuruClient.AppApi.AutoScaleAdd(ctx, app, autoscale)
 	if err != nil {
 		return diag.Errorf("Unable to create autoscale %s %s: %v", app, process, err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("Unable to create autoscale: error code %d", resp.StatusCode)
-	}
-
-	d.SetId(fmt.Sprintf("%s-%s", app, process))
+	d.SetId(createID([]string{app, process}))
 
 	return resourceTsuruApplicationAutoscaleRead(ctx, d, meta)
 }

@@ -6,9 +6,7 @@ package tsuru
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
-	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -86,30 +84,27 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 
 	app := d.Get("app").(string)
 
-	privateEnvs, publicEnvs := envsFromResource(d.Get("environment_variable"))
-	var envsPtr *tsuru_client.EnvSetData
-	if len(privateEnvs.Envs) > 0 && len(publicEnvs.Envs) > 0 {
-		// Don't restart when private and public have variables
-		privateEnvs.Norestart = true
-		envsPtr = publicEnvs
-	} else if len(publicEnvs.Envs) == 0 {
-		envsPtr = privateEnvs
-	} else if len(privateEnvs.Envs) == 0 {
-		envsPtr = publicEnvs
-	}
-
+	envs := envsFromResource(d.Get("environment_variable"))
 	if ri, ok := d.GetOk("restart_on_update"); ok {
 		r := ri.(bool)
 		if !r {
-			envsPtr.Norestart = true
+			envs.Norestart = true
 		}
 	}
-
-	provider.Log.Infof("create public: %#v private: %#v", publicEnvs, privateEnvs)
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		if len(privateEnvs.Envs) > 0 {
-			provider.TsuruClient.AppApi.EnvSet(ctx, app, *privateEnvs)
+		if len(envs.Envs) == 0 {
+			return resource.NonRetryableError(errors.Errorf("No environment variables to create"))
+		}
+		_, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, *envs)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
 		}
 		return nil
 	})
@@ -117,17 +112,7 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		if len(publicEnvs.Envs) > 0 {
-			provider.TsuruClient.AppApi.EnvSet(ctx, app, *publicEnvs)
-		}
-		return nil
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(fmt.Sprintf("%s-envs", app))
+	d.SetId(app)
 
 	return resourceTsuruApplicationEnvironmentRead(ctx, d, meta)
 }
@@ -141,18 +126,24 @@ func resourceTsuruApplicationEnvironmentRead(ctx context.Context, d *schema.Reso
 		return diag.Errorf("unable to read envs for app %s: %v", app, err)
 	}
 
-	prefix := "environment_variable"
-	for i, env := range envs {
+	var envVars []map[string]interface{}
+	for _, env := range envs {
 		if isReservedEnv(env.Name) {
 			continue
 		}
-		d.Set(fmt.Sprintf("%s.%d.name", prefix, i), env.Name)
 		if env.Public {
-			d.Set(fmt.Sprintf("%s.%d.value", prefix, i), env.Value)
+			envVars = append(envVars, map[string]interface{}{
+				"name":  env.Name,
+				"value": env.Value,
+			})
 		} else {
-			d.Set(fmt.Sprintf("%s.%d.sensitive_value", prefix, i), env.Value)
+			envVars = append(envVars, map[string]interface{}{
+				"name":            env.Name,
+				"sensitive_value": env.Value,
+			})
 		}
 	}
+	d.Set("environment_variable", envVars)
 
 	return nil
 }
@@ -161,67 +152,35 @@ func resourceTsuruApplicationEnvironmentUpdate(ctx context.Context, d *schema.Re
 	provider := meta.(*tsuruProvider)
 
 	app := d.Get("app").(string)
-
-	privateEnvs, publicEnvs := envsFromResource(d.Get("environment_variable"))
-	curPrivate, curPublic, err := getRemoteEnvironment(ctx, provider.TsuruClient, app)
-	if err != nil {
-		return diag.Errorf("unable to get current environment variables for app %s: %v", app, err)
-	}
-	privateUpdate, privateRemove := diffEnvSetData(privateEnvs.Envs, curPrivate)
-	publicUpdate, publicRemove := diffEnvSetData(publicEnvs.Envs, curPublic)
-
-	provider.Log.Infof("update publicRemove: %#v privateRemove: %#v", publicRemove, privateRemove)
-
-	err = removeEnvVars(ctx, provider.TsuruClient, d.Timeout(schema.TimeoutUpdate), app, privateRemove)
-	if err != nil {
-		return diag.Errorf("unable to remove private envs: %v", err)
-	}
-	err = removeEnvVars(ctx, provider.TsuruClient, d.Timeout(schema.TimeoutUpdate), app, publicRemove)
-	if err != nil {
-		return diag.Errorf("unable to remove public envs: %v", err)
-	}
-
-	privateEnvs.Envs = privateUpdate
-	publicEnvs.Envs = publicUpdate
-	var envsPtr *tsuru_client.EnvSetData
-	if len(privateEnvs.Envs) > 0 && len(publicEnvs.Envs) > 0 {
-		// Don't restart when private and public have variables
-		privateEnvs.Norestart = true
-		envsPtr = publicEnvs
-	} else if len(publicEnvs.Envs) == 0 {
-		envsPtr = privateEnvs
-	} else if len(privateEnvs.Envs) == 0 {
-		envsPtr = publicEnvs
-	}
+	envs := envsFromResource(d.Get("environment_variable"))
 
 	if ri, ok := d.GetOk("restart_on_update"); ok {
 		r := ri.(bool)
 		if !r {
-			envsPtr.Norestart = true
+			envs.Norestart = true
 		}
 	}
 
-	provider.Log.Infof("update public: %#v private: %#v", publicEnvs, privateEnvs)
-
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		if len(privateEnvs.Envs) > 0 {
-			provider.TsuruClient.AppApi.EnvSet(ctx, app, *privateEnvs)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+		if len(envs.Envs) == 0 {
+			return resource.NonRetryableError(errors.Errorf("No environment variables to update"))
 		}
-		return nil
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		if len(publicEnvs.Envs) > 0 {
-			provider.TsuruClient.AppApi.EnvSet(ctx, app, *publicEnvs)
+		_, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, *envs)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
 		}
 		return nil
 	})
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	return resourceTsuruApplicationEnvironmentRead(ctx, d, meta)
 }
 
@@ -229,43 +188,32 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	provider := meta.(*tsuruProvider)
 
 	app := d.Get("app").(string)
-
-	privateEnvs, publicEnvs := envsFromResource(d.Get("environment_variable"))
-	var envsPtr *tsuru_client.EnvSetData
-	if len(privateEnvs.Envs) > 0 && len(publicEnvs.Envs) > 0 {
-		// Don't restart when private and public have variables
-		privateEnvs.Norestart = true
-		envsPtr = publicEnvs
-	} else if len(publicEnvs.Envs) == 0 {
-		envsPtr = privateEnvs
-	} else if len(privateEnvs.Envs) == 0 {
-		envsPtr = publicEnvs
+	envs := &tsuru_client.EnvSetData{
+		Envs:        []tsuru_client.Env{},
+		ManagedBy:   "terraform",
+		PruneUnused: true,
 	}
 
 	if ri, ok := d.GetOk("restart_on_update"); ok {
 		r := ri.(bool)
 		if !r {
-			envsPtr.Norestart = true
+			envs.Norestart = true
 		}
 	}
 
-	provider.Log.Infof("delete public: %#v private: %#v", publicEnvs, privateEnvs)
-
-	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
-		if len(privateEnvs.Envs) > 0 {
-			varNames := getVarNames(privateEnvs.Envs)
-			provider.TsuruClient.AppApi.EnvUnset(ctx, app, varNames, privateEnvs.Norestart)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+		if len(envs.Envs) == 0 {
+			return resource.NonRetryableError(errors.Errorf("No environment variables to update"))
 		}
-		return nil
-	})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
-		if len(publicEnvs.Envs) > 0 {
-			varNames := getVarNames(privateEnvs.Envs)
-			provider.TsuruClient.AppApi.EnvUnset(ctx, app, varNames, privateEnvs.Norestart)
+		_, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, *envs)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
 		}
 		return nil
 	})
@@ -276,102 +224,13 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	return nil
 }
 
-func removeEnvVars(ctx context.Context, client *tsuru_client.APIClient, timeout time.Duration, app string, envs []tsuru_client.Env) error {
-	return resource.RetryContext(ctx, timeout, func() *resource.RetryError {
-		if len(envs) > 0 {
-			varNames := getVarNames(envs)
-			resp, err := client.AppApi.EnvUnset(ctx, app, varNames, true)
-			if err != nil {
-				return resource.NonRetryableError(err)
-			}
-
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return resource.NonRetryableError(err)
-			}
-
-			if resp.StatusCode != http.StatusOK {
-				if isLocked(string(body)) {
-					return resource.RetryableError(errors.Errorf("App locked"))
-				}
-				return resource.NonRetryableError(errors.Errorf("unable to add cname, error code: %d", resp.StatusCode))
-			}
-		}
-		return nil
-	})
-}
-
-func getRemoteEnvironment(ctx context.Context, client *tsuru_client.APIClient, app string) (private, public []tsuru_client.Env, err error) {
-	envs, _, err := client.AppApi.EnvGet(ctx, app, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, env := range envs {
-		if isReservedEnv(env.Name) {
-			continue
-		}
-		if env.Public {
-			public = append(public, env)
-		} else {
-			private = append(private, env)
-		}
-	}
-
-	return
-}
-
-func diffEnvSetData(newEnvs, oldEnvs []tsuru_client.Env) (update, remove []tsuru_client.Env) {
-	update = []tsuru_client.Env{}
-	remove = []tsuru_client.Env{}
-
-	for _, newEnv := range newEnvs {
-		if curEnv, ok := envInSet(newEnv.Name, oldEnvs); ok {
-			if curEnv.Value != newEnv.Value {
-				update = append(update, newEnv)
-			}
-		} else {
-			update = append(update, newEnv)
-		}
-	}
-
-	for _, oldEnv := range oldEnvs {
-		if _, ok := envInSet(oldEnv.Name, newEnvs); !ok {
-			remove = append(remove, oldEnv)
-		}
-	}
-
-	return
-}
-
-func envInSet(envName string, envs []tsuru_client.Env) (*tsuru_client.Env, bool) {
-	for _, e := range envs {
-		if e.Name == envName {
-			return &e, true
-		}
-	}
-	return nil, false
-}
-
-func getVarNames(envs []tsuru_client.Env) []string {
-	names := []string{}
-	for _, e := range envs {
-		names = append(names, e.Name)
-	}
-	return names
-}
-
-func envsFromResource(envvars interface{}) (*tsuru_client.EnvSetData, *tsuru_client.EnvSetData) {
+func envsFromResource(envvars interface{}) *tsuru_client.EnvSetData {
 	evs := envvars.(*schema.Set)
 
-	private := &tsuru_client.EnvSetData{
-		Envs:    []tsuru_client.Env{},
-		Private: true,
-	}
-
-	public := &tsuru_client.EnvSetData{
-		Envs: []tsuru_client.Env{},
+	envs := &tsuru_client.EnvSetData{
+		Envs:        []tsuru_client.Env{},
+		ManagedBy:   "terraform",
+		PruneUnused: true,
 	}
 
 	for _, raw := range evs.List() {
@@ -381,26 +240,15 @@ func envsFromResource(envvars interface{}) (*tsuru_client.EnvSetData, *tsuru_cli
 		}
 		if v, ok := e["value"]; ok && v != "" {
 			env.Value = v.(string)
-			public.Envs = append(public.Envs, env)
-			continue
-		}
-		if v, ok := e["sensitive_value"]; ok && v != "" {
+		} else if v, ok := e["sensitive_value"]; ok && v != "" {
 			env.Value = v.(string)
-			private.Envs = append(private.Envs, env)
-			continue
 		}
+		envs.Envs = append(envs.Envs, env)
 	}
 
-	return private, public
+	return envs
 }
 
 func isReservedEnv(variable string) bool {
-	reserved := map[string]bool{
-		"TSURU_APPDIR":    true,
-		"TSURU_APPNAME":   true,
-		"TSURU_APP_TOKEN": true,
-		"TSURU_SERVICES":  true,
-	}
-	_, ok := reserved[variable]
-	return ok
+	return strings.HasPrefix(variable, "TSURU_")
 }

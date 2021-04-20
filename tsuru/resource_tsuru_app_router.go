@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -75,29 +74,17 @@ func resourceTsuruApplicationRouterCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		resp, err := provider.TsuruClient.AppApi.AppRouterAdd(ctx, appName, router)
+		_, err := provider.TsuruClient.AppApi.AppRouterAdd(ctx, appName, router)
 		if err != nil {
-			return resource.NonRetryableError(errors.Errorf("unable to create router: %v", err))
-		}
-
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		switch resp.StatusCode {
-		case http.StatusConflict:
-			fallthrough
-		case http.StatusOK:
-			d.SetId(name)
-		default:
-			if isLocked(string(body)) {
-				return resource.RetryableError(errors.Errorf("App locked"))
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(errors.Errorf("unable to create router: %v", err))
 			}
-			return resource.NonRetryableError(errors.Errorf("unable to create router, error code: %d", resp.StatusCode))
 		}
-
+		d.SetId(name)
 		return nil
 	})
 
@@ -146,29 +133,16 @@ func resourceTsuruApplicationRouterUpdate(ctx context.Context, d *schema.Resourc
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
-		resp, err := provider.TsuruClient.AppApi.AppRouterUpdate(ctx, appName, name, router)
+		_, err := provider.TsuruClient.AppApi.AppRouterUpdate(ctx, appName, name, router)
 		if err != nil {
-			return resource.NonRetryableError(errors.Errorf("unable to update router: %v", err))
-		}
-
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		switch resp.StatusCode {
-		case http.StatusConflict:
-			fallthrough
-		case http.StatusOK:
-			d.SetId(name)
-		default:
-			if isLocked(string(body)) {
-				return resource.RetryableError(errors.Errorf("App locked"))
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
 			}
-			return resource.NonRetryableError(errors.Errorf("unable to update router, error code: %d", resp.StatusCode))
 		}
-
 		return nil
 	})
 

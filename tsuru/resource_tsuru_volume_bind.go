@@ -7,7 +7,6 @@ package tsuru
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -34,7 +33,7 @@ func resourceTsuruVolumeBind() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
-			"volume_name": {
+			"volume": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -73,7 +72,7 @@ func resourceTsuruVolumeBind() *schema.Resource {
 func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	name := d.Get("volume_name").(string)
+	name := d.Get("volume").(string)
 
 	bindData := tsuru_client.VolumeBindData{
 		App:        d.Get("app").(string),
@@ -97,25 +96,18 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		resp, err := provider.TsuruClient.VolumeApi.VolumeBind(ctx, name, bindData)
+		_, err := provider.TsuruClient.VolumeApi.VolumeBind(ctx, name, bindData)
 		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			if isLocked(string(body)) {
-				return resource.RetryableError(errors.Errorf("App locked"))
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
 			}
-			return resource.NonRetryableError(errors.Errorf("unable to bind volume, error code: %d", resp.StatusCode))
 		}
 
-		d.SetId(fmt.Sprintf("%s-%s", bindData.App, bindData.Mountpoint))
+		d.SetId(fmt.Sprintf("%s#%s", bindData.App, bindData.Mountpoint))
 		return nil
 	})
 
@@ -128,7 +120,7 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	name := d.Get("volume_name").(string)
+	name := d.Get("volume").(string)
 	app := d.Get("app").(string)
 	mountPath := d.Get("mount_path").(string)
 
@@ -145,7 +137,7 @@ func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, me
 		if bind.Id.App != app && bind.Id.Mountpoint != mountPath {
 			continue
 		}
-		d.Set("volume_name", name)
+		d.Set("volume", name)
 		d.Set("app", app)
 		d.Set("mount_path", bind.Id.Mountpoint)
 		d.Set("read_only", bind.Readonly)
@@ -158,7 +150,7 @@ func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, me
 func resourceTsuruVolumeBindDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	name := d.Get("volume_name").(string)
+	name := d.Get("volume").(string)
 
 	bindData := tsuru_client.VolumeBindData{
 		App:        d.Get("app").(string),
@@ -182,22 +174,15 @@ func resourceTsuruVolumeBindDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
-		resp, err := provider.TsuruClient.VolumeApi.VolumeUnbind(ctx, name, bindData)
+		_, err := provider.TsuruClient.VolumeApi.VolumeUnbind(ctx, name, bindData)
 		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			if isLocked(string(body)) {
-				return resource.RetryableError(errors.Errorf("App locked"))
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
 			}
-			return resource.NonRetryableError(errors.Errorf("unable to unbind volume, error code: %d", resp.StatusCode))
 		}
 		return nil
 	})

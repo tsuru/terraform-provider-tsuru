@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -58,25 +57,18 @@ func resourceTsuruApplicationCNameCreate(ctx context.Context, d *schema.Resource
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		resp, err := provider.TsuruClient.AppApi.AppCnameAdd(ctx, app, cname)
+		_, err := provider.TsuruClient.AppApi.AppCnameAdd(ctx, app, cname)
 		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			if isLocked(string(body)) {
-				return resource.RetryableError(errors.Errorf("App locked"))
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
 			}
-			return resource.NonRetryableError(errors.Errorf("unable to add cname, error code: %d", resp.StatusCode))
 		}
 
-		d.SetId(hostname)
+		d.SetId(createID([]string{app, hostname}))
 		return nil
 	})
 

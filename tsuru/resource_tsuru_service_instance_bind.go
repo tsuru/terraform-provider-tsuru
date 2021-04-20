@@ -8,7 +8,11 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/pkg/errors"
+
+	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
 func resourceTsuruServiceInstanceBind() *schema.Resource {
@@ -50,11 +54,46 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 }
 
 func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
+	provider := meta.(*tsuruProvider)
+
+	service := d.Get("service_name").(string)
+	instance := d.Get("service_instance").(string)
+	app := d.Get("app").(string)
+
+	noRestart := false
+	if ri, ok := d.GetOk("restart_on_update"); ok {
+		r := ri.(bool)
+		if !r {
+			noRestart = true
+		}
+	}
+
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err := provider.TsuruClient.ServiceApi.ServiceInstanceBind(ctx, service, instance, app, tsuru_client.ServiceInstanceBind{
+			NoRestart: noRestart,
+		})
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(createID([]string{service, instance, app}))
+
+	return resourceTsuruServiceInstanceBindRead(ctx, d, meta)
 }
 
 func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	return nil
 }
 

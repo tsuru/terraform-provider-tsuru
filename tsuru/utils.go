@@ -6,9 +6,20 @@ package tsuru
 
 import "strings"
 
-func isLocked(err string) bool {
-	if strings.Contains(err, "event locked") {
+const ID_SEPARATOR = "::"
+
+func isRetryableError(err []byte) bool {
+	e := string(err)
+	if strings.Contains(e, "event locked") {
 		return true
 	}
 	return false
+}
+
+func createID(input []string) string {
+	return strings.TrimSpace(strings.Join(input, ID_SEPARATOR))
+}
+
+func IDtoParts(input string) []string {
+	return strings.Split(input, ID_SEPARATOR)
 }

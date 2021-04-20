@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
 func resourceTsuruApplicationUnits() *schema.Resource {
@@ -32,6 +33,11 @@ func resourceTsuruApplicationUnits() *schema.Resource {
 				Description: "Process name",
 				Required:    true,
 			},
+			"version": {
+				Type:        schema.TypeString,
+				Description: "Process name",
+				Optional:    true,
+			},
 			"units_count": {
 				Type:        schema.TypeInt,
 				Description: "Units count",
@@ -42,11 +48,19 @@ func resourceTsuruApplicationUnits() *schema.Resource {
 }
 
 func resourceTsuruApplicationUnitsCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
+	provider := meta.(*tsuruProvider)
+
+	app := d.Get("app").(string)
+	// process := d.Get("process").(string)
+	// units := d.Get("units_count").(int)
+
+	delta := &tsuru_client.UnitsAddOpts{}
+
+	provider.TsuruClient.AppApi.UnitsAdd(ctx, app, delta)
+	return resourceTsuruApplicationUnitsRead(ctx, d, meta)
 }
 
 func resourceTsuruApplicationUnitsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	return nil
 }
 

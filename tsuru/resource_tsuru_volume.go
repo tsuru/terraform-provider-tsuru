@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -82,13 +81,9 @@ func resourceTsuruVolumeCreate(ctx context.Context, d *schema.ResourceData, meta
 		volume.Opts = options
 	}
 
-	resp, err := provider.TsuruClient.VolumeApi.VolumeCreate(ctx, volume)
+	_, err := provider.TsuruClient.VolumeApi.VolumeCreate(ctx, volume)
 	if err != nil {
 		return diag.Errorf("Unable to create volume: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("Unable to create volume")
 	}
 
 	d.SetId(volume.Name)
@@ -120,13 +115,9 @@ func resourceTsuruVolumeDelete(ctx context.Context, d *schema.ResourceData, meta
 
 	name := d.Get("name").(string)
 
-	resp, err := provider.TsuruClient.VolumeApi.VolumeDelete(ctx, name)
+	_, err := provider.TsuruClient.VolumeApi.VolumeDelete(ctx, name)
 	if err != nil {
 		return diag.Errorf("Unable to delete volume: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("Unable to delete volume %v: error code %d", name, resp.StatusCode)
 	}
 
 	return nil

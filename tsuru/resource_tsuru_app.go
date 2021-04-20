@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -135,13 +134,9 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 		app.Description = desc.(string)
 	}
 
-	_, resp, err := provider.TsuruClient.AppApi.AppCreate(ctx, app)
+	_, _, err := provider.TsuruClient.AppApi.AppCreate(ctx, app)
 	if err != nil {
 		return diag.Errorf("unable to create app %s: %v", app.Name, err)
-	}
-
-	if resp.StatusCode != http.StatusCreated {
-		return diag.Errorf("unable to create app %s: error code %d", app.Name, resp.StatusCode)
 	}
 
 	d.SetId(app.Name)
@@ -200,13 +195,9 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		app.NoRestart = true
 	}
 
-	resp, err := provider.TsuruClient.AppApi.AppUpdate(ctx, name, app)
+	_, err := provider.TsuruClient.AppApi.AppUpdate(ctx, name, app)
 	if err != nil {
 		return diag.Errorf("unable to update app %s: %v", name, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to update app %s: error code %d", name, resp.StatusCode)
 	}
 
 	return nil
@@ -246,13 +237,9 @@ func resourceTsuruApplicationDelete(ctx context.Context, d *schema.ResourceData,
 	provider := meta.(*tsuruProvider)
 	name := d.Get("name").(string)
 
-	resp, err := provider.TsuruClient.AppApi.AppDelete(ctx, name)
+	_, err := provider.TsuruClient.AppApi.AppDelete(ctx, name)
 	if err != nil {
 		return diag.Errorf("unable to delete app %s: %v", name, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to delete app %s: error code %d", name, resp.StatusCode)
 	}
 
 	return nil
@@ -309,12 +296,20 @@ func validPlatform(ctx context.Context, provider *tsuruProvider, platform string
 		return err
 	}
 
+	availablePlatforms := []string{}
 	for _, p := range platforms {
-		if p.Name == platform && !p.Disabled {
+		if p.Disabled {
+			continue
+		}
+
+		availablePlatforms = append(availablePlatforms, p.Name)
+		if p.Name == platform {
 			return nil
 		}
 	}
-	return errors.Errorf("invalid platform: %s", platform)
+	plaformList := strings.Join(availablePlatforms, ",")
+
+	return errors.Errorf("invalid platform: %s available platforms are [%s]", platform, plaformList)
 }
 
 func validPool(ctx context.Context, provider *tsuruProvider, pool string) error {
@@ -323,12 +318,16 @@ func validPool(ctx context.Context, provider *tsuruProvider, pool string) error 
 		return err
 	}
 
+	availablePools := []string{}
 	for _, p := range pools {
+		availablePools = append(availablePools, p.Name)
 		if p.Name == pool {
 			return nil
 		}
 	}
-	return errors.Errorf("invalid pool: %s", pool)
+	poolList := strings.Join(availablePools, ",")
+
+	return errors.Errorf("invalid pool: %s available pools are [%s]", pool, poolList)
 }
 
 func validPlan(ctx context.Context, provider *tsuruProvider, plan string) error {

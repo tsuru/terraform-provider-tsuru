@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -43,16 +42,12 @@ func resourceTsuruApplicationGrantCreate(ctx context.Context, d *schema.Resource
 	app := d.Get("app").(string)
 	team := d.Get("team").(string)
 
-	resp, err := provider.TsuruClient.AppApi.AppTeamGrant(ctx, app, team)
+	_, err := provider.TsuruClient.AppApi.AppTeamGrant(ctx, app, team)
 	if err != nil {
 		return diag.Errorf("unable to add team grant: %v", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to add team grant, error code: %d", resp.StatusCode)
-	}
-
-	d.SetId(app)
+	d.SetId(createID([]string{app, team}))
 
 	return resourceTsuruApplicationGrantRead(ctx, d, meta)
 }
@@ -82,13 +77,9 @@ func resourceTsuruApplicationGrantDelete(ctx context.Context, d *schema.Resource
 	app := d.Get("app").(string)
 	team := d.Get("team").(string)
 
-	resp, err := provider.TsuruClient.AppApi.AppTeamRevoke(ctx, app, team)
+	_, err := provider.TsuruClient.AppApi.AppTeamRevoke(ctx, app, team)
 	if err != nil {
 		return diag.Errorf("unable to revoke team grant: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to revoke team grant, error code: %d", resp.StatusCode)
 	}
 
 	return nil
