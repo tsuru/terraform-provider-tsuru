@@ -1,0 +1,6 @@
+healthcheck:
+  path: /healthcheck
+  method: GET
+  status: 200
+  match: WORKING
+  allowed_failures: 3
