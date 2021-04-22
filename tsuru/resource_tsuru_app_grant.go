@@ -15,7 +15,6 @@ func resourceTsuruApplicationGrant() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Tsuru Application Access Grant",
 		CreateContext: resourceTsuruApplicationGrantCreate,
-		UpdateContext: resourceTsuruApplicationGrantCreate,
 		ReadContext:   resourceTsuruApplicationGrantRead,
 		DeleteContext: resourceTsuruApplicationGrantDelete,
 		Importer: &schema.ResourceImporter{
@@ -26,11 +25,13 @@ func resourceTsuruApplicationGrant() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "Application name",
 				Required:    true,
+				ForceNew:    true,
 			},
 			"team": {
 				Type:        schema.TypeString,
 				Description: "Teams to grant access to the app",
 				Required:    true,
+				ForceNew:    true,
 			},
 		},
 	}
@@ -54,8 +55,13 @@ func resourceTsuruApplicationGrantCreate(ctx context.Context, d *schema.Resource
 
 func resourceTsuruApplicationGrantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	appName := d.Get("app").(string)
-	team := d.Get("team").(string)
+
+	parts, err := IDtoParts(d.Id(), 2)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	appName := parts[0]
+	team := parts[1]
 
 	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, appName)
 	if err != nil {

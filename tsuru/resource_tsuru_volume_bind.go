@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -107,7 +106,7 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 			}
 		}
 
-		d.SetId(fmt.Sprintf("%s#%s", bindData.App, bindData.Mountpoint))
+		d.SetId(createID([]string{bindData.App, name, bindData.Mountpoint}))
 		return nil
 	})
 
@@ -120,9 +119,14 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	name := d.Get("volume").(string)
-	app := d.Get("app").(string)
-	mountPath := d.Get("mount_path").(string)
+
+	parts, err := IDtoParts(d.Id(), 3)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	app := parts[0]
+	name := parts[1]
+	mountPath := parts[2]
 
 	volume, resp, err := provider.TsuruClient.VolumeApi.VolumeGet(ctx, name)
 	if err != nil {

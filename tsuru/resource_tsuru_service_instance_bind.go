@@ -20,7 +20,6 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 		Description:   "Tsuru Service Instance Bind",
 		CreateContext: resourceTsuruServiceInstanceBindCreate,
 		ReadContext:   resourceTsuruServiceInstanceBindRead,
-		UpdateContext: resourceTsuruServiceInstanceBindUpdate,
 		DeleteContext: resourceTsuruServiceInstanceBindDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -41,6 +40,7 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 			"app": {
 				Type:        schema.TypeString,
 				Description: "Application name",
+				ForceNew:    true,
 				Required:    true,
 			},
 			"restart_on_update": {
@@ -48,6 +48,7 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 				Description: "restart app after applying",
 				Optional:    true,
 				Default:     true,
+				ForceNew:    true,
 			},
 		},
 	}
@@ -94,13 +95,67 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 }
 
 func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	provider := meta.(*tsuruProvider)
+
+	parts, err := IDtoParts(d.Id(), 3)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	service := parts[0]
+	instanceName := parts[1]
+	app := parts[2]
+
+	instance, _, err := provider.TsuruClient.ServiceApi.InstanceGet(ctx, service, instanceName)
+	if err != nil {
+		return diag.Errorf("unable to read bind %s %s: %v", service, instanceName, err)
+	}
+
+	for _, a := range instance.Apps {
+		if app == a {
+			d.Set("app", a)
+			d.Set("service_name", service)
+			d.Set("service_instance", instanceName)
+			return nil
+		}
+	}
+
 	return nil
 }
 
-func resourceTsuruServiceInstanceBindUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceTsuruServiceInstanceBindRead(ctx, d, meta)
-}
-
 func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	provider := meta.(*tsuruProvider)
+
+	service := d.Get("service_name").(string)
+	instance := d.Get("service_instance").(string)
+	app := d.Get("app").(string)
+
+	noRestart := false
+	if ri, ok := d.GetOk("restart_on_update"); ok {
+		r := ri.(bool)
+		if !r {
+			noRestart = true
+		}
+	}
+
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err := provider.TsuruClient.ServiceApi.ServiceInstanceUnbind(ctx, service, instance, app, tsuru_client.ServiceInstanceUnbind{
+			NoRestart: noRestart,
+		})
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }

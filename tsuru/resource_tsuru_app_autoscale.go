@@ -128,8 +128,12 @@ func resourceTsuruApplicationAutoscaleCreate(ctx context.Context, d *schema.Reso
 func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	app := d.Get("app").(string)
-	process := d.Get("process").(string)
+	parts, err := IDtoParts(d.Id(), 2)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	app := parts[0]
+	process := parts[1]
 
 	autoscales, _, err := provider.TsuruClient.AppApi.AutoScaleInfo(ctx, app)
 	if err != nil {

@@ -4,7 +4,11 @@
 
 package tsuru
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/pkg/errors"
+)
 
 const ID_SEPARATOR = "::"
 
@@ -20,6 +24,10 @@ func createID(input []string) string {
 	return strings.TrimSpace(strings.Join(input, ID_SEPARATOR))
 }
 
-func IDtoParts(input string) []string {
-	return strings.Split(input, ID_SEPARATOR)
+func IDtoParts(input string, expectedLength int) ([]string, error) {
+	output := strings.Split(input, ID_SEPARATOR)
+	if len(output) < expectedLength {
+		return nil, errors.Errorf("Mismatched length %d on input ID %s expected %d", len(output), input, expectedLength)
+	}
+	return output, nil
 }

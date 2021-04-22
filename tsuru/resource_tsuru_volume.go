@@ -94,7 +94,7 @@ func resourceTsuruVolumeCreate(ctx context.Context, d *schema.ResourceData, meta
 func resourceTsuruVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	name := d.Get("name").(string)
+	name := d.Id()
 
 	volume, _, err := provider.TsuruClient.VolumeApi.VolumeGet(ctx, name)
 	if err != nil {

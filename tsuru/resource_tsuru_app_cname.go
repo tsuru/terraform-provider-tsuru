@@ -80,8 +80,13 @@ func resourceTsuruApplicationCNameCreate(ctx context.Context, d *schema.Resource
 
 func resourceTsuruApplicationCNameRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	appName := d.Get("app").(string)
-	hostname := d.Get("hostname").(string)
+
+	parts, err := IDtoParts(d.Id(), 2)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	appName := parts[0]
+	hostname := parts[1]
 
 	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, appName)
 	if err != nil {

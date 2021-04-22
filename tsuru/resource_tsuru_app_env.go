@@ -119,7 +119,7 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 
 func resourceTsuruApplicationEnvironmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	app := d.Get("app").(string)
+	app := d.Id()
 
 	envs, _, err := provider.TsuruClient.AppApi.EnvGet(ctx, app, nil)
 	if err != nil {

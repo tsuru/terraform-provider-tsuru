@@ -84,7 +84,7 @@ func resourceTsuruApplicationRouterCreate(ctx context.Context, d *schema.Resourc
 				return resource.NonRetryableError(errors.Errorf("unable to create router: %v", err))
 			}
 		}
-		d.SetId(name)
+		d.SetId(createID([]string{appName, name}))
 		return nil
 	})
 
@@ -97,8 +97,13 @@ func resourceTsuruApplicationRouterCreate(ctx context.Context, d *schema.Resourc
 
 func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	appName := d.Get("app").(string)
-	name := d.Get("name").(string)
+
+	parts, err := IDtoParts(d.Id(), 2)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	appName := parts[0]
+	name := parts[1]
 
 	routers, _, err := provider.TsuruClient.AppApi.AppRouterList(ctx, appName)
 	if err != nil {
