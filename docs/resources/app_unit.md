@@ -24,5 +24,6 @@ Tsuru Application Units
 ### Optional
 
 - **id** (String) The ID of this resource.
+- **version** (Number) Process name
 
 

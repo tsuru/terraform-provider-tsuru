@@ -19,7 +19,7 @@ Tsuru Service Volume Bind
 
 - **app** (String) Application name
 - **mount_point** (String) Name of service instance
-- **volume_name** (String) Name of service kind
+- **volume** (String) Name of service kind
 
 ### Optional
 

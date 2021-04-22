@@ -26,5 +26,15 @@ Tsuru Application Autoscale
 
 - **id** (String) The ID of this resource.
 - **min_units** (Number) minimum number of units
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- **create** (String)
+- **delete** (String)
+- **update** (String)
 
 
