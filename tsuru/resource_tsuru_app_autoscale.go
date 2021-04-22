@@ -7,11 +7,13 @@ package tsuru
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/pkg/errors"
 
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
@@ -26,6 +28,11 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 		CreateContext: resourceTsuruApplicationAutoscaleCreate,
 		ReadContext:   resourceTsuruApplicationAutoscaleRead,
 		DeleteContext: resourceTsuruApplicationAutoscaleDelete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -115,9 +122,21 @@ func resourceTsuruApplicationAutoscaleCreate(ctx context.Context, d *schema.Reso
 		AverageCPU: cpu,
 	}
 
-	_, err = provider.TsuruClient.AppApi.AutoScaleAdd(ctx, app, autoscale)
+	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err = provider.TsuruClient.AppApi.AutoScaleAdd(ctx, app, autoscale)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(errors.Errorf("Unable to create autoscale %s %s: %v", app, process, err))
+		}
+		return nil
+	})
 	if err != nil {
-		return diag.Errorf("Unable to create autoscale %s %s: %v", app, process, err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(createID([]string{app, process}))
@@ -162,13 +181,21 @@ func resourceTsuruApplicationAutoscaleDelete(ctx context.Context, d *schema.Reso
 	app := d.Get("app").(string)
 	process := d.Get("process").(string)
 
-	resp, err := provider.TsuruClient.AppApi.AutoScaleRemove(ctx, app, process)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
+		_, err := provider.TsuruClient.AppApi.AutoScaleRemove(ctx, app, process)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(errors.Errorf("Unable to remove autoscale %s %s: %v", app, process, err))
+		}
+		return nil
+	})
 	if err != nil {
-		return diag.Errorf("Unable to remove autoscale %s %s: %v", app, process, err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("Unable to remove autoscale: error code %d", resp.StatusCode)
+		return diag.FromErr(err)
 	}
 
 	return nil
