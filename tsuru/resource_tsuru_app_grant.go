@@ -6,9 +6,13 @@ package tsuru
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/pkg/errors"
+	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
 func resourceTsuruApplicationGrant() *schema.Resource {
@@ -19,6 +23,11 @@ func resourceTsuruApplicationGrant() *schema.Resource {
 		DeleteContext: resourceTsuruApplicationGrantDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"app": {
@@ -43,9 +52,21 @@ func resourceTsuruApplicationGrantCreate(ctx context.Context, d *schema.Resource
 	app := d.Get("app").(string)
 	team := d.Get("team").(string)
 
-	_, err := provider.TsuruClient.AppApi.AppTeamGrant(ctx, app, team)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err := provider.TsuruClient.AppApi.AppTeamGrant(ctx, app, team)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(errors.Errorf("unable to add team grant: %v", err))
+			}
+		}
+		return nil
+	})
 	if err != nil {
-		return diag.Errorf("unable to add team grant: %v", err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(createID([]string{app, team}))
@@ -83,10 +104,22 @@ func resourceTsuruApplicationGrantDelete(ctx context.Context, d *schema.Resource
 	app := d.Get("app").(string)
 	team := d.Get("team").(string)
 
-	_, err := provider.TsuruClient.AppApi.AppTeamRevoke(ctx, app, team)
-	if err != nil {
-		return diag.Errorf("unable to revoke team grant: %v", err)
-	}
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
+		_, err := provider.TsuruClient.AppApi.AppTeamRevoke(ctx, app, team)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(errors.Errorf("unable to revoke team grant: %v", err))
+		}
+		return nil
+	})
 
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

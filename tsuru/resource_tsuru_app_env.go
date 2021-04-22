@@ -103,8 +103,8 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 				if isRetryableError(apiError.Body()) {
 					return resource.RetryableError(err)
 				}
-				return resource.NonRetryableError(err)
 			}
+			return resource.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -188,32 +188,31 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	provider := meta.(*tsuruProvider)
 
 	app := d.Get("app").(string)
-	envs := &tsuru_client.EnvSetData{
-		Envs:        []tsuru_client.Env{},
-		ManagedBy:   "terraform",
-		PruneUnused: true,
+	envSet := envsFromResource(d.Get("environment_variable"))
+
+	envs := []string{}
+	for _, e := range envSet.Envs {
+		envs = append(envs, e.Name)
 	}
 
+	noRestart := false
 	if ri, ok := d.GetOk("restart_on_update"); ok {
 		r := ri.(bool)
 		if !r {
-			envs.Norestart = true
+			noRestart = true
 		}
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
-		if len(envs.Envs) == 0 {
-			return resource.NonRetryableError(errors.Errorf("No environment variables to update"))
-		}
-		_, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, *envs)
+		_, err := provider.TsuruClient.AppApi.EnvUnset(ctx, app, envs, noRestart)
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
 				if isRetryableError(apiError.Body()) {
 					return resource.RetryableError(err)
 				}
-				return resource.NonRetryableError(err)
 			}
+			return resource.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -242,6 +241,7 @@ func envsFromResource(envvars interface{}) *tsuru_client.EnvSetData {
 			env.Value = v.(string)
 		} else if v, ok := e["sensitive_value"]; ok && v != "" {
 			env.Value = v.(string)
+			env.Private = true
 		}
 		envs.Envs = append(envs.Envs, env)
 	}
