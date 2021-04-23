@@ -62,11 +62,9 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 	app := d.Get("app").(string)
 
 	noRestart := false
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			noRestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		noRestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -130,11 +128,9 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 	app := d.Get("app").(string)
 
 	noRestart := false
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			noRestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		noRestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {

@@ -87,11 +87,9 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			bindData.Norestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		bindData.Norestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -170,11 +168,9 @@ func resourceTsuruVolumeBindDelete(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			bindData.Norestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		bindData.Norestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {

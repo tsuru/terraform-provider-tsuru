@@ -85,11 +85,9 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 	app := d.Get("app").(string)
 
 	envs := envsFromResource(d.Get("environment_variable"))
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			envs.Norestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		envs.Norestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -154,11 +152,9 @@ func resourceTsuruApplicationEnvironmentUpdate(ctx context.Context, d *schema.Re
 	app := d.Get("app").(string)
 	envs := envsFromResource(d.Get("environment_variable"))
 
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			envs.Norestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		envs.Norestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
@@ -196,11 +192,9 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	}
 
 	noRestart := false
-	if ri, ok := d.GetOk("restart_on_update"); ok {
-		r := ri.(bool)
-		if !r {
-			noRestart = true
-		}
+	ri := d.Get("restart_on_update").(bool)
+	if !ri {
+		noRestart = true
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {

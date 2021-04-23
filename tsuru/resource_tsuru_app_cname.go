@@ -6,7 +6,6 @@ package tsuru
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -112,13 +111,9 @@ func resourceTsuruApplicationCNameDelete(ctx context.Context, d *schema.Resource
 		Cname: []string{hostname},
 	}
 
-	resp, err := provider.TsuruClient.AppApi.AppCnameDelete(ctx, app, cname)
+	_, err := provider.TsuruClient.AppApi.AppCnameDelete(ctx, app, cname)
 	if err != nil {
 		return diag.Errorf("unable to delete cname: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to delete cname, error code: %d", resp.StatusCode)
 	}
 
 	return nil
