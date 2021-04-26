@@ -3,7 +3,6 @@ module github.com/tsuru/terraform-provider-tsuru
 go 1.15
 
 require (
-	cloud.google.com/go v0.81.0 // indirect
 	cloud.google.com/go/storage v1.14.0 // indirect
 	github.com/antihax/optional v1.0.0
 	github.com/aws/aws-sdk-go v1.38.12 // indirect
@@ -30,13 +29,12 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tsuru/go-tsuruclient v0.0.0-20210422134510-1c5d85cbad9c
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20210331212208-0fccb6fa2b5c // indirect
-	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 // indirect
-	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
-	golang.org/x/text v0.3.6 // indirect
-	google.golang.org/genproto v0.0.0-20210405150802-d70529258950 // indirect
+	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6 // indirect
+	golang.org/x/sys v0.0.0-20210423185535-09eb48e85fd7 // indirect
+	google.golang.org/api v0.45.0 // indirect
+	google.golang.org/genproto v0.0.0-20210423144448-3a41ef94ed2b // indirect
 	istio.io/pkg v0.0.0-20210219215147-6639dbf1271c
 	k8s.io/apimachinery v0.20.4
 )
