@@ -14,10 +14,7 @@ const ID_SEPARATOR = "::"
 
 func isRetryableError(err []byte) bool {
 	e := string(err)
-	if strings.Contains(e, "event locked") {
-		return true
-	}
-	return false
+	return strings.Contains(e, "event locked")
 }
 
 func createID(input []string) string {

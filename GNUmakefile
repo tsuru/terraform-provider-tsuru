@@ -52,8 +52,13 @@ install: build
 uninstall:
 	rm -Rf ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}
 
+lint:
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.39.0
+	time golangci-lint run
+
 test:
 	TF_ACC=1 TF_ACC_TERRAFORM_VERSION=0.14.4 go test ./... -v
 
 generate-docs:
+	go get github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 	go generate
