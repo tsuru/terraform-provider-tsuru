@@ -205,7 +205,7 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 
 func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	name := d.Get("name").(string)
+	name := d.Id()
 
 	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, name)
 	if err != nil {
@@ -228,6 +228,27 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 			tags = append(tags, item)
 		}
 		d.Set("tags", tags)
+	}
+
+	annotations := map[string]interface{}{}
+	if len(app.Metadata.Annotations) > 0 {
+		for _, annotation := range app.Metadata.Annotations {
+			annotations[annotation.Name] = annotation.Value
+		}
+	}
+
+	labels := map[string]interface{}{}
+	if len(app.Metadata.Labels) > 0 {
+		for _, label := range app.Metadata.Labels {
+			labels[label.Name] = label.Value
+		}
+	}
+
+	if len(annotations) > 0 || len(labels) > 0 {
+		d.Set("metadata", []map[string]interface{}{{
+			"annotations": annotations,
+			"labels":      labels,
+		}})
 	}
 
 	return nil
