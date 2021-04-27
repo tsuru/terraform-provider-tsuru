@@ -87,6 +87,58 @@ func resourceTsuruApplication() *schema.Resource {
 				Description: "Restart app after applying changes",
 				Optional:    true,
 			},
+
+			"internal_address": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"domain": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"port": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"process": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"version": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"protocol": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"router": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"addresses": {
+							Type:     schema.TypeList,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Computed: true,
+						},
+						"options": {
+							Type:     schema.TypeMap,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+							Computed: true,
+						},
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -244,6 +296,9 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 			"labels":      labels,
 		}})
 	}
+
+	d.Set("internal_address", flattenInternalAddresses(app.InternalAddresses))
+	d.Set("router", flattenRouters(app.Routers))
 
 	return nil
 }

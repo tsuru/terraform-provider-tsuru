@@ -72,6 +72,23 @@ func TestAccResourceTsuruApp(t *testing.T) {
 				Units: []tsuru.Unit{
 					{Processname: "web"},
 				},
+				InternalAddresses: []tsuru.AppInternalAddresses{
+					{
+						Version:  "10",
+						Port:     8888,
+						Process:  "web",
+						Domain:   "app01.namespace.svc.cluster.local",
+						Protocol: "TCP",
+					},
+				},
+				Routers: []tsuru.AppRouters{
+					{
+						Name: "default-router",
+						Addresses: []string{
+							"my-app.router.io",
+						},
+					},
+				},
 			}
 			return c.JSON(http.StatusOK, app)
 		}
@@ -113,6 +130,8 @@ func TestAccResourceTsuruApp(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
 					resource.TestCheckResourceAttr(resourceName, "tags.0", "tagA"),
 					resource.TestCheckResourceAttr(resourceName, "tags.1", "tagB"),
+					resource.TestCheckResourceAttr(resourceName, "router.0.name", "default-router"),
+					resource.TestCheckResourceAttr(resourceName, "internal_address.0.domain", "app01.namespace.svc.cluster.local"),
 				),
 			},
 		},
