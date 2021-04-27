@@ -40,7 +40,20 @@ func Provider() *schema.Provider {
 			"tsuru_plan":            resourceTsuruPlan(),
 			"tsuru_webhook":         resourceTsuruWebhook(),
 
-			"tsuru_service_instance": resourceTsuruServiceInstance(),
+			"tsuru_app":           resourceTsuruApplication(),
+			"tsuru_app_autoscale": resourceTsuruApplicationAutoscale(),
+			"tsuru_app_cname":     resourceTsuruApplicationCName(),
+			"tsuru_app_router":    resourceTsuruApplicationRouter(),
+			"tsuru_app_grant":     resourceTsuruApplicationGrant(),
+			"tsuru_app_unit":      resourceTsuruApplicationUnits(),
+			"tsuru_app_env":       resourceTsuruApplicationEnvironment(),
+
+			"tsuru_service_instance":       resourceTsuruServiceInstance(),
+			"tsuru_service_instance_bind":  resourceTsuruServiceInstanceBind(),
+			"tsuru_service_instance_grant": resourceTsuruServiceInstanceGrant(),
+
+			"tsuru_volume":      resourceTsuruVolume(),
+			"tsuru_volume_bind": resourceTsuruVolumeBind(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"tsuru_app": dataSourceTsuruApp(),
@@ -76,6 +89,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 	host := d.Get("host").(string)
 	if host != "" {
 		cfg.BasePath = host
+		os.Setenv("TSURU_TARGET", host)
 	}
 	token := d.Get("token").(string)
 	if token != "" {

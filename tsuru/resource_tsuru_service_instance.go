@@ -114,7 +114,7 @@ func resourceTsuruServiceInstanceCreate(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("Could not create tsuru router, err : %s", err.Error())
 	}
 
-	d.SetId(name)
+	d.SetId(createID([]string{serviceName, name}))
 
 	return nil
 }
@@ -122,8 +122,12 @@ func resourceTsuruServiceInstanceCreate(ctx context.Context, d *schema.ResourceD
 func resourceTsuruServiceInstanceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	name := d.Get("name").(string)
-	serviceName := d.Get("service_name").(string)
+	parts, err := IDtoParts(d.Id(), 2)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	serviceName := parts[0]
+	name := parts[1]
 
 	instance, _, err := provider.TsuruClient.ServiceApi.InstanceGet(ctx, serviceName, name)
 	if err != nil {
