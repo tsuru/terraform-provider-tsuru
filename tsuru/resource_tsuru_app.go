@@ -222,13 +222,7 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 		d.Set("description", app.Description)
 	}
 
-	if len(app.Tags) > 0 {
-		tags := []interface{}{}
-		for _, item := range app.Tags {
-			tags = append(tags, item)
-		}
-		d.Set("tags", tags)
-	}
+	d.Set("tags", app.Tags)
 
 	annotations := map[string]interface{}{}
 	if len(app.Metadata.Annotations) > 0 {
