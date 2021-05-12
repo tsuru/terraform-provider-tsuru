@@ -31,6 +31,11 @@ Tsuru Application
 - **restart_on_update** (Boolean) Restart app after applying changes
 - **tags** (List of String) Tags
 
+### Read-Only
+
+- **internal_address** (List of Object) (see [below for nested schema](#nestedatt--internal_address))
+- **router** (List of Object) (see [below for nested schema](#nestedatt--router))
+
 <a id="nestedblock--metadata"></a>
 ### Nested Schema for `metadata`
 
@@ -38,5 +43,27 @@ Optional:
 
 - **annotations** (Map of String)
 - **labels** (Map of String)
+
+
+<a id="nestedatt--internal_address"></a>
+### Nested Schema for `internal_address`
+
+Read-Only:
+
+- **domain** (String)
+- **port** (Number)
+- **process** (String)
+- **protocol** (String)
+- **version** (String)
+
+
+<a id="nestedatt--router"></a>
+### Nested Schema for `router`
+
+Read-Only:
+
+- **addresses** (List of String)
+- **name** (String)
+- **options** (Map of String)
 
 
