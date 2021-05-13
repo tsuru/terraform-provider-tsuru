@@ -24,11 +24,13 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Description: "Target to tsuru API",
 				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("TSURU_TARGET", nil),
 			},
 			"token": {
 				Type:        schema.TypeString,
 				Description: "Token to authenticate on tsuru API (optional)",
 				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("TSURU_TOKEN", nil),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
