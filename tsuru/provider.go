@@ -24,7 +24,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Description: "Target to tsuru API",
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("TSURU_TARGET", nil),
+				DefaultFunc: schema.EnvDefaultFunc("TSURU_HOST", nil),
 			},
 			"token": {
 				Type:        schema.TypeString,
