@@ -7,7 +7,9 @@ package tsuru
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -83,9 +85,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 	}
 	userAgent := fmt.Sprintf("HashiCorp/1.0 Terraform/%s", terraformVersion)
 
+	httpClient := http.DefaultClient
+	httpClient.Timeout = 2 * time.Hour
+
 	cfg := &tsuru.Configuration{
 		DefaultHeader: map[string]string{},
 		UserAgent:     userAgent,
+		HTTPClient:    httpClient,
 	}
 
 	host := d.Get("host").(string)
