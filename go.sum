@@ -678,6 +678,14 @@ github.com/tsuru/gnuflag v0.0.0-20151217162021-86b8c1b864aa h1:JlLQP1xa13a994p/A
 github.com/tsuru/gnuflag v0.0.0-20151217162021-86b8c1b864aa/go.mod h1:UibOSvkMFKRe/eiwktAPAvQG8L+p8nYsECJvu3Dgw7I=
 github.com/tsuru/go-tsuruclient v0.0.0-20210426181646-b7774d33597a h1:bblOOxOJvfo+MDWGTbTakKKYz2/aFi2X1tm8+ryB3D8=
 github.com/tsuru/go-tsuruclient v0.0.0-20210426181646-b7774d33597a/go.mod h1:wYe4ngw/l34brrJ8IZqGmhTWNTycnQsxcAPxGNSY8YY=
+github.com/tsuru/go-tsuruclient v0.0.0-20210519141511-b11911caa559 h1:sO9+L74OR3da67NZ1d72gPPVaecMR32M2axz88iCscg=
+github.com/tsuru/go-tsuruclient v0.0.0-20210519141511-b11911caa559/go.mod h1:wYe4ngw/l34brrJ8IZqGmhTWNTycnQsxcAPxGNSY8YY=
+github.com/tsuru/go-tsuruclient v0.0.0-20210520125036-8c9b7d2fbf31 h1:pcUL6RnemDbSWAiVAHybQ7dwq/G+RJXeFY7LBVqx16E=
+github.com/tsuru/go-tsuruclient v0.0.0-20210520125036-8c9b7d2fbf31/go.mod h1:wYe4ngw/l34brrJ8IZqGmhTWNTycnQsxcAPxGNSY8YY=
+github.com/tsuru/go-tsuruclient v0.0.0-20210520125331-2c41cb4a0a95 h1:1KBC4CymN3L2yIaJhFlK7GA5UsKke6yjCAJSWddEs/Q=
+github.com/tsuru/go-tsuruclient v0.0.0-20210520125331-2c41cb4a0a95/go.mod h1:wYe4ngw/l34brrJ8IZqGmhTWNTycnQsxcAPxGNSY8YY=
+github.com/tsuru/go-tsuruclient v0.0.0-20210520132303-680a5dd3035f h1:KsRtww720oFxvfEXWNCTMrcBfzg+Ers89xeGiZr3/qU=
+github.com/tsuru/go-tsuruclient v0.0.0-20210520132303-680a5dd3035f/go.mod h1:wYe4ngw/l34brrJ8IZqGmhTWNTycnQsxcAPxGNSY8YY=
 github.com/tsuru/tablecli v0.0.0-20180215113938-82de88f75181 h1:R1SnLQm/RZp35wa9e9nXyxy4EkEgU2v0rP4DGadrJ0g=
 github.com/tsuru/tablecli v0.0.0-20180215113938-82de88f75181/go.mod h1:ztYpOhW+u1k21FEqp7nZNgpWbr0dUKok5lgGCZi+1AQ=
 github.com/tsuru/tsuru v0.0.0-20180820205921-0e7f7f02eac5 h1:DWs/guyBAFqPQrpJeCKY+avcVOt6h/8AGXCSBIQB3N8=

@@ -27,7 +27,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
-	github.com/tsuru/go-tsuruclient v0.0.0-20210426181646-b7774d33597a
+	github.com/tsuru/go-tsuruclient v0.0.0-20210520132303-680a5dd3035f
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/mod v0.4.2 // indirect
