@@ -163,6 +163,9 @@ func kubeConfigAuthProviderSchema() *schema.Schema {
 				"config": {
 					Type:     schema.TypeMap,
 					Optional: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
 				},
 			},
 		},
@@ -333,63 +336,7 @@ func clusterFromResourceData(d *schema.ResourceData) tsuru.Cluster {
 		customData[key] = value.(string)
 	}
 
-	var kubeConfig tsuru.ClusterKubeConfig
-
-	if data, ok := d.GetOk("kube_config"); ok {
-		dataArray := data.([]interface{})
-		kubeConfigRaw := dataArray[0].(map[string]interface{})
-
-		dataArray = kubeConfigRaw["cluster"].([]interface{})
-		serverRaw, _ := dataArray[0].(map[string]interface{})
-
-		dataArray = kubeConfigRaw["user"].([]interface{})
-		userRaw, _ := dataArray[0].(map[string]interface{})
-
-		dataArray = userRaw["auth_provider"].([]interface{})
-		authProviderRaw, _ := dataArray[0].(map[string]interface{})
-
-		kubeConfig.Cluster.Server = serverRaw["server"].(string)
-		kubeConfig.Cluster.CertificateAuthorityData = serverRaw["certificate_authority_data"].(string)
-		kubeConfig.Cluster.TlsServerName = serverRaw["tls_server_name"].(string)
-		kubeConfig.Cluster.InsecureSkipTlsVerify = serverRaw["insecure_skip_tls_verify"].(bool)
-
-		kubeConfig.User.AuthProvider.Name = authProviderRaw["name"].(string)
-		kubeConfig.User.AuthProvider.Config = map[string]string{}
-
-		configRaw, _ := authProviderRaw["config"].(map[string]interface{})
-
-		for key, item := range configRaw {
-			kubeConfig.User.AuthProvider.Config[key] = item.(string)
-		}
-
-		kubeConfig.User.ClientCertificateData = userRaw["client_certificate_data"].(string)
-		kubeConfig.User.ClientKeyData = userRaw["client_key_data"].(string)
-		kubeConfig.User.Token = userRaw["token"].(string)
-		kubeConfig.User.Username = userRaw["username"].(string)
-		kubeConfig.User.Password = userRaw["password"].(string)
-
-		dataArray = userRaw["exec"].([]interface{})
-		execRaw, _ := dataArray[0].(map[string]interface{})
-
-		kubeConfig.User.Exec.ApiVersion = execRaw["api_version"].(string)
-		kubeConfig.User.Exec.Command = execRaw["command"].(string)
-		kubeConfig.User.Exec.Args = []string{}
-		kubeConfig.User.Exec.Env = []tsuru.ClusterKubeConfigUserExecEnv{}
-
-		for _, arg := range execRaw["args"].([]interface{}) {
-			kubeConfig.User.Exec.Args = append(kubeConfig.User.Exec.Args, arg.(string))
-		}
-
-		for _, arg := range execRaw["env"].([]interface{}) {
-
-			m := arg.(map[string]interface{})
-			kubeConfig.User.Exec.Env = append(kubeConfig.User.Exec.Env, tsuru.ClusterKubeConfigUserExecEnv{
-				Name:  m["name"].(string),
-				Value: m["value"].(string),
-			})
-		}
-
-	}
+	kubeConfig := kubeConfigFromResourceData(d.Get("kube_config"))
 
 	clusterDefault := false
 	if value, ok := d.GetOk("default"); ok {
@@ -414,6 +361,117 @@ func clusterFromResourceData(d *schema.ResourceData) tsuru.Cluster {
 		KubeConfig:  kubeConfig,
 		HttpProxy:   d.Get("http_proxy").(string),
 	}
+}
+
+func kubeConfigFromResourceData(data interface{}) tsuru.ClusterKubeConfig {
+	kubeConfig := tsuru.ClusterKubeConfig{}
+	dataArray := data.([]interface{})
+	if len(dataArray) == 0 {
+		return kubeConfig
+	}
+
+	kubeConfigRaw := dataArray[0].(map[string]interface{})
+
+	kubeConfig.Cluster = kubeConfigClusterFromResourceData(kubeConfigRaw["cluster"])
+	kubeConfig.User = kubeConfigUserFromResourceData(kubeConfigRaw["user"])
+
+	return kubeConfig
+}
+
+func kubeConfigClusterFromResourceData(data interface{}) tsuru.ClusterKubeConfigCluster {
+	cluster := tsuru.ClusterKubeConfigCluster{}
+	dataArray := data.([]interface{})
+
+	if len(dataArray) == 0 {
+		return cluster
+	}
+
+	clusterRaw, _ := dataArray[0].(map[string]interface{})
+
+	cluster.Server = clusterRaw["server"].(string)
+	cluster.CertificateAuthorityData = clusterRaw["certificate_authority_data"].(string)
+	cluster.TlsServerName = clusterRaw["tls_server_name"].(string)
+	cluster.InsecureSkipTlsVerify = clusterRaw["insecure_skip_tls_verify"].(bool)
+
+	return cluster
+}
+
+func kubeConfigUserFromResourceData(data interface{}) tsuru.ClusterKubeConfigUser {
+	user := tsuru.ClusterKubeConfigUser{}
+
+	dataArray := data.([]interface{})
+
+	if len(dataArray) == 0 {
+		return user
+	}
+
+	userRaw, _ := dataArray[0].(map[string]interface{})
+
+	user.ClientCertificateData = userRaw["client_certificate_data"].(string)
+	user.ClientKeyData = userRaw["client_key_data"].(string)
+	user.Token = userRaw["token"].(string)
+	user.Username = userRaw["username"].(string)
+	user.Password = userRaw["password"].(string)
+
+	user.AuthProvider = authProviderFromResourceData(userRaw["auth_provider"])
+	user.Exec = execFromResourceData(userRaw["exec"])
+
+	return user
+}
+
+func authProviderFromResourceData(data interface{}) tsuru.ClusterKubeConfigUserAuthprovider {
+	authProvider := tsuru.ClusterKubeConfigUserAuthprovider{}
+
+	dataArray := data.([]interface{})
+	if len(dataArray) == 0 {
+		return authProvider
+	}
+
+	authProviderRaw, _ := dataArray[0].(map[string]interface{})
+
+	authProvider.Name = authProviderRaw["name"].(string)
+
+	configRaw, _ := authProviderRaw["config"].(map[string]interface{})
+	if len(configRaw) > 0 {
+		authProvider.Config = map[string]string{}
+
+		for key, item := range configRaw {
+			authProvider.Config[key] = item.(string)
+		}
+	}
+
+	return authProvider
+}
+
+func execFromResourceData(data interface{}) tsuru.ClusterKubeConfigUserExec {
+	exec := tsuru.ClusterKubeConfigUserExec{}
+
+	dataArray := data.([]interface{})
+	if len(dataArray) == 0 {
+		return exec
+	}
+
+	execRaw, _ := dataArray[0].(map[string]interface{})
+
+	exec.ApiVersion, _ = execRaw["api_version"].(string)
+	exec.Command, _ = execRaw["command"].(string)
+	exec.Args = []string{}
+	exec.Env = []tsuru.ClusterKubeConfigUserExecEnv{}
+
+	argsRaw, _ := execRaw["args"].([]interface{})
+	for _, arg := range argsRaw {
+		exec.Args = append(exec.Args, arg.(string))
+	}
+
+	envRaw, _ := execRaw["env"].([]interface{})
+	for _, arg := range envRaw {
+		m := arg.(map[string]interface{})
+		exec.Env = append(exec.Env, tsuru.ClusterKubeConfigUserExecEnv{
+			Name:  m["name"].(string),
+			Value: m["value"].(string),
+		})
+	}
+	return exec
 }
 
 func flattenKubeConfig(kubeconfig tsuru.ClusterKubeConfig) []interface{} {
@@ -446,8 +504,12 @@ func flattenKubeConfigUser(user tsuru.ClusterKubeConfigUser) []interface{} {
 		"password":                user.Password,
 		"token":                   user.Token,
 		"auth_provider":           flattenAuthProvider(user.AuthProvider),
-		"exec":                    flattenExec(user.Exec),
 	}
+
+	if !reflect.DeepEqual(user.Exec, tsuru.ClusterKubeConfigUserExec{}) {
+		result["exec"] = flattenExec(user.Exec)
+	}
+
 	return []interface{}{result}
 }
 
@@ -456,6 +518,7 @@ func flattenAuthProvider(authProvider tsuru.ClusterKubeConfigUserAuthprovider) [
 		"name":   authProvider.Name,
 		"config": authProvider.Config,
 	}
+
 	return []interface{}{result}
 }
 
@@ -466,6 +529,7 @@ func flattenExec(exec tsuru.ClusterKubeConfigUserExec) []interface{} {
 		"command":     exec.Command,
 		"env":         flattenEnvs(exec.Env),
 	}
+
 	return []interface{}{result}
 }
 

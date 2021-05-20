@@ -72,8 +72,8 @@ func TestAccTsuruCluster_basic(t *testing.T) {
 func testAccTsuruClusterConfig_basic(fakeServer, name string) string {
 	return fmt.Sprintf(`
 resource "tsuru_cluster"  "test_cluster"   {
-	name = "%s" 
-	tsuru_provisioner = "kubernetes" 
+	name = "%s"
+	tsuru_provisioner = "kubernetes"
 	addresses = [
 		"https://mycluster.local"
 	]
@@ -88,7 +88,7 @@ resource "tsuru_cluster"  "test_cluster"   {
 }
 
 func TestAccTsuruCluster_kubeConfig(t *testing.T) {
-	expectedKubeConfig := tsuru.ClusterKubeConfig{
+	testKubeConfig := tsuru.ClusterKubeConfig{
 		Cluster: tsuru.ClusterKubeConfigCluster{
 			Server:                   "https://mycluster.local",
 			CertificateAuthorityData: "server-cert",
@@ -121,36 +121,69 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 		},
 	}
 
+	simpleKubeConfig := tsuru.ClusterKubeConfig{
+		Cluster: tsuru.ClusterKubeConfigCluster{
+			Server:                   "https://simplecluster.local",
+			CertificateAuthorityData: "server-cert",
+		},
+		User: tsuru.ClusterKubeConfigUser{
+			AuthProvider: tsuru.ClusterKubeConfigUserAuthprovider{
+				Name: "mycloud",
+			},
+		},
+	}
+
 	fakeServer := echo.New()
 	fakeServer.POST("/1.3/provisioner/clusters", func(c echo.Context) error {
 		p := &tsuru.Cluster{}
 		err := c.Bind(&p)
 		require.NoError(t, err)
-		assert.Equal(t, "test_cluster", p.Name)
-		assert.Nil(t, p.CustomData)
-		assert.True(t, p.Default)
-		assert.Equal(t, expectedKubeConfig, p.KubeConfig)
-		assert.Equal(t, "http://myproxy.io:3128", p.HttpProxy)
+
+		if p.Name == "test_cluster" {
+			assert.Nil(t, p.CustomData)
+			assert.True(t, p.Default)
+			assert.Equal(t, testKubeConfig, p.KubeConfig)
+			assert.Equal(t, "http://myproxy.io:3128", p.HttpProxy)
+		} else if p.Name == "simple_cluster" {
+			assert.Nil(t, p.CustomData)
+			assert.False(t, p.Default)
+			assert.Equal(t, simpleKubeConfig, p.KubeConfig)
+		}
 
 		return nil
 	})
 	fakeServer.GET("/1.8/provisioner/clusters/:name", func(c echo.Context) error {
 		name := c.Param("name")
-		return c.JSON(http.StatusOK, &tsuru.Cluster{
-			Name:        name,
-			Provisioner: "kubernetes",
-			CustomData: map[string]string{
-				"token": "test_token",
-			},
-			Default:    true,
-			KubeConfig: expectedKubeConfig,
-			HttpProxy:  "http://myproxy.io:3128",
-		})
+
+		if name == "test_cluster" {
+			return c.JSON(http.StatusOK, &tsuru.Cluster{
+				Name:        name,
+				Provisioner: "kubernetes",
+				CustomData: map[string]string{
+					"token": "test_token",
+				},
+				Default:    true,
+				KubeConfig: testKubeConfig,
+				HttpProxy:  "http://myproxy.io:3128",
+			})
+		}
+
+		if name == "simple_cluster" {
+			return c.JSON(http.StatusOK, &tsuru.Cluster{
+				Name:        name,
+				Provisioner: "kubernetes",
+				KubeConfig:  simpleKubeConfig,
+			})
+		}
+
+		return c.NoContent(http.StatusNotFound)
 	})
 	fakeServer.DELETE("/1.3/provisioner/clusters/:name", func(c echo.Context) error {
 		name := c.Param("name")
-		require.Equal(t, name, "test_cluster")
-		return c.NoContent(http.StatusNoContent)
+		if name == "test_cluster" || name == "simple_cluster" {
+			return c.NoContent(http.StatusNoContent)
+		}
+		return c.NoContent(http.StatusNotFound)
 	})
 	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
 		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
@@ -166,7 +199,7 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 		CheckDestroy:      nil,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTsuruClusterConfig_kubeConfig("test_cluster"),
+				Config: testAccTsuruClusterConfig_kubeConfig(),
 
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccResourceExists(resourceName),
@@ -184,13 +217,39 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			},
 		},
 	})
+
+	simpleResourceName := "tsuru_cluster.simple_cluster"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		IDRefreshName:     simpleResourceName,
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTsuruClusterConfig_kubeConfigSimple(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(simpleResourceName),
+					resource.TestCheckResourceAttr(simpleResourceName, "kube_config.0.cluster.0.server", "https://simplecluster.local"),
+				),
+			},
+			{
+				ImportState:       true,
+				ResourceName:      simpleResourceName,
+				ImportStateVerify: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(simpleResourceName),
+					resource.TestCheckResourceAttr(simpleResourceName, "kube_config.0.cluster.0.server", "https://simplecluster.local"),
+				),
+			},
+		},
+	})
 }
 
-func testAccTsuruClusterConfig_kubeConfig(name string) string {
-	return fmt.Sprintf(`
-resource "tsuru_cluster"  "test_cluster"   {
-	name = "%s" 
-	tsuru_provisioner = "kubernetes" 
+func testAccTsuruClusterConfig_kubeConfig() string {
+	return `
+resource "tsuru_cluster" "test_cluster"   {
+	name = "test_cluster"
+	tsuru_provisioner = "kubernetes"
 	default = true
 
 	http_proxy = "http://myproxy.io:3128"
@@ -229,6 +288,26 @@ resource "tsuru_cluster"  "test_cluster"   {
 			}
 		}
 	}
+}`
 }
-`, name)
+
+func testAccTsuruClusterConfig_kubeConfigSimple() string {
+	return `
+resource "tsuru_cluster" "simple_cluster"   {
+	name = "simple_cluster"
+	tsuru_provisioner = "kubernetes"
+	kube_config {
+		cluster {
+			server                     = "https://simplecluster.local"
+			certificate_authority_data = "server-cert"
+		}
+
+		user {
+			auth_provider {
+				name = "mycloud"
+			}
+		}
+	}
+}
+`
 }
