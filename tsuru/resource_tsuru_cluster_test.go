@@ -107,7 +107,7 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			Password:              "password",
 			ClientCertificateData: "client-cert",
 			ClientKeyData:         "client-key",
-			Exec: tsuru.ClusterKubeConfigUserExec{
+			Exec: &tsuru.ClusterKubeConfigUserExec{
 				ApiVersion: "api-version",
 				Command:    "tsuru",
 				Args:       []string{"cluster", "login"},

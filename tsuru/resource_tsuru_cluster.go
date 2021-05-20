@@ -443,20 +443,18 @@ func authProviderFromResourceData(data interface{}) tsuru.ClusterKubeConfigUserA
 	return authProvider
 }
 
-func execFromResourceData(data interface{}) tsuru.ClusterKubeConfigUserExec {
-	exec := tsuru.ClusterKubeConfigUserExec{}
+func execFromResourceData(data interface{}) *tsuru.ClusterKubeConfigUserExec {
 
 	dataArray := data.([]interface{})
 	if len(dataArray) == 0 {
-		return exec
+		return nil
 	}
+	exec := &tsuru.ClusterKubeConfigUserExec{}
 
 	execRaw, _ := dataArray[0].(map[string]interface{})
 
 	exec.ApiVersion, _ = execRaw["api_version"].(string)
 	exec.Command, _ = execRaw["command"].(string)
-	exec.Args = []string{}
-	exec.Env = []tsuru.ClusterKubeConfigUserExecEnv{}
 
 	argsRaw, _ := execRaw["args"].([]interface{})
 	for _, arg := range argsRaw {
@@ -506,7 +504,7 @@ func flattenKubeConfigUser(user tsuru.ClusterKubeConfigUser) []interface{} {
 		"auth_provider":           flattenAuthProvider(user.AuthProvider),
 	}
 
-	if !reflect.DeepEqual(user.Exec, tsuru.ClusterKubeConfigUserExec{}) {
+	if user.Exec != nil {
 		result["exec"] = flattenExec(user.Exec)
 	}
 
@@ -522,7 +520,7 @@ func flattenAuthProvider(authProvider tsuru.ClusterKubeConfigUserAuthprovider) [
 	return []interface{}{result}
 }
 
-func flattenExec(exec tsuru.ClusterKubeConfigUserExec) []interface{} {
+func flattenExec(exec *tsuru.ClusterKubeConfigUserExec) []interface{} {
 	result := map[string]interface{}{
 		"args":        exec.Args,
 		"api_version": exec.ApiVersion,
