@@ -27,12 +27,77 @@ description: |-
 - **client_key** (String) Client key to connect in cluster, must be enconded in base64
 - **custom_data** (Map of String) Key/value to store additional config
 - **default** (Boolean) Whether true, the cluster is the default for all pools
+- **http_proxy** (String) Client HTTP proxy
 - **id** (String) The ID of this resource.
 - **initial_pools** (List of String) Name of initial pools, required when is no default cluster
+- **kube_config** (Block List, Max: 1) (see [below for nested schema](#nestedblock--kube_config))
+- **local** (Boolean) Whether true, the cluster is auth by the local credentials of kubernetes
 - **tsuru_provisioner** (String) Provisioner of cluster
 
 ### Read-Only
 
 - **pools** (List of String) Name of pools that belongs to the cluster
+
+<a id="nestedblock--kube_config"></a>
+### Nested Schema for `kube_config`
+
+Optional:
+
+- **cluster** (Block List, Max: 1) (see [below for nested schema](#nestedblock--kube_config--cluster))
+- **user** (Block List, Max: 1) (see [below for nested schema](#nestedblock--kube_config--user))
+
+<a id="nestedblock--kube_config--cluster"></a>
+### Nested Schema for `kube_config.cluster`
+
+Required:
+
+- **server** (String)
+
+Optional:
+
+- **certificate_authority_data** (String, Sensitive)
+- **insecure_skip_tls_verify** (Boolean)
+- **tls_server_name** (String)
+
+
+<a id="nestedblock--kube_config--user"></a>
+### Nested Schema for `kube_config.user`
+
+Optional:
+
+- **auth_provider** (Block List, Max: 1) (see [below for nested schema](#nestedblock--kube_config--user--auth_provider))
+- **client_certificate_data** (String, Sensitive)
+- **client_key_data** (String, Sensitive)
+- **exec** (Block List, Max: 1) (see [below for nested schema](#nestedblock--kube_config--user--exec))
+- **password** (String, Sensitive)
+- **token** (String, Sensitive)
+- **username** (String, Sensitive)
+
+<a id="nestedblock--kube_config--user--auth_provider"></a>
+### Nested Schema for `kube_config.user.auth_provider`
+
+Optional:
+
+- **config** (Map of String)
+- **name** (String)
+
+
+<a id="nestedblock--kube_config--user--exec"></a>
+### Nested Schema for `kube_config.user.exec`
+
+Optional:
+
+- **api_version** (String)
+- **args** (List of String)
+- **command** (String)
+- **env** (Block List) (see [below for nested schema](#nestedblock--kube_config--user--exec--env))
+
+<a id="nestedblock--kube_config--user--exec--env"></a>
+### Nested Schema for `kube_config.user.exec.env`
+
+Required:
+
+- **name** (String)
+- **value** (String)
 
 
