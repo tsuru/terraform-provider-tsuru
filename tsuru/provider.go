@@ -6,8 +6,12 @@ package tsuru
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,6 +35,12 @@ func Provider() *schema.Provider {
 				Description: "Token to authenticate on tsuru API (optional)",
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("TSURU_TOKEN", nil),
+			},
+			"skip_cert_verification": {
+				Type:        schema.TypeBool,
+				Description: "Disable certificate verification",
+				Default:     false,
+				Optional:    true,
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -86,6 +96,27 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 	cfg := &tsuru.Configuration{
 		DefaultHeader: map[string]string{},
 		UserAgent:     userAgent,
+	}
+
+	if d.Get("skip_cert_verification").(bool) {
+		transport := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		cfg.HTTPClient = &http.Client{
+			Transport: transport,
+		}
 	}
 
 	host := d.Get("host").(string)
