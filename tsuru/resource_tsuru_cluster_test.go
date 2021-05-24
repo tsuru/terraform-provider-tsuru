@@ -142,12 +142,12 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 		if p.Name == "test_cluster" {
 			assert.Nil(t, p.CustomData)
 			assert.True(t, p.Default)
-			assert.Equal(t, testKubeConfig, p.KubeConfig)
+			assert.Equal(t, &testKubeConfig, p.KubeConfig)
 			assert.Equal(t, "http://myproxy.io:3128", p.HttpProxy)
 		} else if p.Name == "simple_cluster" {
 			assert.Nil(t, p.CustomData)
 			assert.False(t, p.Default)
-			assert.Equal(t, simpleKubeConfig, p.KubeConfig)
+			assert.Equal(t, &simpleKubeConfig, p.KubeConfig)
 		}
 
 		return nil
@@ -163,7 +163,7 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 					"token": "test_token",
 				},
 				Default:    true,
-				KubeConfig: testKubeConfig,
+				KubeConfig: &testKubeConfig,
 				HttpProxy:  "http://myproxy.io:3128",
 			})
 		}
@@ -172,7 +172,7 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			return c.JSON(http.StatusOK, &tsuru.Cluster{
 				Name:        name,
 				Provisioner: "kubernetes",
-				KubeConfig:  simpleKubeConfig,
+				KubeConfig:  &simpleKubeConfig,
 			})
 		}
 

@@ -2,7 +2,6 @@ package tsuru
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -363,19 +362,19 @@ func clusterFromResourceData(d *schema.ResourceData) tsuru.Cluster {
 	}
 }
 
-func kubeConfigFromResourceData(data interface{}) tsuru.ClusterKubeConfig {
-	kubeConfig := tsuru.ClusterKubeConfig{}
+func kubeConfigFromResourceData(data interface{}) *tsuru.ClusterKubeConfig {
 	dataArray := data.([]interface{})
 	if len(dataArray) == 0 {
-		return kubeConfig
+		return nil
 	}
+	kubeConfig := tsuru.ClusterKubeConfig{}
 
 	kubeConfigRaw := dataArray[0].(map[string]interface{})
 
 	kubeConfig.Cluster = kubeConfigClusterFromResourceData(kubeConfigRaw["cluster"])
 	kubeConfig.User = kubeConfigUserFromResourceData(kubeConfigRaw["user"])
 
-	return kubeConfig
+	return &kubeConfig
 }
 
 func kubeConfigClusterFromResourceData(data interface{}) tsuru.ClusterKubeConfigCluster {
@@ -472,8 +471,8 @@ func execFromResourceData(data interface{}) *tsuru.ClusterKubeConfigUserExec {
 	return exec
 }
 
-func flattenKubeConfig(kubeconfig tsuru.ClusterKubeConfig) []interface{} {
-	if reflect.DeepEqual(kubeconfig, tsuru.ClusterKubeConfig{}) {
+func flattenKubeConfig(kubeconfig *tsuru.ClusterKubeConfig) []interface{} {
+	if kubeconfig == nil {
 		return []interface{}{}
 	}
 
