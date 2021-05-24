@@ -41,6 +41,7 @@ func Provider() *schema.Provider {
 				Description: "Disable certificate verification",
 				Default:     false,
 				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("TSURU_SKIP_CERT_VERIFICATION", nil),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
