@@ -17,7 +17,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.9.1 // indirect
 	github.com/hashicorp/terraform-exec v0.13.1 // indirect
 	github.com/hashicorp/terraform-json v0.10.0 // indirect
-	github.com/hashicorp/terraform-plugin-docs v0.4.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
@@ -27,7 +26,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
-	github.com/tsuru/go-tsuruclient v0.0.0-20210520204115-f6a563924e0b
+	github.com/tsuru/go-tsuruclient v0.0.0-20210524124819-9143c75c2e89
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/mod v0.4.2 // indirect
