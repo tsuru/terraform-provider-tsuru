@@ -70,7 +70,10 @@ func resourceTsuruPoolConstraintSet(ctx context.Context, d *schema.ResourceData,
 		Blacklist: d.Get("blacklist").(bool),
 	}
 
-	_, err := provider.TsuruClient.PoolApi.ConstraintSet(ctx, constraint)
+	err := tsuruRetry(ctx, d, func() error {
+		_, internalErr := provider.TsuruClient.PoolApi.ConstraintSet(ctx, constraint)
+		return internalErr
+	})
 
 	if err != nil {
 		return diag.Errorf("Could not set tsuru pool pool constraint: %q, err: %s", id, err.Error())
@@ -118,10 +121,15 @@ func resourceTsuruPoolConstraintDelete(ctx context.Context, d *schema.ResourceDa
 	provider := meta.(*tsuruProvider)
 
 	id := d.Get("pool_expr").(string) + "/" + d.Get("field").(string)
-	_, err := provider.TsuruClient.PoolApi.ConstraintSet(ctx, tsuru.PoolConstraintSet{
-		PoolExpr: d.Get("pool_expr").(string),
-		Field:    d.Get("field").(string),
-		Values:   []string{},
+
+	err := tsuruRetry(ctx, d, func() error {
+		_, internalErr := provider.TsuruClient.PoolApi.ConstraintSet(ctx, tsuru.PoolConstraintSet{
+			PoolExpr: d.Get("pool_expr").(string),
+			Field:    d.Get("field").(string),
+			Values:   []string{},
+		})
+
+		return internalErr
 	})
 
 	if err != nil {

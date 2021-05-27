@@ -5,9 +5,13 @@
 package tsuru
 
 import (
+	"context"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
+	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
 const ID_SEPARATOR = "::"
@@ -15,6 +19,22 @@ const ID_SEPARATOR = "::"
 func isRetryableError(err []byte) bool {
 	e := string(err)
 	return strings.Contains(e, "event locked")
+}
+
+func tsuruRetry(ctx context.Context, d *schema.ResourceData, f func() error) error {
+	return resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		err := f()
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
 }
 
 func createID(input []string) string {
