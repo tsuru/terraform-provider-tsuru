@@ -25,6 +25,7 @@ Tsuru Application
 
 ### Optional
 
+- **default_router** (String) Default router at creation of app
 - **description** (String) Application description
 - **id** (String) The ID of this resource.
 - **metadata** (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))

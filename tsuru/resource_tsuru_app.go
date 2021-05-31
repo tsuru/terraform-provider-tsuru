@@ -82,6 +82,12 @@ func resourceTsuruApplication() *schema.Resource {
 					},
 				},
 			},
+
+			"default_router": {
+				Type:        schema.TypeString,
+				Description: "Default router at creation of app",
+				Optional:    true,
+			},
 			"restart_on_update": {
 				Type:        schema.TypeBool,
 				Description: "Restart app after applying changes",
@@ -166,12 +172,18 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 		tags = append(tags, item.(string))
 	}
 
+	defaultRouter := ""
+	if i, ok := d.GetOk("default_router"); ok {
+		defaultRouter = i.(string)
+	}
+
 	app := tsuru_client.InputApp{
 		Name:      d.Get("name").(string),
 		Platform:  platform,
 		Pool:      pool,
 		Plan:      plan,
 		TeamOwner: d.Get("team_owner").(string),
+		Router:    defaultRouter,
 		Tags:      tags,
 	}
 
