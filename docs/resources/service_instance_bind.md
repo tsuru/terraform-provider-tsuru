@@ -31,5 +31,5 @@ Tsuru Service Instance Bind
 Import is supported using the following syntax:
 
 ```shell
-terraform import tsuru.service_instance_bind.my_bind "SERVICE INSTANCE APP"
+terraform import tsuru.service_instance_bind.my_bind "SERVICE::INSTANCE::APP"
 ```
