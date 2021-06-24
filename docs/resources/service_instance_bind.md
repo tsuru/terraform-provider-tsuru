@@ -26,4 +26,10 @@ Tsuru Service Instance Bind
 - **id** (String) The ID of this resource.
 - **restart_on_update** (Boolean) restart app after applying
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru.service_instance_bind.my_bind "SERVICE INSTANCE APP"
+```
