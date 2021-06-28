@@ -2,24 +2,26 @@ terraform {
   required_providers {
     tsuru = {
       source = "tsuru/tsuru"
+      version = "0.1.9"
     }
   }
 }
 
 provider "tsuru" {
-  host = "https://tsuru.mycompany.com"
+//  host = "https://tsuru.mycompany.com"
+  host = "https://tsuru.globoi.com"
 }
 
 resource "tsuru_app" "my-app" {
-  name = "sample-app"
+  name = "sample-app-test-v2"
 
   description = "app created with terraform"
 
-  plan = "c0.1m0.2"
-  pool = "staging"
+  plan = "small"
+  pool = "dev"
   platform = "python"
 
-  team_owner = "admin"
+  team_owner = "devops"
 
   tags = [ "a", "b" ]
   metadata {
@@ -33,6 +35,13 @@ resource "tsuru_app" "my-app" {
     }
   }
   restart_on_update = true
+}
+
+resource "tsuru_app_deploy" "my-app" {
+  app = tsuru_app.my-app.name
+  image_url = "hello-world:latest"
+  message = "hello world"
+  override_old_versions = true
 }
 
 resource "tsuru_app_grant" "app-permissions-team-a" {
@@ -50,13 +59,13 @@ resource "tsuru_app_cname" "app-extra-cname" {
   hostname = "sample.tsuru.i.mycompany.com"
 }
 
-resource "tsuru_app_router" "other-router" {
-  app = tsuru_app.my-app.name
-  name = "internal-http-lb"
-  options = {
-    "key" = "value"
-  }
-}
+//resource "tsuru_app_router" "other-router" {
+//  app = tsuru_app.my-app.name
+//  name = "internal-http-lb"
+//  options = {
+//    "key" = "value"
+//  }
+//}
 
 resource "tsuru_app_autoscale" "web" {
   app = tsuru_app.my-app.name
