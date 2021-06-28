@@ -45,29 +45,29 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"tsuru_pool":            resourceTsuruPool(),
+			"tsuru_service_instance_bind":  resourceTsuruServiceInstanceBind(),
+			"tsuru_service_instance_grant": resourceTsuruServiceInstanceGrant(),
+			"tsuru_service_instance":       resourceTsuruServiceInstance(),
+
+			"tsuru_volume_bind": resourceTsuruVolumeBind(),
+			"tsuru_volume":      resourceTsuruVolume(),
+
+			"tsuru_app_autoscale": resourceTsuruApplicationAutoscale(),
+			"tsuru_app_unit":      resourceTsuruApplicationUnits(),
+			"tsuru_app_env":       resourceTsuruApplicationEnvironment(),
+			"tsuru_app_cname":     resourceTsuruApplicationCName(),
+			"tsuru_app_router":    resourceTsuruApplicationRouter(),
+			"tsuru_app_deploy":    resourceTsuruApplicationDeploy(),
+			"tsuru_app_grant":     resourceTsuruApplicationGrant(),
+			"tsuru_app":           resourceTsuruApplication(),
+
 			"tsuru_pool_constraint": resourceTsuruPoolConstraint(),
+			"tsuru_pool":            resourceTsuruPool(),
 			"tsuru_cluster_pool":    resourceTsuruClusterPool(),
 			"tsuru_cluster":         resourceTsuruCluster(),
 			"tsuru_router":          resourceTsuruRouter(),
 			"tsuru_plan":            resourceTsuruPlan(),
 			"tsuru_webhook":         resourceTsuruWebhook(),
-
-			"tsuru_app":           resourceTsuruApplication(),
-			"tsuru_app_autoscale": resourceTsuruApplicationAutoscale(),
-			"tsuru_app_cname":     resourceTsuruApplicationCName(),
-			"tsuru_app_router":    resourceTsuruApplicationRouter(),
-			"tsuru_app_grant":     resourceTsuruApplicationGrant(),
-			"tsuru_app_unit":      resourceTsuruApplicationUnits(),
-			"tsuru_app_env":       resourceTsuruApplicationEnvironment(),
-			"tsuru_app_deploy":    resourceTsuruApplicationDeploy(),
-
-			"tsuru_service_instance":       resourceTsuruServiceInstance(),
-			"tsuru_service_instance_bind":  resourceTsuruServiceInstanceBind(),
-			"tsuru_service_instance_grant": resourceTsuruServiceInstanceGrant(),
-
-			"tsuru_volume":      resourceTsuruVolume(),
-			"tsuru_volume_bind": resourceTsuruVolumeBind(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"tsuru_app": dataSourceTsuruApp(),
