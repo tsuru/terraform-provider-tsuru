@@ -18,26 +18,14 @@ Tsuru Application Environment
 ### Required
 
 - **app** (String) Application name
-- **environment_variable** (Block Set, Min: 1) Environment variables (see [below for nested schema](#nestedblock--environment_variable))
 
 ### Optional
 
+- **environment_variables** (Map of String) Environment variables
 - **id** (String) The ID of this resource.
+- **private_environment_variables** (Map of String) Environment variables
 - **restart_on_update** (Boolean) restart app after applying
 - **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-
-<a id="nestedblock--environment_variable"></a>
-### Nested Schema for `environment_variable`
-
-Required:
-
-- **name** (String) Variable name
-
-Optional:
-
-- **sensitive_value** (String, Sensitive) Sensitive variable value
-- **value** (String) Variable value
-
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
