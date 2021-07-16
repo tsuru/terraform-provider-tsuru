@@ -6,7 +6,6 @@ package provider
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -14,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
 
+	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
@@ -43,31 +43,18 @@ func resourceTsuruApplicationEnvironment() *schema.Resource {
 				Description: "Application name",
 				Required:    true,
 			},
-			"environment_variable": {
-				Type:        schema.TypeSet,
+			"environment_variables": {
 				Description: "Environment variables",
-				Required:    true,
-				MinItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Type:        schema.TypeString,
-							Description: "Variable name",
-							Required:    true,
-						},
-						"value": {
-							Type:        schema.TypeString,
-							Description: "Variable value",
-							Optional:    true,
-						},
-						"sensitive_value": {
-							Type:        schema.TypeString,
-							Description: "Sensitive variable value",
-							Sensitive:   true,
-							Optional:    true,
-						},
-					},
-				},
+				Required:    false,
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"private_environment_variables": {
+				Description: "Environment variables",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, Sensitive: true},
 			},
 			"restart_on_update": {
 				Type:        schema.TypeBool,
@@ -84,7 +71,14 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 
 	app := d.Get("app").(string)
 
-	envs := envsFromResource(d.Get("environment_variable"))
+	envs := &tsuru_client.EnvSetData{
+		Envs:        []tsuru_client.Env{},
+		ManagedBy:   "terraform",
+		PruneUnused: true,
+	}
+	envs.Envs = append(envs.Envs, envsFromResource(d.Get("environment_variables"), false)...)
+	envs.Envs = append(envs.Envs, envsFromResource(d.Get("private_environment_variables"), true)...)
+
 	ri := d.Get("restart_on_update").(bool)
 	if !ri {
 		envs.Norestart = true
@@ -124,24 +118,21 @@ func resourceTsuruApplicationEnvironmentRead(ctx context.Context, d *schema.Reso
 		return diag.Errorf("unable to read envs for app %s: %v", app, err)
 	}
 
-	var envVars []map[string]interface{}
+	envs = filterUnmanagedTerraformEnvs(envs)
+
+	envVars := map[string]string{}
+	sensitiveEnvVars := map[string]string{}
+
 	for _, env := range envs {
-		if isReservedEnv(env.Name) {
-			continue
-		}
 		if env.Public {
-			envVars = append(envVars, map[string]interface{}{
-				"name":  env.Name,
-				"value": env.Value,
-			})
+			envVars[env.Name] = env.Value
 		} else {
-			envVars = append(envVars, map[string]interface{}{
-				"name":            env.Name,
-				"sensitive_value": env.Value,
-			})
+			sensitiveEnvVars[env.Name] = env.Value
 		}
 	}
-	d.Set("environment_variable", envVars)
+
+	d.Set("environment_variables", envVars)
+	d.Set("private_environment_variables", sensitiveEnvVars)
 
 	return nil
 }
@@ -150,7 +141,13 @@ func resourceTsuruApplicationEnvironmentUpdate(ctx context.Context, d *schema.Re
 	provider := meta.(*tsuruProvider)
 
 	app := d.Get("app").(string)
-	envs := envsFromResource(d.Get("environment_variable"))
+	envs := &tsuru_client.EnvSetData{
+		Envs:        []tsuru_client.Env{},
+		ManagedBy:   "terraform",
+		PruneUnused: true,
+	}
+	envs.Envs = append(envs.Envs, envsFromResource(d.Get("environment_variables"), false)...)
+	envs.Envs = append(envs.Envs, envsFromResource(d.Get("private_environment_variables"), true)...)
 
 	ri := d.Get("restart_on_update").(bool)
 	if !ri {
@@ -184,12 +181,6 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	provider := meta.(*tsuruProvider)
 
 	app := d.Get("app").(string)
-	envSet := envsFromResource(d.Get("environment_variable"))
-
-	envs := []string{}
-	for _, e := range envSet.Envs {
-		envs = append(envs, e.Name)
-	}
 
 	noRestart := false
 	ri := d.Get("restart_on_update").(bool)
@@ -198,7 +189,11 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
-		_, err := provider.TsuruClient.AppApi.EnvUnset(ctx, app, envs, noRestart)
+		_, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, tsuru_client.EnvSetData{
+			Envs:      []tsuru.Env{},
+			ManagedBy: "terraform",
+			Norestart: noRestart,
+		})
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
@@ -217,32 +212,50 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 	return nil
 }
 
-func envsFromResource(envvars interface{}) *tsuru_client.EnvSetData {
-	evs := envvars.(*schema.Set)
+func envsFromResource(envvars interface{}, private bool) []tsuru_client.Env {
+	m := envvars.(map[string]interface{})
 
-	envs := &tsuru_client.EnvSetData{
-		Envs:        []tsuru_client.Env{},
-		ManagedBy:   "terraform",
-		PruneUnused: true,
-	}
+	envs := []tsuru_client.Env{}
 
-	for _, raw := range evs.List() {
-		e := raw.(map[string]interface{})
+	for key, raw := range m {
 		env := tsuru_client.Env{
-			Name: e["name"].(string),
+			Name:    key,
+			Value:   raw.(string),
+			Private: private,
 		}
-		if v, ok := e["value"]; ok && v != "" {
-			env.Value = v.(string)
-		} else if v, ok := e["sensitive_value"]; ok && v != "" {
-			env.Value = v.(string)
-			env.Private = true
-		}
-		envs.Envs = append(envs.Envs, env)
+		envs = append(envs, env)
 	}
 
 	return envs
 }
 
+func filterUnmanagedTerraformEnvs(envs []tsuru.EnvVar) []tsuru.EnvVar {
+	n := 0
+	for _, env := range envs {
+		if isReservedEnv(env.Name) {
+			continue
+		}
+		if env.ManagedBy != "terraform" {
+			continue
+		}
+		envs[n] = env
+		n++
+	}
+	envs = envs[:n]
+	return envs
+}
+
 func isReservedEnv(variable string) bool {
-	return strings.HasPrefix(variable, "TSURU_")
+	for _, internalEnv := range internalEnvs() {
+		if internalEnv == variable {
+			return true
+		}
+	}
+	return false
+}
+
+func internalEnvs() []string {
+	return []string{
+		"TSURU_HOST", "TSURU_APPNAME", "TSURU_APP_TOKEN", "TSURU_SERVICE", "TSURU_APPDIR", "TSURU_SERVICES",
+	}
 }

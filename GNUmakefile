@@ -2,12 +2,13 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=tsuru
 NAME=tsuru
 BINARY=terraform-provider-${NAME}
-VERSION=0.1.9
+VERSION=2.0.11
 
 UNAME_S := $(shell uname -s)
 UNAME_P := $(shell uname -p)
 ifeq ($(UNAME_S),Linux)
 	OS := linux
+	UNAME_P := $(shell uname -m)
 endif
 ifeq ($(UNAME_S),Darwin)
 	OS := darwin

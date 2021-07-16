@@ -44,18 +44,15 @@ func TestAccResourceTsuruAppEnv(t *testing.T) {
 		envs := tsuru.EnvSetData{}
 		c.Bind(&envs)
 		iterationCount++
-		assert.Equal(t, 2, len(envs.Envs))
+
+		if iterationCount == 1 {
+			assert.Equal(t, 2, len(envs.Envs))
+		} else if iterationCount == 2 {
+			assert.Equal(t, 0, len(envs.Envs))
+		}
 		assert.Equal(t, "terraform", envs.ManagedBy)
 		assert.Equal(t, true, envs.Norestart)
 		return c.JSON(http.StatusOK, map[string]interface{}{"ok": "true"})
-	})
-
-	fakeServer.DELETE("/1.0/apps/:app/env", func(c echo.Context) error {
-		envs := c.QueryParam("env")
-		noRestart := c.QueryParam("norestart")
-		assert.Equal(t, "env1", envs)
-		assert.Equal(t, "true", noRestart)
-		return c.NoContent(http.StatusOK)
 	})
 
 	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
@@ -75,15 +72,8 @@ func TestAccResourceTsuruAppEnv(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccResourceExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "app", "app01"),
-					resource.TestCheckResourceAttr(resourceName, "environment_variable.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "environment_variable.*", map[string]string{
-						"name":  "env1",
-						"value": "10",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "environment_variable.*", map[string]string{
-						"name":            "env2",
-						"sensitive_value": "12",
-					}),
+					resource.TestCheckResourceAttr(resourceName, "environment_variables.env1", "10"),
+					resource.TestCheckResourceAttr(resourceName, "private_environment_variables.env2", "12"),
 				),
 			},
 		},
@@ -95,14 +85,12 @@ func testAccResourceTsuruAppEnv_basic() string {
 	resource "tsuru_app_env" "env" {
 		app = "app01"
 		restart_on_update = false
-		environment_variable {
-			name = "env1"
-			value = "10"
+		environment_variables = {
+			env1 = "10"
 		}
 
-		environment_variable {
-			name = "env2"
-			sensitive_value = "12"
+		private_environment_variables = {
+			env2 = "12"
 		}
 	}
 `
