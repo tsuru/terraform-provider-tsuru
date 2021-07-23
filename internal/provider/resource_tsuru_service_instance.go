@@ -47,7 +47,7 @@ func resourceTsuruServiceInstance() *schema.Resource {
 			},
 			"pool": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Service Pool",
 			},
 			"description": {

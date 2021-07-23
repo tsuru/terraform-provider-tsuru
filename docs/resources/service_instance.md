@@ -20,7 +20,6 @@ description: |-
 - **name** (String) Instance name
 - **owner** (String) Team owner of this instance
 - **plan** (String)
-- **pool** (String) Service Pool
 - **service_name** (String) Name of service kind
 
 ### Optional
@@ -28,6 +27,7 @@ description: |-
 - **description** (String) Human readable description for instance
 - **id** (String) The ID of this resource.
 - **parameters** (Map of String) Service instance addicional parameters
+- **pool** (String) Service Pool
 - **tags** (List of String) Custom tags for instance
 - **unbind_on_delete** (Boolean) Unbind service instance from apps on delete
 
