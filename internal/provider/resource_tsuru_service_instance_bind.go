@@ -105,6 +105,10 @@ func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.Resourc
 
 	instance, _, err := provider.TsuruClient.ServiceApi.InstanceGet(ctx, service, instanceName)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("unable to read bind %s %s: %v", service, instanceName, err)
 	}
 
