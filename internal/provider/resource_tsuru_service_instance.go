@@ -131,6 +131,10 @@ func resourceTsuruServiceInstanceRead(ctx context.Context, d *schema.ResourceDat
 
 	instance, _, err := provider.TsuruClient.ServiceApi.InstanceGet(ctx, serviceName, name)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("Could not read tsuru service (%s) instance (%s), err : %s", serviceName, name, err.Error())
 	}
 

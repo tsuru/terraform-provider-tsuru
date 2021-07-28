@@ -273,7 +273,11 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 
 	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, name)
 	if err != nil {
-		return diag.Errorf("unable to create app %s: %v", app.Name, err)
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.Errorf("unable to read app %s: %v", app.Name, err)
 	}
 
 	d.Set("name", name)

@@ -204,7 +204,10 @@ func resourceTsuruApplicationUnitsDelete(ctx context.Context, d *schema.Resource
 func countUnits(ctx context.Context, provider *tsuruProvider, appName, process string, version *int) (int, error) {
 	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, appName)
 	if err != nil {
-		return 0, errors.Errorf("unable to create app %s: %v", app.Name, err)
+		if isNotFoundError(err) {
+			return 0, nil
+		}
+		return 0, errors.Errorf("unable to read app %s: %v", app.Name, err)
 	}
 
 	units := 0

@@ -98,6 +98,10 @@ func resourceTsuruVolumeRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	volume, _, err := provider.TsuruClient.VolumeApi.VolumeGet(ctx, name)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("Unable to read volume: %v", err)
 	}
 

@@ -107,6 +107,10 @@ func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceD
 
 	routers, _, err := provider.TsuruClient.AppApi.AppRouterList(ctx, appName)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("unable to get app %s: %v", appName, err)
 	}
 

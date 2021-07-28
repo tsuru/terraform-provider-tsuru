@@ -115,6 +115,10 @@ func resourceTsuruApplicationEnvironmentRead(ctx context.Context, d *schema.Reso
 
 	envs, _, err := provider.TsuruClient.AppApi.EnvGet(ctx, app, nil)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("unable to read envs for app %s: %v", app, err)
 	}
 

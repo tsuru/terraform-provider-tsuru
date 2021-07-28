@@ -94,11 +94,15 @@ func resourceTsuruApplicationAutoscaleCreate(ctx context.Context, d *schema.Reso
 
 	appInfo, _, err := provider.TsuruClient.AppApi.AppGet(ctx, app)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("Unable to read app %s: %v", app, err)
 	}
 
 	if appInfo.Deploys == 0 {
-		return nil
+		return diag.Errorf("We can not set a autoscale without a first deploy")
 	}
 
 	process := d.Get("process").(string)

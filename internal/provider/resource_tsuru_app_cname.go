@@ -89,6 +89,10 @@ func resourceTsuruApplicationCNameRead(ctx context.Context, d *schema.ResourceDa
 
 	app, _, err := provider.TsuruClient.AppApi.AppGet(ctx, appName)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("unable to get app %s: %v", appName, err)
 	}
 
