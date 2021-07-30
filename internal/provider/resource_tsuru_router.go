@@ -97,8 +97,8 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 
 		return nil
 	}
-	return diag.Errorf("Could not find tsuru router, name: %s,type: %s", name, typo)
-
+	d.SetId("")
+	return nil
 }
 
 func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

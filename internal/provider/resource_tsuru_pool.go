@@ -84,6 +84,10 @@ func resourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	pool, _, err := provider.TsuruClient.PoolApi.PoolGet(ctx, d.Id())
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("Could not read tsuru pool: %q, err: %s", d.Id(), err.Error())
 	}
 	d.Set("name", pool.Name)

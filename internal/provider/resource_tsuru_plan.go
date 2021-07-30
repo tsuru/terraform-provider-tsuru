@@ -92,6 +92,9 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 	cpuFormat := cpuFormat(cpu)
 
 	plans, _, err := provider.TsuruClient.PlanApi.PlanList(ctx)
+	if err != nil {
+		return diag.Errorf("Could not read tsuru plans err: %s", err.Error())
+	}
 
 	for _, plan := range plans {
 		if plan.Name != name {
@@ -114,11 +117,8 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 		return nil
 	}
 
-	if err != nil {
-		return diag.Errorf("Could not read tsuru plan: %q, err: %s", d.Id(), err.Error())
-	}
+	d.SetId("")
 	return nil
-
 }
 
 func resourceTsuruPlanDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

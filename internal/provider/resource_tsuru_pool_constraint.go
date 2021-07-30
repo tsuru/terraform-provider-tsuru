@@ -114,7 +114,8 @@ func resourceTsuruPoolConstraintRead(ctx context.Context, d *schema.ResourceData
 		return nil
 	}
 
-	return diag.Errorf("Could not find tsuru pool pool constraints, pool_expr: %s, field: %s", poolExpr, field)
+	d.SetId("")
+	return nil
 }
 
 func resourceTsuruPoolConstraintDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

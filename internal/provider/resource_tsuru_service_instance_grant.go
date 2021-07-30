@@ -84,7 +84,7 @@ func resourceTsuruServiceInstanceGrantRead(ctx context.Context, d *schema.Resour
 			return nil
 		}
 	}
-
+	d.SetId("")
 	return nil
 }
 

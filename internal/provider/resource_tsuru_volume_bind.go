@@ -6,7 +6,6 @@ package provider
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -126,13 +125,13 @@ func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, me
 	name := parts[1]
 	mountPath := parts[2]
 
-	volume, resp, err := provider.TsuruClient.VolumeApi.VolumeGet(ctx, name)
+	volume, _, err := provider.TsuruClient.VolumeApi.VolumeGet(ctx, name)
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("unable to read volume info: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return diag.Errorf("unable to read volume info, error code: %d", resp.StatusCode)
 	}
 
 	for _, bind := range volume.Binds {
@@ -146,7 +145,8 @@ func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, me
 		return nil
 	}
 
-	return diag.Errorf("unable to find bind for volume %s to %s", volume.Name, app)
+	d.SetId("")
+	return nil
 }
 
 func resourceTsuruVolumeBindDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

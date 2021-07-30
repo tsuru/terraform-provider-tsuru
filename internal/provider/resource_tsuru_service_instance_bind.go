@@ -121,6 +121,7 @@ func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.Resourc
 		}
 	}
 
+	d.SetId("")
 	return nil
 }
 

@@ -275,6 +275,10 @@ func resourceTsuruClusterRead(ctx context.Context, d *schema.ResourceData, meta 
 	cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
 
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("Could not read tsuru cluster, err : %s", err.Error())
 	}
 
