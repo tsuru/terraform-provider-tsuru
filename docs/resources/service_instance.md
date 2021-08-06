@@ -30,5 +30,10 @@ description: |-
 - **pool** (String) Service Pool
 - **tags** (List of String) Custom tags for instance
 - **unbind_on_delete** (Boolean) Unbind service instance from apps on delete
+- **wait_for_up_status** (Boolean) Wait for instance to reach up state
+
+### Read-Only
+
+- **status** (String) Current status of service
 
 
