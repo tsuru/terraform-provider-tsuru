@@ -20,6 +20,8 @@ import (
 
 func TestTsuruServiceInstance_basic(t *testing.T) {
 	fakeServer := echo.New()
+	interationStatus := 0
+
 	fakeServer.POST("/1.0/services/rpaasv2/instances", func(c echo.Context) error {
 		si := &tsuru.ServiceInstance{}
 		err := c.Bind(&si)
@@ -46,6 +48,15 @@ func TestTsuruServiceInstance_basic(t *testing.T) {
 			Planname:  "c2m2",
 			Pool:      "some-pool",
 		})
+	})
+	fakeServer.GET("/1.0/services/rpaasv2/instances/my-reverse-proxy/status", func(c echo.Context) error {
+		interationStatus++
+
+		if interationStatus < 2 {
+			return c.String(http.StatusOK, "Service is pending")
+		} else {
+			return c.String(http.StatusOK, "Service is up")
+		}
 	})
 	fakeServer.DELETE("/1.0/services/rpaasv2/instances/my-reverse-proxy", func(c echo.Context) error {
 		return c.NoContent(http.StatusNoContent)
@@ -91,6 +102,8 @@ resource "tsuru_service_instance"  "my_reverse_proxy"   {
 		"value" = "10"
 		"otherValue" = "false"
 	}
+
+	wait_for_up_status = true
 }
 `, name)
 }

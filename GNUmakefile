@@ -2,7 +2,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=tsuru
 NAME=tsuru
 BINARY=terraform-provider-${NAME}
-VERSION=2.1.2
+VERSION=2.1.3
 
 UNAME_S := $(shell uname -s)
 UNAME_P := $(shell uname -p)
@@ -18,11 +18,15 @@ endif
 ifeq ($(UNAME_P),x86_64)
 	ARCH := amd64
 endif
+
 ifneq ($(filter %86,$(UNAME_P)),)
 	ARCH := 386
 endif
 ifneq ($(filter arm%,$(UNAME_P)),)
 	ARCH := arm
+endif
+ifeq ($(UNAME_P),arm64)
+	ARCH := arm64
 endif
 
 OS_ARCH=${OS}_${ARCH}

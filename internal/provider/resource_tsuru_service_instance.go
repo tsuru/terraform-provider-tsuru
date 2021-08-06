@@ -6,9 +6,14 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"strings"
 
 	"github.com/antihax/optional"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
@@ -75,6 +80,16 @@ func resourceTsuruServiceInstance() *schema.Resource {
 				Optional:    true,
 				Description: "Unbind service instance from apps on delete",
 			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Current status of service",
+			},
+			"wait_for_up_status": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Wait for instance to reach up state",
+			},
 		},
 	}
 }
@@ -116,7 +131,19 @@ func resourceTsuruServiceInstanceCreate(ctx context.Context, d *schema.ResourceD
 
 	d.SetId(createID([]string{serviceName, name}))
 
-	return nil
+	if waitForStatus, ok := d.GetOk("wait_for_up_status"); ok {
+		if waitForStatus.(bool) {
+			log.Printf("[INFO] Waiting for service_instance %s/%s to reach up status", serviceName, name)
+			err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				waitForServiceInstanceStatusUpFunc(ctx, provider, serviceName, name),
+			)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	return resourceTsuruServiceInstanceRead(ctx, d, meta)
 }
 
 func resourceTsuruServiceInstanceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -155,6 +182,14 @@ func resourceTsuruServiceInstanceRead(ctx context.Context, d *schema.ResourceDat
 	if len(instance.Parameters) > 0 {
 		d.Set("parameters", instance.Parameters)
 	}
+
+	status, err := serviceInstanceStatus(ctx, provider, serviceName, name)
+	if err != nil {
+		return diag.Errorf("Could not read tsuru service (%s) instance (%s) status, err : %s", serviceName, name, err.Error())
+	}
+
+	d.Set("status", status)
+
 	return nil
 
 }
@@ -189,6 +224,19 @@ func resourceTsuruServiceInstanceUpdate(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.Errorf("Could not update tsuru service instance: %q, err: %s", d.Id(), err.Error())
 	}
+
+	if waitForStatus, ok := d.GetOk("wait_for_up_status"); ok {
+		if waitForStatus.(bool) {
+			log.Printf("[INFO] Waiting for service_instance %s/%s to reach up status", serviceName, name)
+			err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate),
+				waitForServiceInstanceStatusUpFunc(ctx, provider, serviceName, name),
+			)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -206,6 +254,37 @@ func resourceTsuruServiceInstanceDelete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
+func serviceInstanceStatus(ctx context.Context, provider *tsuruProvider, serviceName, serviceInstance string) (string, error) {
+	response, err := provider.TsuruClient.ServiceApi.ServiceInstanceStatus(ctx, serviceName, serviceInstance)
+	if err != nil {
+		return "", err
+	}
+
+	defer response.Body.Close()
+	b, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
+
+func waitForServiceInstanceStatusUpFunc(ctx context.Context, provider *tsuruProvider, serviceName, serviceInstance string) resource.RetryFunc {
+	return func() *resource.RetryError {
+		currentStatus, err := serviceInstanceStatus(ctx, provider, serviceName, serviceInstance)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		if strings.HasSuffix(currentStatus, "is up") {
+			log.Printf("[INFO] service %s/%s reach up status", serviceName, serviceInstance)
+			return nil
+		}
+
+		log.Printf("[INFO] service %s/%s current status %q ", serviceName, serviceInstance, currentStatus)
+		return resource.RetryableError(fmt.Errorf("current status %q", currentStatus))
+	}
+}
 func parseTags(data interface{}) []string {
 	values := []string{}
 
