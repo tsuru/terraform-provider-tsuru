@@ -293,6 +293,7 @@ func resourceTsuruClusterRead(ctx context.Context, d *schema.ResourceData, meta 
 	d.Set("pools", cluster.Pools)
 	d.Set("http_proxy", cluster.HttpProxy)
 	d.Set("kube_config", flattenKubeConfig(cluster.KubeConfig))
+	d.Set("custom_data", cluster.CustomData)
 
 	return nil
 }
