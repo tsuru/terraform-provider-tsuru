@@ -159,12 +159,9 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			return c.JSON(http.StatusOK, &tsuru.Cluster{
 				Name:        name,
 				Provisioner: "kubernetes",
-				CustomData: map[string]string{
-					"token": "test_token",
-				},
-				Default:    true,
-				KubeConfig: &testKubeConfig,
-				HttpProxy:  "http://myproxy.io:3128",
+				Default:     true,
+				KubeConfig:  &testKubeConfig,
+				HttpProxy:   "http://myproxy.io:3128",
 			})
 		}
 
