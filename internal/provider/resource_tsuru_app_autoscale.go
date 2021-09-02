@@ -66,7 +66,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 			},
 			"cpu_average": {
 				Type:        schema.TypeString,
-				Description: "CPU average, i.e: 2, mean that we trigger autoscale when the average of CPU of units is 200%. for less than one CPU, use the `m` suffix, example: 200m means that we scale when reach 20% of CPU average",
+				Description: "CPU average, for example: 2, mean that we trigger autoscale when the average of CPU of units is 200%. for less than one CPU, use the `m` suffix, example: 200m means that we scale when reach 20% of CPU average",
 				Required:    true,
 				ForceNew:    true,
 				ValidateFunc: func(i interface{}, k string) (s []string, es []error) {
