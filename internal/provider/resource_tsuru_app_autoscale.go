@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	cpuRegex = regexp.MustCompile(`^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$`)
+	cpuRegex = regexp.MustCompile(`^([+-]?[0-9.]+)([m]*[-+]?[0-9]*)$`)
 )
 
 func resourceTsuruApplicationAutoscale() *schema.Resource {
@@ -66,7 +66,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 			},
 			"cpu_average": {
 				Type:        schema.TypeString,
-				Description: "cpu average",
+				Description: "CPU average, i.e: 2, mean that we trigger autoscale when the average of CPU of units is 200%. for less than one CPU, use the `m` suffix, example: 200m means that we scale when reach 20% of CPU average",
 				Required:    true,
 				ForceNew:    true,
 				ValidateFunc: func(i interface{}, k string) (s []string, es []error) {
@@ -77,7 +77,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 					}
 
 					if !cpuRegex.MatchString(v) {
-						es = append(es, fmt.Errorf("%s value %s must match regexp ^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$", k, v))
+						es = append(es, fmt.Errorf("%s value %s must be a number of CPU or use m suffix for fraction, i.e: 300m", k, v))
 						return
 					}
 					return
