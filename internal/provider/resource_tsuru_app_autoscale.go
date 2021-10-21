@@ -6,8 +6,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -16,10 +14,6 @@ import (
 	"github.com/pkg/errors"
 
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
-)
-
-var (
-	cpuRegex = regexp.MustCompile(`^([+-]?[0-9.]+)([m]*[-+]?[0-9]*)$`)
 )
 
 func resourceTsuruApplicationAutoscale() *schema.Resource {
@@ -69,19 +63,6 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Description: "CPU average, for example: 2, mean that we trigger autoscale when the average of CPU of units is 200%. for less than one CPU, use the `m` suffix, example: 200m means that we scale when reach 20% of CPU average",
 				Required:    true,
 				ForceNew:    true,
-				ValidateFunc: func(i interface{}, k string) (s []string, es []error) {
-					v, ok := i.(string)
-					if !ok {
-						es = append(es, fmt.Errorf("expected type of %s to be string", k))
-						return
-					}
-
-					if !cpuRegex.MatchString(v) {
-						es = append(es, fmt.Errorf("%s value %s must be a number of CPU or use m suffix for fraction, i.e: 300m", k, v))
-						return
-					}
-					return
-				},
 			},
 		},
 	}
