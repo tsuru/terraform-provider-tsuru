@@ -5,6 +5,7 @@ go 1.15
 require (
 	cloud.google.com/go/storage v1.14.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 // indirect
 	github.com/antihax/optional v1.0.0
 	github.com/aws/aws-sdk-go v1.38.12 // indirect
 	github.com/fatih/color v1.10.0 // indirect
@@ -14,7 +15,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/hcl/v2 v2.10.0 // indirect
-	github.com/hashicorp/terraform-plugin-docs v0.4.0 // indirect
+	github.com/hashicorp/terraform-plugin-docs v0.5.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/labstack/echo/v4 v4.2.0
@@ -25,7 +26,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tsuru/go-tsuruclient v0.0.0-20210524131825-8734dc64dd91
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	github.com/zclconf/go-cty v1.9.0 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6 // indirect
 	google.golang.org/api v0.45.0 // indirect

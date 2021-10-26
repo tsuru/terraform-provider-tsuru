@@ -18,7 +18,7 @@ Tsuru Application Autoscale
 ### Required
 
 - **app** (String) Application name
-- **cpu_average** (String) cpu average
+- **cpu_average** (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
 - **max_units** (Number) maximum number of units
 - **process** (String) Name of service instance
 
