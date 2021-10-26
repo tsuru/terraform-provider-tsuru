@@ -6,6 +6,10 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -60,7 +64,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 			},
 			"cpu_average": {
 				Type:        schema.TypeString,
-				Description: "CPU average, for example: 2, mean that we trigger autoscale when the average of CPU of units is 200%. for less than one CPU, use the `m` suffix, example: 200m means that we scale when reach 20% of CPU average",
+				Description: "CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.",
 				Required:    true,
 				ForceNew:    true,
 			},
@@ -139,25 +143,47 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 	app := parts[0]
 	process := parts[1]
 
-	autoscales, _, err := provider.TsuruClient.AppApi.AutoScaleInfo(ctx, app)
-	if err != nil {
-		return diag.Errorf("Unable to read autoscale %s %s: %v", app, process, err)
-	}
+	currentCPUAverage := d.Get("cpu_average").(string)
+	isMilli := strings.HasSuffix(currentCPUAverage, "m")
+	isPercentage := strings.HasSuffix(currentCPUAverage, "%")
 
-	for _, autoscale := range autoscales {
-		if autoscale.Process != process {
-			continue
+	// autoscale info reflects near realtime
+	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		autoscales, _, err := provider.TsuruClient.AppApi.AutoScaleInfo(ctx, app)
+		if err != nil {
+			return resource.NonRetryableError(errors.Wrapf(err, "unable to read autoscale %s %s", app, process))
 		}
 
-		d.Set("app", app)
-		d.Set("process", autoscale.Process)
-		d.Set("min_units", autoscale.MinUnits)
-		d.Set("max_units", autoscale.MaxUnits)
-		d.Set("cpu_average", autoscale.AverageCPU)
-		return nil
+		for _, autoscale := range autoscales {
+			if autoscale.Process != process {
+				continue
+			}
+
+			d.Set("app", app)
+			d.Set("process", autoscale.Process)
+			d.Set("min_units", autoscale.MinUnits)
+			d.Set("max_units", autoscale.MaxUnits)
+			if isPercentage {
+				d.Set("cpu_average", milliToPercentage(autoscale.AverageCPU)+"%")
+			} else if isMilli {
+				d.Set("cpu_average", autoscale.AverageCPU)
+			} else if strings.HasSuffix(autoscale.AverageCPU, "m") {
+				d.Set("cpu_average", milliToPercentage(autoscale.AverageCPU))
+			} else {
+				d.Set("cpu_average", autoscale.AverageCPU)
+			}
+			return nil
+		}
+
+		log.Print("[INFO] no autoscales found, trying again")
+		return resource.RetryableError(fmt.Errorf("unable to read autoscale %s %s: process not found", app, process))
+	})
+
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
-	return diag.Errorf("Unable to read autoscale %s %s: process not found", app, process)
+	return nil
 }
 
 func resourceTsuruApplicationAutoscaleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -184,4 +210,17 @@ func resourceTsuruApplicationAutoscaleDelete(ctx context.Context, d *schema.Reso
 	}
 
 	return nil
+}
+
+func milliToPercentage(milli string) string {
+	if milli == "" {
+		return ""
+	}
+
+	milliInt, err := strconv.ParseFloat(strings.TrimRight(milli, "m"), 64)
+	if err != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%.2g", milliInt/10)
 }
