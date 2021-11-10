@@ -126,7 +126,7 @@ func resourceTsuruServiceInstanceCreate(ctx context.Context, d *schema.ResourceD
 	_, err := provider.TsuruClient.ServiceApi.InstanceCreate(ctx, serviceName, instance)
 
 	if err != nil {
-		return diag.Errorf("Could not create tsuru router, err : %s", err.Error())
+		return diag.Errorf("Could not create tsuru service instance, err : %s", err.Error())
 	}
 
 	d.SetId(createID([]string{serviceName, name}))
