@@ -3,7 +3,7 @@
 page_title: "tsuru_app Data Source - terraform-provider-tsuru"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # tsuru_app (Data Source)
@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- **name** (String) Unique name of pool
+- **name** (String) Unique name of app
 
 ### Optional
 
@@ -56,5 +56,3 @@ Read-Only:
 - **addresses** (List of String)
 - **name** (String)
 - **options** (Map of String)
-
-

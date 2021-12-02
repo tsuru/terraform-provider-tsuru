@@ -15,7 +15,7 @@ func dataSourceTsuruApp() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Description: "Unique name of pool",
+				Description: "Unique name of app",
 				Required:    true,
 			},
 
