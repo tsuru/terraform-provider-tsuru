@@ -50,6 +50,11 @@ func resourceTsuruApplication() *schema.Resource {
 				Description: "Application owner",
 				Required:    true,
 			},
+			"cluster": {
+				Type:        schema.TypeString,
+				Description: "The name of cluster",
+				Computed:    true,
+			},
 			"pool": {
 				Type:        schema.TypeString,
 				Description: "The name of pool",
@@ -285,6 +290,7 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("pool", app.Pool)
 	d.Set("plan", app.Plan.Name)
 	d.Set("team_owner", app.TeamOwner)
+	d.Set("cluster", app.Cluster)
 
 	if app.Description != "" {
 		d.Set("description", app.Description)
