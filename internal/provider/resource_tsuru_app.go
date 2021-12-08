@@ -264,10 +264,13 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		app.NoRestart = true
 	}
 
-	_, err := provider.TsuruClient.AppApi.AppUpdate(ctx, name, app)
+	resp, err := provider.TsuruClient.AppApi.AppUpdate(ctx, name, app)
 	if err != nil {
 		return diag.Errorf("unable to update app %s: %v", name, err)
 	}
+
+	defer resp.Body.Close()
+	logTsuruStream(resp.Body)
 
 	return nil
 }

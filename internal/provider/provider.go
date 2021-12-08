@@ -5,9 +5,12 @@
 package provider
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -15,10 +18,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/sirupsen/logrus"
 	"github.com/tsuru/go-tsuruclient/pkg/client"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
-	"istio.io/pkg/log"
 )
 
 func Provider() *schema.Provider {
@@ -81,17 +82,9 @@ func Provider() *schema.Provider {
 
 type tsuruProvider struct {
 	TsuruClient *tsuru.APIClient
-	Log         *logrus.Logger
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
-	logger := logrus.New()
-	file, err := os.OpenFile("/tmp/tsuru-provider.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err == nil {
-		logger.Out = file
-	} else {
-		log.Info("Failed to log to file, using default stderr")
-	}
 	userAgent := fmt.Sprintf("HashiCorp/1.0 Terraform/%s", terraformVersion)
 
 	cfg := &tsuru.Configuration{
@@ -137,6 +130,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 
 	return &tsuruProvider{
 		TsuruClient: client,
-		Log:         logger,
 	}, nil
+}
+
+func logTsuruStream(in io.Reader) {
+	reader := bufio.NewScanner(in)
+	for reader.Scan() {
+		log.Println("[INFO] ", reader.Text())
+	}
 }

@@ -88,7 +88,7 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 		if len(envs.Envs) == 0 {
 			return resource.NonRetryableError(errors.Errorf("No environment variables to create"))
 		}
-		_, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, *envs)
+		resp, err := provider.TsuruClient.AppApi.EnvSet(ctx, app, *envs)
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
@@ -98,6 +98,10 @@ func resourceTsuruApplicationEnvironmentCreate(ctx context.Context, d *schema.Re
 			}
 			return resource.NonRetryableError(err)
 		}
+
+		defer resp.Body.Close()
+		logTsuruStream(resp.Body)
+
 		return nil
 	})
 	if err != nil {

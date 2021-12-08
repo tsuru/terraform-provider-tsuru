@@ -92,7 +92,7 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		_, err := provider.TsuruClient.VolumeApi.VolumeBind(ctx, name, bindData)
+		resp, err := provider.TsuruClient.VolumeApi.VolumeBind(ctx, name, bindData)
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
@@ -102,6 +102,9 @@ func resourceTsuruVolumeBindCreate(ctx context.Context, d *schema.ResourceData, 
 				return resource.NonRetryableError(err)
 			}
 		}
+
+		defer resp.Body.Close()
+		logTsuruStream(resp.Body)
 
 		d.SetId(createID([]string{bindData.App, name, bindData.Mountpoint}))
 		return nil

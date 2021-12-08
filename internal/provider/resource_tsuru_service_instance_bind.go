@@ -68,7 +68,7 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		_, err := provider.TsuruClient.ServiceApi.ServiceInstanceBind(ctx, service, instance, app, tsuru_client.ServiceInstanceBind{
+		resp, err := provider.TsuruClient.ServiceApi.ServiceInstanceBind(ctx, service, instance, app, tsuru_client.ServiceInstanceBind{
 			NoRestart: noRestart,
 		})
 		if err != nil {
@@ -80,6 +80,8 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 				return resource.NonRetryableError(err)
 			}
 		}
+		defer resp.Body.Close()
+		logTsuruStream(resp.Body)
 		return nil
 	})
 
