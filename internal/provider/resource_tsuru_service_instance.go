@@ -11,7 +11,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/antihax/optional"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -216,11 +215,7 @@ func resourceTsuruServiceInstanceUpdate(ctx context.Context, d *schema.ResourceD
 		instanceData.Parameters = parseParameters(parameters)
 	}
 
-	updateOpts := &tsuru.InstanceUpdateOpts{
-		ServiceInstanceUpdateData: optional.NewInterface(instanceData),
-	}
-
-	_, err := provider.TsuruClient.ServiceApi.InstanceUpdate(ctx, serviceName, name, updateOpts)
+	_, err := provider.TsuruClient.ServiceApi.InstanceUpdate(ctx, serviceName, name, instanceData)
 	if err != nil {
 		return diag.Errorf("Could not update tsuru service instance: %q, err: %s", d.Id(), err.Error())
 	}
