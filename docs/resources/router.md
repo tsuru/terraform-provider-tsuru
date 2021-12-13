@@ -24,5 +24,6 @@ description: |-
 
 - **config** (String) Configuration for router in YAML format
 - **id** (String) The ID of this resource.
+- **readiness_gates** (List of String) List of readiness gates associated with this router
 
 

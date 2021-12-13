@@ -34,6 +34,7 @@ Tsuru Application
 
 ### Read-Only
 
+- **cluster** (String) The name of cluster
 - **internal_address** (List of Object) (see [below for nested schema](#nestedatt--internal_address))
 - **router** (List of Object) (see [below for nested schema](#nestedatt--router))
 

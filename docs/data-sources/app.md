@@ -3,7 +3,7 @@
 page_title: "tsuru_app Data Source - terraform-provider-tsuru"
 subcategory: ""
 description: |-
-
+  
 ---
 
 # tsuru_app (Data Source)
@@ -56,3 +56,5 @@ Read-Only:
 - **addresses** (List of String)
 - **name** (String)
 - **options** (Map of String)
+
+

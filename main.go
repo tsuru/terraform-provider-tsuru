@@ -8,7 +8,7 @@ import (
 	"github.com/tsuru/terraform-provider-tsuru/internal/provider"
 )
 
-//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
 
 func main() {
 	plugin.Serve(&plugin.ServeOpts{
