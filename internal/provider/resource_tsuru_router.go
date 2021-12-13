@@ -30,6 +30,14 @@ func resourceTsuruRouter() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"readiness_gates": {
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Description: "List of readiness gates associated with this router",
+			},
 			"config": {
 				Type:        schema.TypeString,
 				Description: "Configuration for router in YAML format",
@@ -39,26 +47,39 @@ func resourceTsuruRouter() *schema.Resource {
 	}
 }
 
-func resourceTsuruRouterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	provider := meta.(*tsuruProvider)
-	name := d.Get("name").(string)
-
+func routerFromResourceData(d *schema.ResourceData) (tsuru.DynamicRouter, diag.Diagnostics) {
 	config, err := parseRouterConfig(d.Get("config"))
 	if err != nil {
-		return diag.Errorf("Could not decode config, err : %s", err.Error())
+		return tsuru.DynamicRouter{}, diag.Errorf("Could not decode config, err : %s", err.Error())
 	}
 
-	_, err = provider.TsuruClient.RouterApi.RouterCreate(ctx, tsuru.DynamicRouter{
-		Name:   name,
-		Type:   d.Get("type").(string),
-		Config: config,
-	})
+	readinessGates := []string{}
+	for _, item := range d.Get("readiness_gates").([]interface{}) {
+		readinessGates = append(readinessGates, item.(string))
+	}
 
+	return tsuru.DynamicRouter{
+		Name:           d.Get("name").(string),
+		Type:           d.Get("type").(string),
+		ReadinessGates: readinessGates,
+		Config:         config,
+	}, nil
+}
+
+func resourceTsuruRouterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	provider := meta.(*tsuruProvider)
+
+	router, dg := routerFromResourceData(d)
+	if dg != nil {
+		return dg
+	}
+
+	_, err := provider.TsuruClient.RouterApi.RouterCreate(ctx, router)
 	if err != nil {
 		return diag.Errorf("Could not create tsuru router, err : %s", err.Error())
 	}
 
-	d.SetId(name)
+	d.SetId(router.Name)
 
 	return nil
 }
@@ -81,6 +102,7 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		d.Set("name", router.Name)
 		d.Set("type", router.Type)
+		d.Set("readiness_gates", router.ReadinessGates)
 
 		config, err := parseRouterConfig(d.Get("config"))
 		if err != nil {
@@ -103,17 +125,13 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 
 func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	config, err := parseRouterConfig(d.Get("config"))
-	if err != nil {
-		return diag.Errorf("Could not decode config, err : %s", err.Error())
+
+	router, dg := routerFromResourceData(d)
+	if dg != nil {
+		return dg
 	}
 
-	_, err = provider.TsuruClient.RouterApi.RouterUpdate(ctx, d.Id(), tsuru.DynamicRouter{
-		Name:   d.Get("name").(string),
-		Type:   d.Get("type").(string),
-		Config: config,
-	})
-
+	_, err := provider.TsuruClient.RouterApi.RouterUpdate(ctx, d.Id(), router)
 	if err != nil {
 		return diag.Errorf("Could not update tsuru router: %q, err: %s", d.Id(), err.Error())
 	}

@@ -23,6 +23,7 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "test_router", p.Name)
 		assert.Equal(t, "router", p.Type)
+		assert.Equal(t, []string{"gate1", "gate2"}, p.ReadinessGates)
 		assert.Equal(t, map[string]interface{}{
 			"url": "testing",
 			"headers": map[string]interface{}{
@@ -35,8 +36,9 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 	fakeServer.GET("/1.3/routers", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, []*tsuru.DynamicRouter{
 			{
-				Name: "test_router",
-				Type: "router",
+				Name:           "test_router",
+				Type:           "router",
+				ReadinessGates: []string{"gate1", "gate2"},
 				Config: map[string]interface{}{
 					"url": "testing",
 					"headers": map[string]interface{}{
@@ -81,6 +83,7 @@ func testAccTsuruRouterConfig_basic(fakeServer, name string) string {
 resource "tsuru_router"  "test_router"   {
 	name = "%s"
 	type = "router"
+	readiness_gates = ["gate1", "gate2"]
 
 	config = <<-EOT
 	url: "testing"
