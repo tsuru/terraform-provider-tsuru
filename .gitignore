@@ -14,3 +14,5 @@ crash.log
 .terraformrc
 terraform.rc
 terraform
+
+.idea
