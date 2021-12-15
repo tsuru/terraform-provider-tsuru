@@ -118,6 +118,7 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 		return nil
 	}
 
+	d.SetId("")
 	return nil
 }
 
