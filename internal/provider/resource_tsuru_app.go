@@ -272,7 +272,7 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 	defer resp.Body.Close()
 	logTsuruStream(resp.Body)
 
-	return nil
+	return resourceTsuruApplicationRead(ctx, d, meta)
 }
 
 func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -337,6 +337,7 @@ func resourceTsuruApplicationDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to delete app %s: %v", name, err)
 	}
 
+	d.SetId("")
 	return nil
 }
 

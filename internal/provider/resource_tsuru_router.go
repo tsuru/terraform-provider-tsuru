@@ -81,7 +81,7 @@ func resourceTsuruRouterCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	d.SetId(router.Name)
 
-	return nil
+	return resourceTsuruRouterRead(ctx, d, meta)
 }
 
 func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -135,7 +135,8 @@ func resourceTsuruRouterUpdate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("Could not update tsuru router: %q, err: %s", d.Id(), err.Error())
 	}
-	return nil
+
+	return resourceTsuruRouterRead(ctx, d, meta)
 }
 
 func resourceTsuruRouterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -145,6 +146,7 @@ func resourceTsuruRouterDelete(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("Could not delete tsuru router, err: %s", err.Error())
 	}
 
+	d.SetId("")
 	return nil
 }
 

@@ -58,7 +58,8 @@ func resourceTsuruPlanCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("Could not create tsuru plan: %q, err: %s", plan.Name, err.Error())
 	}
 	d.SetId(plan.Name)
-	return nil
+
+	return resourceTsuruPlanRead(ctx, d, meta)
 }
 
 func planResourceData(d *schema.ResourceData) tsuru.Plan {
@@ -117,7 +118,6 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 		return nil
 	}
 
-	d.SetId("")
 	return nil
 }
 
@@ -130,6 +130,7 @@ func resourceTsuruPlanDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("Could not delete tsuru plan, err: %s", err.Error())
 	}
 
+	d.SetId("")
 	return nil
 }
 

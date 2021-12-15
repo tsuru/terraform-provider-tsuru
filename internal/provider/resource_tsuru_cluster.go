@@ -315,7 +315,8 @@ func resourceTsuruClusterUpdate(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.Errorf("Could not update tsuru cluster: %q, err: %s", d.Id(), err.Error())
 	}
-	return nil
+
+	return resourceTsuruClusterRead(ctx, d, meta)
 }
 
 func resourceTsuruClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -325,6 +326,8 @@ func resourceTsuruClusterDelete(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.Errorf("Could not delete tsuru cluster, err: %s", err.Error())
 	}
+
+	d.SetId("")
 	return nil
 }
 

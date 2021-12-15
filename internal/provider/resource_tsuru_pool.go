@@ -76,7 +76,8 @@ func resourceTsuruPoolCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("Could not create tsuru pool: %q, err: %s", name, err.Error())
 	}
 	d.SetId(name)
-	return nil
+
+	return resourceTsuruPoolRead(ctx, d, meta)
 }
 
 func resourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -119,7 +120,8 @@ func resourceTsuruPoolUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("Could not update tsuru pool: %q, err: %s", d.Id(), err.Error())
 	}
-	return nil
+
+	return resourceTsuruPoolRead(ctx, d, meta)
 }
 
 func resourceTsuruPoolDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -129,5 +131,7 @@ func resourceTsuruPoolDelete(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("Could not delete tsuru pool: %q, err: %s", d.Id(), err.Error())
 	}
+
+	d.SetId("")
 	return nil
 }

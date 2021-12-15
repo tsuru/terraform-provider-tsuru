@@ -120,5 +120,6 @@ func resourceTsuruApplicationCNameDelete(ctx context.Context, d *schema.Resource
 		return diag.Errorf("unable to delete cname: %v", err)
 	}
 
+	d.SetId("")
 	return nil
 }

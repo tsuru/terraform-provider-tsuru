@@ -57,7 +57,7 @@ func resourceTsuruServiceInstanceGrantCreate(ctx context.Context, d *schema.Reso
 
 	d.SetId(createID([]string{service, instance, team}))
 
-	return nil
+	return resourceTsuruServiceInstanceGrantRead(ctx, d, meta)
 }
 
 func resourceTsuruServiceInstanceGrantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -100,5 +100,6 @@ func resourceTsuruServiceInstanceGrantDelete(ctx context.Context, d *schema.Reso
 		return diag.Errorf("unable to revoke permission to team %s on %s %s: %v", team, service, instance, err)
 	}
 
+	d.SetId("")
 	return nil
 }

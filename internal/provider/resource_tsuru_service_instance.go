@@ -232,7 +232,7 @@ func resourceTsuruServiceInstanceUpdate(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	return nil
+	return resourceTsuruServiceInstanceRead(ctx, d, meta)
 }
 
 func resourceTsuruServiceInstanceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -246,6 +246,7 @@ func resourceTsuruServiceInstanceDelete(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("Could not delete tsuru service instance, err: %s", err.Error())
 	}
 
+	d.SetId("")
 	return nil
 }
 

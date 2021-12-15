@@ -124,5 +124,6 @@ func resourceTsuruVolumeDelete(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("Unable to delete volume: %v", err)
 	}
 
+	d.SetId("")
 	return nil
 }
