@@ -125,5 +125,6 @@ func resourceTsuruApplicationGrantDelete(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	return nil
 }

@@ -57,7 +57,7 @@ func resourceTsuruServiceInstanceGrantCreate(ctx context.Context, d *schema.Reso
 
 	d.SetId(createID([]string{service, instance, team}))
 
-	return nil
+	return resourceTsuruServiceInstanceGrantRead(ctx, d, meta)
 }
 
 func resourceTsuruServiceInstanceGrantRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

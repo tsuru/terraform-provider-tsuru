@@ -232,7 +232,7 @@ func resourceTsuruServiceInstanceUpdate(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	return nil
+	return resourceTsuruServiceInstanceRead(ctx, d, meta)
 }
 
 func resourceTsuruServiceInstanceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
