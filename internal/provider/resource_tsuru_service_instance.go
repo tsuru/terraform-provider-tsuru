@@ -246,7 +246,6 @@ func resourceTsuruServiceInstanceDelete(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("Could not delete tsuru service instance, err: %s", err.Error())
 	}
 
-	d.SetId("")
 	return nil
 }
 

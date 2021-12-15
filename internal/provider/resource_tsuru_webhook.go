@@ -240,7 +240,6 @@ func resourceTsuruWebhookDelete(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
 	return nil
 }
 

@@ -160,6 +160,5 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
 	return nil
 }

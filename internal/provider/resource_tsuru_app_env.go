@@ -217,7 +217,6 @@ func resourceTsuruApplicationEnvironmentDelete(ctx context.Context, d *schema.Re
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
 	return nil
 }
 

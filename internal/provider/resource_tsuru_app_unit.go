@@ -198,7 +198,6 @@ func resourceTsuruApplicationUnitsDelete(ctx context.Context, d *schema.Resource
 		return diag.Errorf("unable to remove units from %s %s: %v", app, process, err)
 	}
 
-	d.SetId("")
 	return nil
 }
 

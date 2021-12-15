@@ -132,6 +132,5 @@ func resourceTsuruPoolDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("Could not delete tsuru pool: %q, err: %s", d.Id(), err.Error())
 	}
 
-	d.SetId("")
 	return nil
 }

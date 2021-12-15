@@ -209,7 +209,6 @@ func resourceTsuruApplicationAutoscaleDelete(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
 	return nil
 }
 

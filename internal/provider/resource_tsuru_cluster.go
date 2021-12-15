@@ -327,7 +327,6 @@ func resourceTsuruClusterDelete(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("Could not delete tsuru cluster, err: %s", err.Error())
 	}
 
-	d.SetId("")
 	return nil
 }
 

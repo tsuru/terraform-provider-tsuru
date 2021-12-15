@@ -337,7 +337,6 @@ func resourceTsuruApplicationDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("unable to delete app %s: %v", name, err)
 	}
 
-	d.SetId("")
 	return nil
 }
 

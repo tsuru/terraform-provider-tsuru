@@ -176,7 +176,6 @@ func resourceTsuruApplicationRouterDelete(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("unable to delete router, error code: %d", resp.StatusCode)
 	}
 
-	d.SetId("")
 	return nil
 }
 

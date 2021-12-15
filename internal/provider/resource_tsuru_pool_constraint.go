@@ -138,6 +138,5 @@ func resourceTsuruPoolConstraintDelete(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("Could not set tsuru pool empty pool constraints: %q, err: %s", id, err.Error())
 	}
 
-	d.SetId("")
 	return nil
 }

@@ -100,6 +100,5 @@ func resourceTsuruServiceInstanceGrantDelete(ctx context.Context, d *schema.Reso
 		return diag.Errorf("unable to revoke permission to team %s on %s %s: %v", team, service, instance, err)
 	}
 
-	d.SetId("")
 	return nil
 }

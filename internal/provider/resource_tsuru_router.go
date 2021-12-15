@@ -146,7 +146,6 @@ func resourceTsuruRouterDelete(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("Could not delete tsuru router, err: %s", err.Error())
 	}
 
-	d.SetId("")
 	return nil
 }
 

@@ -130,7 +130,6 @@ func resourceTsuruPlanDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("Could not delete tsuru plan, err: %s", err.Error())
 	}
 
-	d.SetId("")
 	return nil
 }
 
