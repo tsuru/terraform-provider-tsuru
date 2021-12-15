@@ -65,7 +65,7 @@ func resourceTsuruClusterPoolSet(ctx context.Context, d *schema.ResourceData, me
 
 	d.SetId(clusterName + "/" + poolName)
 
-	return nil
+	return resourceTsuruClusterPoolRead(ctx, d, meta)
 }
 
 func resourceTsuruClusterPoolUnset(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
