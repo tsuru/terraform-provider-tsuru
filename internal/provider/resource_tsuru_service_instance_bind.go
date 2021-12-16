@@ -48,7 +48,6 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 				Description: "restart app after applying",
 				Optional:    true,
 				Default:     true,
-				ForceNew:    true,
 			},
 		},
 	}
