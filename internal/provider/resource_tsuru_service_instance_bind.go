@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -19,6 +20,7 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Tsuru Service Instance Bind",
 		CreateContext: resourceTsuruServiceInstanceBindCreate,
+		UpdateContext: resourceTsuruServiceInstanceBindUpdate,
 		ReadContext:   resourceTsuruServiceInstanceBindRead,
 		DeleteContext: resourceTsuruServiceInstanceBindDelete,
 		Importer: &schema.ResourceImporter{
@@ -90,6 +92,11 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 
 	d.SetId(createID([]string{service, instance, app}))
 
+	return resourceTsuruServiceInstanceBindRead(ctx, d, meta)
+}
+
+func resourceTsuruServiceInstanceBindUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Println("[INFO] Update bind is a no-op")
 	return resourceTsuruServiceInstanceBindRead(ctx, d, meta)
 }
 
