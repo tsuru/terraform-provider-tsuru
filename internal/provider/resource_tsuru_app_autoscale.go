@@ -45,7 +45,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Name of service instance",
+				Description: "Application process",
 			},
 			"min_units": {
 				Type:        schema.TypeInt,
