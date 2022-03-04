@@ -23,8 +23,9 @@ import (
 func resourceTsuruApplicationAutoscale() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Tsuru Application Autoscale",
-		CreateContext: resourceTsuruApplicationAutoscaleCreate,
+		CreateContext: resourceTsuruApplicationAutoscaleSet,
 		ReadContext:   resourceTsuruApplicationAutoscaleRead,
+		UpdateContext: resourceTsuruApplicationAutoscaleSet,
 		DeleteContext: resourceTsuruApplicationAutoscaleDelete,
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(40 * time.Minute),
@@ -51,7 +52,6 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "minimum number of units",
 				Required:    true,
-				ForceNew:    true,
 				DefaultFunc: func() (interface{}, error) {
 					return 1, nil
 				},
@@ -60,19 +60,17 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "maximum number of units",
 				Required:    true,
-				ForceNew:    true,
 			},
 			"cpu_average": {
 				Type:        schema.TypeString,
 				Description: "CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.",
 				Required:    true,
-				ForceNew:    true,
 			},
 		},
 	}
 }
 
-func resourceTsuruApplicationAutoscaleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTsuruApplicationAutoscaleSet(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
 	app := d.Get("app").(string)
