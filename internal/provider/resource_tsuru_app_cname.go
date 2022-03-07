@@ -115,7 +115,21 @@ func resourceTsuruApplicationCNameDelete(ctx context.Context, d *schema.Resource
 		Cname: []string{hostname},
 	}
 
-	_, err := provider.TsuruClient.AppApi.AppCnameDelete(ctx, app, cname)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutDelete), func() *resource.RetryError {
+		_, err := provider.TsuruClient.AppApi.AppCnameDelete(ctx, app, cname)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return diag.Errorf("unable to delete cname: %v", err)
 	}
