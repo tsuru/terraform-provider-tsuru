@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
@@ -85,9 +86,22 @@ func resourceTsuruApplicationUnitsCreate(ctx context.Context, d *schema.Resource
 		deltaRequest.Version = vStr
 	}
 
-	_, err = provider.TsuruClient.AppApi.UnitsAdd(ctx, app, deltaRequest)
+	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err = provider.TsuruClient.AppApi.UnitsAdd(ctx, app, deltaRequest)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(errors.Errorf("unable to add units to %s %s: %v", app, process, err))
+		}
+		return nil
+	})
+
 	if err != nil {
-		return diag.Errorf("unable to add units to %s %s: %v", app, process, err)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(createID(baseID))
