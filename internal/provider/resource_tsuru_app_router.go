@@ -105,7 +105,14 @@ func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceD
 	appName := parts[0]
 	name := parts[1]
 
-	routers, _, err := provider.TsuruClient.AppApi.AppRouterList(ctx, appName)
+	routers, resp, err := provider.TsuruClient.AppApi.AppRouterList(ctx, appName)
+
+	// wpjunior: it is a workaround for threating the response 204 of API
+	if resp != nil && resp.StatusCode == http.StatusNoContent {
+		d.SetId("")
+		return nil
+	}
+
 	if err != nil {
 		if isNotFoundError(err) {
 			d.SetId("")
