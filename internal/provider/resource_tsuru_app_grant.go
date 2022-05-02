@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -53,7 +54,11 @@ func resourceTsuruApplicationGrantCreate(ctx context.Context, d *schema.Resource
 	team := d.Get("team").(string)
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		_, err := provider.TsuruClient.AppApi.AppTeamGrant(ctx, app, team)
+		response, err := provider.TsuruClient.AppApi.AppTeamGrant(ctx, app, team)
+		// ignore teams already granted for this app
+		if response.StatusCode == http.StatusConflict {
+			return nil
+		}
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
