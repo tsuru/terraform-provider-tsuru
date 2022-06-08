@@ -145,8 +145,11 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 	isMilli := strings.HasSuffix(currentCPUAverage, "m")
 	isPercentage := strings.HasSuffix(currentCPUAverage, "%")
 
+	retryCount := 0
+	maxRetries := 10
 	// autoscale info reflects near realtime
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		retryCount++
 		autoscales, _, err := provider.TsuruClient.AppApi.AutoScaleInfo(ctx, app)
 		if err != nil {
 			return resource.NonRetryableError(errors.Wrapf(err, "unable to read autoscale %s %s", app, process))
@@ -171,6 +174,10 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 				d.Set("cpu_average", autoscale.AverageCPU)
 			}
 			return nil
+		}
+
+		if retryCount >= maxRetries {
+			return resource.NonRetryableError(fmt.Errorf("unable to read autoscale %s %s: process not found (after %d retries)", app, process, maxRetries))
 		}
 
 		log.Print("[INFO] no autoscales found, trying again")
