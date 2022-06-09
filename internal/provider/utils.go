@@ -16,6 +16,15 @@ import (
 
 const ID_SEPARATOR = "::"
 
+type MaxRetriesError struct {
+	Message string
+	Meta    interface{}
+}
+
+func (e *MaxRetriesError) Error() string {
+	return e.Message
+}
+
 func isRetryableError(err []byte) bool {
 	e := string(err)
 	return strings.Contains(e, "event locked")

@@ -146,7 +146,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 	isPercentage := strings.HasSuffix(currentCPUAverage, "%")
 
 	retryCount := 0
-	maxRetries := 10
+	maxRetries := 5
 	// autoscale info reflects near realtime
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		retryCount++
@@ -177,14 +177,25 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 		}
 
 		if retryCount >= maxRetries {
-			return resource.NonRetryableError(fmt.Errorf("unable to read autoscale %s %s: process not found (after %d retries)", app, process, maxRetries))
+			return resource.NonRetryableError(&MaxRetriesError{Message: fmt.Sprintf("Unable to read autoscale for %s::%s (after %d retries)", app, process, maxRetries)})
 		}
 
 		log.Print("[INFO] no autoscales found, trying again")
-		return resource.RetryableError(fmt.Errorf("unable to read autoscale %s %s: process not found", app, process))
+		return resource.RetryableError(fmt.Errorf("unable to read autoscale for %s::%s: process not found", app, process))
 	})
 
 	if err != nil {
+		var mrErr *MaxRetriesError
+		if errors.As(err, &mrErr) {
+			d.SetId("")
+			return diag.Diagnostics{
+				{
+					Severity: diag.Warning,
+					Summary:  mrErr.Message,
+					Detail:   fmt.Sprintf("%s. Removing it from state.", mrErr.Message),
+				},
+			}
+		}
 		return diag.FromErr(err)
 	}
 
