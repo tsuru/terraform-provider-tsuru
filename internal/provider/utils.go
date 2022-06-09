@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -23,6 +24,14 @@ type MaxRetriesError struct {
 
 func (e *MaxRetriesError) Error() string {
 	return e.Message
+}
+
+func isNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	openAPIError, ok := err.(tsuru_client.GenericOpenAPIError)
+	return ok && openAPIError.StatusCode() == http.StatusNotFound
 }
 
 func isRetryableError(err []byte) bool {

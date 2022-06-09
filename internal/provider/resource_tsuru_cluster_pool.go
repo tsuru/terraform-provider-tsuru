@@ -6,12 +6,10 @@ package provider
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
 func resourceTsuruClusterPool() *schema.Resource {
@@ -132,14 +130,6 @@ func getClusterAndPoolFromResource(d *schema.ResourceData) (cluster, pool string
 func setClusterPoolNotFound(d *schema.ResourceData) {
 	d.Set("cluster", "")
 	d.Set("pool", "")
-}
-
-func isNotFoundError(err error) bool {
-	if err == nil {
-		return false
-	}
-	openAPIError, ok := err.(tsuru.GenericOpenAPIError)
-	return ok && openAPIError.StatusCode() == http.StatusNotFound
 }
 
 func removeItemFromSlice(s []string, item string) []string {
