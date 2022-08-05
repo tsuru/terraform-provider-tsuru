@@ -73,35 +73,36 @@ func resourceTsuruApplicationUnitsCreate(ctx context.Context, d *schema.Resource
 	delta := units - curUnits
 	if delta < 0 {
 		return diag.Errorf("App has more running units for process %s than defined, update your tf file", process)
-	}
+	} else if delta > 0 {
 
-	deltaRequest := tsuru_client.UnitsDelta{
-		Units:   strconv.Itoa(delta),
-		Process: process,
-	}
-
-	if version != nil {
-		vStr := strconv.Itoa(*version)
-		baseID = append(baseID, vStr)
-		deltaRequest.Version = vStr
-	}
-
-	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		_, err = provider.TsuruClient.AppApi.UnitsAdd(ctx, app, deltaRequest)
-		if err != nil {
-			var apiError tsuru_client.GenericOpenAPIError
-			if errors.As(err, &apiError) {
-				if isRetryableError(apiError.Body()) {
-					return resource.RetryableError(err)
-				}
-			}
-			return resource.NonRetryableError(errors.Errorf("unable to add units to %s %s: %v", app, process, err))
+		deltaRequest := tsuru_client.UnitsDelta{
+			Units:   strconv.Itoa(delta),
+			Process: process,
 		}
-		return nil
-	})
 
-	if err != nil {
-		return diag.FromErr(err)
+		if version != nil {
+			vStr := strconv.Itoa(*version)
+			baseID = append(baseID, vStr)
+			deltaRequest.Version = vStr
+		}
+
+		err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+			_, err = provider.TsuruClient.AppApi.UnitsAdd(ctx, app, deltaRequest)
+			if err != nil {
+				var apiError tsuru_client.GenericOpenAPIError
+				if errors.As(err, &apiError) {
+					if isRetryableError(apiError.Body()) {
+						return resource.RetryableError(err)
+					}
+				}
+				return resource.NonRetryableError(errors.Errorf("unable to add units to %s %s: %v", app, process, err))
+			}
+			return nil
+		})
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId(createID(baseID))
