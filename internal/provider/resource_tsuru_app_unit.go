@@ -71,20 +71,20 @@ func resourceTsuruApplicationUnitsCreate(ctx context.Context, d *schema.Resource
 	}
 
 	delta := units - curUnits
+	deltaRequest := tsuru_client.UnitsDelta{
+		Units:   strconv.Itoa(delta),
+		Process: process,
+	}
+
+	if version != nil {
+		vStr := strconv.Itoa(*version)
+		baseID = append(baseID, vStr)
+		deltaRequest.Version = vStr
+	}
+
 	if delta < 0 {
 		return diag.Errorf("App has more running units for process %s than defined, update your tf file", process)
 	} else if delta > 0 {
-
-		deltaRequest := tsuru_client.UnitsDelta{
-			Units:   strconv.Itoa(delta),
-			Process: process,
-		}
-
-		if version != nil {
-			vStr := strconv.Itoa(*version)
-			baseID = append(baseID, vStr)
-			deltaRequest.Version = vStr
-		}
 
 		err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 			_, err = provider.TsuruClient.AppApi.UnitsAdd(ctx, app, deltaRequest)
