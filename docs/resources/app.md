@@ -104,4 +104,13 @@ Read-Only:
 - `name` (String)
 - `options` (Map of String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_app.resource_name "name"
+
+# example
+terraform import tsuru_app.my-app "sample-app"
+```

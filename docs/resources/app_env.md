@@ -56,4 +56,13 @@ Optional:
 - `delete` (String)
 - `update` (String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_app_env.resource_name "app"
+
+# example
+terraform import tsuru_app_env.env "sample-app"
+```

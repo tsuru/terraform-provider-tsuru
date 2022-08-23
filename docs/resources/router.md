@@ -52,4 +52,13 @@ Optional:
 - `delete` (String)
 - `update` (String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_router.resource_name "name"
+
+# example
+terraform import tsuru_router.test_router "test_router"
+```

@@ -47,4 +47,13 @@ Optional:
 - `create` (String)
 - `delete` (String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_plan.resource_name "name"
+
+# example
+terraform import tsuru_plan.plan1 "plan1"
+```
