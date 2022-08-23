@@ -24,21 +24,24 @@ resource "tsuru_app_grant" "app-permissions-team-a" {
 
 ### Required
 
-- **app** (String) Application name
-- **team** (String) Teams to grant access to the app
+- `app` (String) Application name
+- `team` (String) Teams to grant access to the app
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

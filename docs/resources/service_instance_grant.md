@@ -25,12 +25,24 @@ resource "tsuru_service_instance_grant" "instance_grant" {
 
 ### Required
 
-- **service_instance** (String) Name of service instance
-- **service_name** (String) Name of service kind
-- **team** (String) Team name
+- `service_instance` (String) Name of service instance
+- `service_name` (String) Name of service kind
+- `team` (String) Team name
 
 ### Optional
 
-- **id** (String) The ID of this resource.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
 
 

@@ -26,13 +26,25 @@ resource "tsuru_plan" "plan1" {
 
 ### Required
 
-- **cpu** (String)
-- **memory** (String)
-- **name** (String)
+- `cpu` (String)
+- `memory` (String)
+- `name` (String)
 
 ### Optional
 
-- **default** (Boolean)
-- **id** (String) The ID of this resource.
+- `default` (Boolean)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
 
 

@@ -26,14 +26,27 @@ resource "tsuru_pool" "my-pool" {
 
 ### Required
 
-- **name** (String) Unique name of pool
+- `name` (String) Unique name of pool
 
 ### Optional
 
-- **default** (Boolean)
-- **id** (String) The ID of this resource.
-- **labels** (Map of String) Key/value to store additional config
-- **public** (Boolean)
-- **tsuru_provisioner** (String) Provisioner of pool
+- `default` (Boolean)
+- `labels` (Map of String) Key/value to store additional config
+- `public` (Boolean)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `tsuru_provisioner` (String) Provisioner of pool
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

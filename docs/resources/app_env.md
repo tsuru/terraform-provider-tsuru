@@ -34,23 +34,26 @@ resource "tsuru_app_env" "env" {
 
 ### Required
 
-- **app** (String) Application name
+- `app` (String) Application name
 
 ### Optional
 
-- **environment_variables** (Map of String) Environment variables
-- **id** (String) The ID of this resource.
-- **private_environment_variables** (Map of String) Environment variables
-- **restart_on_update** (Boolean) restart app after applying
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `environment_variables` (Map of String) Environment variables
+- `private_environment_variables` (Map of String) Environment variables
+- `restart_on_update` (Boolean) restart app after applying
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

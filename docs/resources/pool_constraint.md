@@ -17,13 +17,26 @@ description: |-
 
 ### Required
 
-- **field** (String) field of constraint
-- **pool_expr** (String) The name of pools, allow glob match style
-- **values** (List of String)
+- `field` (String) field of constraint
+- `pool_expr` (String) The name of pools, allow glob match style
+- `values` (List of String)
 
 ### Optional
 
-- **blacklist** (Boolean)
-- **id** (String) The ID of this resource.
+- `blacklist` (Boolean)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

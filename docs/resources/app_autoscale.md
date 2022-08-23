@@ -27,24 +27,27 @@ resource "tsuru_app_autoscale" "web" {
 
 ### Required
 
-- **app** (String) Application name
-- **cpu_average** (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
-- **max_units** (Number) maximum number of units
-- **process** (String) Name of service instance
+- `app` (String) Application name
+- `cpu_average` (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
+- `max_units` (Number) maximum number of units
+- `process` (String) Application process
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **min_units** (Number) minimum number of units
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `min_units` (Number) minimum number of units
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

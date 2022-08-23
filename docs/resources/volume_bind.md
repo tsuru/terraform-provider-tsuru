@@ -17,24 +17,26 @@ Tsuru Service Volume Bind
 
 ### Required
 
-- **app** (String) Application name
-- **mount_point** (String) Name of service instance
-- **volume** (String) Name of service kind
+- `app` (String) Application name
+- `mount_point` (String) Name of service instance
+- `volume` (String) Name of service kind
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **read_only** (Boolean) restart app after applying
-- **restart_on_update** (Boolean) restart app after applying
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `read_only` (Boolean) restart app after applying
+- `restart_on_update` (Boolean) restart app after applying
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
 
 

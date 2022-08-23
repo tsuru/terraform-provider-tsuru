@@ -57,31 +57,44 @@ resource "tsuru_webhook" "webhook1" {
 
 ### Required
 
-- **description** (String)
-- **name** (String)
-- **team_owner** (String)
-- **url** (String)
+- `description` (String)
+- `name` (String)
+- `team_owner` (String)
+- `url` (String)
 
 ### Optional
 
-- **body** (String)
-- **event_filter** (Block List) (see [below for nested schema](#nestedblock--event_filter))
-- **headers** (Map of String)
-- **id** (String) The ID of this resource.
-- **insecure** (Boolean)
-- **method** (String)
-- **proxy_url** (String)
+- `body` (String)
+- `event_filter` (Block List) (see [below for nested schema](#nestedblock--event_filter))
+- `headers` (Map of String)
+- `insecure` (Boolean)
+- `method` (String)
+- `proxy_url` (String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--event_filter"></a>
 ### Nested Schema for `event_filter`
 
 Optional:
 
-- **error_only** (Boolean)
-- **kind_names** (List of String)
-- **kind_types** (List of String)
-- **success_only** (Boolean)
-- **target_types** (List of String)
-- **target_values** (List of String)
+- `error_only` (Boolean)
+- `kind_names` (List of String)
+- `kind_types` (List of String)
+- `success_only` (Boolean)
+- `target_types` (List of String)
+- `target_values` (List of String)
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
 
 

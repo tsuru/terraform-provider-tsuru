@@ -34,23 +34,33 @@ resource "tsuru_service_instance" "my_reverse_proxy" {
 
 ### Required
 
-- **name** (String) Instance name
-- **owner** (String) Team owner of this instance
-- **plan** (String)
-- **service_name** (String) Name of service kind
+- `name` (String) Instance name
+- `owner` (String) Team owner of this instance
+- `plan` (String)
+- `service_name` (String) Name of service kind
 
 ### Optional
 
-- **description** (String) Human readable description for instance
-- **id** (String) The ID of this resource.
-- **parameters** (Map of String) Service instance addicional parameters
-- **pool** (String) Service Pool
-- **tags** (List of String) Custom tags for instance
-- **unbind_on_delete** (Boolean) Unbind service instance from apps on delete
-- **wait_for_up_status** (Boolean) Wait for instance to reach up state
+- `description` (String) Human readable description for instance
+- `parameters` (Map of String) Service instance addicional parameters
+- `pool` (String) Service Pool
+- `tags` (List of String) Custom tags for instance
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `unbind_on_delete` (Boolean) Unbind service instance from apps on delete
+- `wait_for_up_status` (Boolean) Wait for instance to reach up state
 
 ### Read-Only
 
-- **status** (String) Current status of service
+- `id` (String) The ID of this resource.
+- `status` (String) Current status of service
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

@@ -17,35 +17,32 @@ description: |-
 
 ### Required
 
-- **name** (String) Unique name of app
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) Unique name of app
 
 ### Read-Only
 
-- **cluster** (String)
-- **description** (String)
-- **internal_address** (Block List) (see [below for nested schema](#nestedblock--internal_address))
-- **platform** (String)
-- **pool** (String)
-- **router** (Block List) (see [below for nested schema](#nestedblock--router))
-- **tags** (List of String)
-- **team_owner** (String)
-- **teams** (List of String)
-- **tsuru_provisioner** (String)
+- `cluster` (String)
+- `description` (String)
+- `id` (String) The ID of this resource.
+- `internal_address` (Block List) (see [below for nested schema](#nestedblock--internal_address))
+- `platform` (String)
+- `pool` (String)
+- `router` (Block List) (see [below for nested schema](#nestedblock--router))
+- `tags` (List of String)
+- `team_owner` (String)
+- `teams` (List of String)
+- `tsuru_provisioner` (String)
 
 <a id="nestedblock--internal_address"></a>
 ### Nested Schema for `internal_address`
 
 Read-Only:
 
-- **domain** (String)
-- **port** (Number)
-- **process** (String)
-- **protocol** (String)
-- **version** (String)
+- `domain` (String)
+- `port` (Number)
+- `process` (String)
+- `protocol` (String)
+- `version` (String)
 
 
 <a id="nestedblock--router"></a>
@@ -53,8 +50,8 @@ Read-Only:
 
 Read-Only:
 
-- **addresses** (List of String)
-- **name** (String)
-- **options** (Map of String)
+- `addresses` (List of String)
+- `name` (String)
+- `options` (Map of String)
 
 

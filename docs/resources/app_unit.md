@@ -25,13 +25,26 @@ resource "tsuru_app_unit" "other-unit" {
 
 ### Required
 
-- **app** (String) Application name
-- **process** (String) Process name
-- **units_count** (Number) Units count
+- `app` (String) Application name
+- `process` (String) Process name
+- `units_count` (Number) Units count
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **version** (Number) Process name
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `version` (Number) Process name
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

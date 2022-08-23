@@ -24,11 +24,23 @@ resource "tsuru_cluster_pool" "cluster-pool" {
 
 ### Required
 
-- **cluster** (String) The name of defined cluster
-- **pool** (String) The name of defined pool
+- `cluster` (String) The name of defined cluster
+- `pool` (String) The name of defined pool
 
 ### Optional
 
-- **id** (String) The ID of this resource.
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
 
 

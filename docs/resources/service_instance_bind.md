@@ -26,19 +26,32 @@ resource "tsuru_service_instance_bind" "instance_bind" {
 
 ### Required
 
-- **app** (String) Application name
-- **service_instance** (String) Name of service instance
-- **service_name** (String) Name of service kind
+- `app` (String) Application name
+- `service_instance` (String) Name of service instance
+- `service_name` (String) Name of service kind
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **restart_on_update** (Boolean) restart app after applying
+- `restart_on_update` (Boolean) restart app after applying
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 ## Import
 
 Import is supported using the following syntax:
 
 ```shell
-terraform import tsuru_service_instance_bind.my_bind "SERVICE::INSTANCE::APP"
+terraform import tsuru.service_instance_bind.my_bind "SERVICE::INSTANCE::APP"
 ```

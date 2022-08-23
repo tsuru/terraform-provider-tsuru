@@ -30,13 +30,26 @@ resource "tsuru_router" "test_router" {
 
 ### Required
 
-- **name** (String)
-- **type** (String)
+- `name` (String)
+- `type` (String)
 
 ### Optional
 
-- **config** (String) Configuration for router in YAML format
-- **id** (String) The ID of this resource.
-- **readiness_gates** (List of String) List of readiness gates associated with this router
+- `config` (String) Configuration for router in YAML format
+- `readiness_gates` (List of String) List of readiness gates associated with this router
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

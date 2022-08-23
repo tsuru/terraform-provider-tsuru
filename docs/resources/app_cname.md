@@ -24,21 +24,24 @@ resource "tsuru_app_cname" "app-extra-cname" {
 
 ### Required
 
-- **app** (String) Application name
-- **hostname** (String) Application description
+- `app` (String) Application name
+- `hostname` (String) Application description
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 

@@ -28,22 +28,31 @@ resource "tsuru_app_router" "other-router" {
 
 ### Required
 
-- **app** (String) Application name
-- **name** (String) Router name
+- `app` (String) Application name
+- `name` (String) Router name
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **options** (Map of String) Application description
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `options` (Map of String) Application description
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **delete** (String)
-- **update** (String)
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_app_router.myrouter "APP::ROUTER_NAME"
+```

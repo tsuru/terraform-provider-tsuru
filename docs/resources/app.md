@@ -42,34 +42,45 @@ resource "tsuru_app" "my-app" {
 
 ### Required
 
-- **name** (String) Application name
-- **plan** (String) Plan
-- **platform** (String) Platform
-- **pool** (String) The name of pool
-- **team_owner** (String) Application owner
+- `name` (String) Application name
+- `plan` (String) Plan
+- `platform` (String) Platform
+- `pool` (String) The name of pool
+- `team_owner` (String) Application owner
 
 ### Optional
 
-- **default_router** (String) Default router at creation of app
-- **description** (String) Application description
-- **id** (String) The ID of this resource.
-- **metadata** (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
-- **restart_on_update** (Boolean) Restart app after applying changes
-- **tags** (List of String) Tags
+- `default_router` (String) Default router at creation of app
+- `description` (String) Application description
+- `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
+- `restart_on_update` (Boolean) Restart app after applying changes
+- `tags` (List of String) Tags
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- **cluster** (String) The name of cluster
-- **internal_address** (List of Object) (see [below for nested schema](#nestedatt--internal_address))
-- **router** (List of Object) (see [below for nested schema](#nestedatt--router))
+- `cluster` (String) The name of cluster
+- `id` (String) The ID of this resource.
+- `internal_address` (List of Object) (see [below for nested schema](#nestedatt--internal_address))
+- `router` (List of Object) (see [below for nested schema](#nestedatt--router))
 
 <a id="nestedblock--metadata"></a>
 ### Nested Schema for `metadata`
 
 Optional:
 
-- **annotations** (Map of String)
-- **labels** (Map of String)
+- `annotations` (Map of String)
+- `labels` (Map of String)
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
 
 <a id="nestedatt--internal_address"></a>
@@ -77,11 +88,11 @@ Optional:
 
 Read-Only:
 
-- **domain** (String)
-- **port** (Number)
-- **process** (String)
-- **protocol** (String)
-- **version** (String)
+- `domain` (String)
+- `port` (Number)
+- `process` (String)
+- `protocol` (String)
+- `version` (String)
 
 
 <a id="nestedatt--router"></a>
@@ -89,8 +100,8 @@ Read-Only:
 
 Read-Only:
 
-- **addresses** (List of String)
-- **name** (String)
-- **options** (Map of String)
+- `addresses` (List of String)
+- `name` (String)
+- `options` (Map of String)
 
 

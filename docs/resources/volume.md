@@ -29,14 +29,26 @@ resource "tsuru_volume" "volume" {
 
 ### Required
 
-- **name** (String) Volume name
-- **owner** (String) Team owner of this volume
-- **plan** (String)
-- **pool** (String) Volume Pool
+- `name` (String) Volume name
+- `owner` (String) Team owner of this volume
+- `plan` (String)
+- `pool` (String) Volume Pool
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **options** (Map of String) Volume additional options
+- `options` (Map of String) Volume additional options
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
 
 
