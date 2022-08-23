@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -23,6 +24,11 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 		UpdateContext: resourceTsuruServiceInstanceBindUpdate,
 		ReadContext:   resourceTsuruServiceInstanceBindRead,
 		DeleteContext: resourceTsuruServiceInstanceBindDelete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},

@@ -24,7 +24,6 @@ func resourceTsuruVolumeBind() *schema.Resource {
 		DeleteContext: resourceTsuruVolumeBindDelete,
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(40 * time.Minute),
-			Update: schema.DefaultTimeout(40 * time.Minute),
 			Delete: schema.DefaultTimeout(40 * time.Minute),
 		},
 		Importer: &schema.ResourceImporter{

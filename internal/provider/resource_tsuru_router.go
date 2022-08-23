@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"reflect"
+	"time"
 
 	yaml "github.com/ghodss/yaml"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -16,6 +17,11 @@ func resourceTsuruRouter() *schema.Resource {
 		ReadContext:   resourceTsuruRouterRead,
 		UpdateContext: resourceTsuruRouterUpdate,
 		DeleteContext: resourceTsuruRouterDelete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},

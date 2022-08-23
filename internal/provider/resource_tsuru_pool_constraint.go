@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,6 +20,11 @@ func resourceTsuruPoolConstraint() *schema.Resource {
 		ReadContext:   resourceTsuruPoolConstraintRead,
 		UpdateContext: resourceTsuruPoolConstraintSet,
 		DeleteContext: resourceTsuruPoolConstraintDelete,
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(40 * time.Minute),
+			Delete: schema.DefaultTimeout(40 * time.Minute),
+		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
