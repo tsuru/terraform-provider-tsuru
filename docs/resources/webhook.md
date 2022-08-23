@@ -97,4 +97,13 @@ Optional:
 - `create` (String)
 - `delete` (String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_webhook.resource_name "name"
+
+# example
+terraform import tsuru_webhook.webhook1 "webhook1"
+```

@@ -45,4 +45,13 @@ Optional:
 - `create` (String)
 - `delete` (String)
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import tsuru_service_instance_grant.resource_name "service::instance::team"
+
+# example
+terraform import tsuru_service_instance_grant.instance_grant "service01::my-instance::mysupport-team"
+```

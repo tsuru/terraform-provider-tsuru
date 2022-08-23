@@ -53,5 +53,8 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
-terraform import tsuru.service_instance_bind.my_bind "SERVICE::INSTANCE::APP"
+terraform import service_instance_bind.resource_name "service::instance::app"
+
+# example
+terraform import service_instance_bind.instance_bind "service01::my-instance::app01"
 ```
