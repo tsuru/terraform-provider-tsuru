@@ -137,14 +137,13 @@ func resourceTsuruVolumeBindRead(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	for _, bind := range volume.Binds {
-		if bind.Id.App != app && bind.Id.Mountpoint != mountPath {
-			continue
+		if bind.Id.App == app && bind.Id.Mountpoint == mountPath {
+			d.Set("volume", name)
+			d.Set("app", app)
+			d.Set("mount_point", bind.Id.Mountpoint)
+			d.Set("read_only", bind.Readonly)
+			return nil
 		}
-		d.Set("volume", name)
-		d.Set("app", app)
-		d.Set("mount_point", bind.Id.Mountpoint)
-		d.Set("read_only", bind.Readonly)
-		return nil
 	}
 
 	d.SetId("")
