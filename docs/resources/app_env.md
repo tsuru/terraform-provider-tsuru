@@ -40,7 +40,7 @@ resource "tsuru_app_env" "env" {
 
 - `environment_variables` (Map of String) Environment variables
 - `private_environment_variables` (Map of String) Environment variables
-- `restart_on_update` (Boolean) restart app after applying
+- `restart_on_update` (Boolean) restart app after applying (default = true)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only

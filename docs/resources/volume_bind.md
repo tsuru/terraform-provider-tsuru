@@ -31,8 +31,8 @@ resource "tsuru_volume_bind" "volume_bind" {
 
 ### Optional
 
-- `read_only` (Boolean) restart app after applying
-- `restart_on_update` (Boolean) restart app after applying
+- `read_only` (Boolean) restart app after applying (default = false)
+- `restart_on_update` (Boolean) restart app after applying (default = true)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only

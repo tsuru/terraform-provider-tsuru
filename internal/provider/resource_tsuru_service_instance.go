@@ -83,7 +83,7 @@ func resourceTsuruServiceInstance() *schema.Resource {
 				Type:        schema.TypeBool,
 				Default:     true,
 				Optional:    true,
-				Description: "Unbind service instance from apps on delete",
+				Description: "Unbind service instance from apps on delete (default = true)",
 			},
 			"status": {
 				Type:        schema.TypeString,

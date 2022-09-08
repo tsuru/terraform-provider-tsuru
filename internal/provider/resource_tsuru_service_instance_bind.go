@@ -53,7 +53,7 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 			},
 			"restart_on_update": {
 				Type:        schema.TypeBool,
-				Description: "restart app after applying",
+				Description: "restart app after applying (default = true)",
 				Optional:    true,
 				Default:     true,
 			},

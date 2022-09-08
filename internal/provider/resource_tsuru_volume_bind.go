@@ -50,14 +50,14 @@ func resourceTsuruVolumeBind() *schema.Resource {
 			},
 			"read_only": {
 				Type:        schema.TypeBool,
-				Description: "restart app after applying",
+				Description: "restart app after applying (default = false)",
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
 			},
 			"restart_on_update": {
 				Type:        schema.TypeBool,
-				Description: "restart app after applying",
+				Description: "restart app after applying (default = true)",
 				Optional:    true,
 				Default:     true,
 				ForceNew:    true,

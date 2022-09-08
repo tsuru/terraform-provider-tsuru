@@ -46,7 +46,7 @@ resource "tsuru_service_instance" "my_reverse_proxy" {
 - `pool` (String) Service Pool
 - `tags` (List of String) Custom tags for instance
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `unbind_on_delete` (Boolean) Unbind service instance from apps on delete
+- `unbind_on_delete` (Boolean) Unbind service instance from apps on delete (default = true)
 - `wait_for_up_status` (Boolean) Wait for instance to reach up state
 
 ### Read-Only

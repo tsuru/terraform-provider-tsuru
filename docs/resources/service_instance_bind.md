@@ -32,7 +32,7 @@ resource "tsuru_service_instance_bind" "instance_bind" {
 
 ### Optional
 
-- `restart_on_update` (Boolean) restart app after applying
+- `restart_on_update` (Boolean) restart app after applying (default = true)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
