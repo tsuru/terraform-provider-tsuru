@@ -62,7 +62,7 @@ lint:
 	time golangci-lint run
 
 test:
-	TF_ACC=1 TF_ACC_TERRAFORM_VERSION=1.0.3 go test ./... -v
+	TF_ACC=1 TF_ACC_TERRAFORM_VERSION=1.3.2 go test ./... -v
 
 generate-docs:
 	go get github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
