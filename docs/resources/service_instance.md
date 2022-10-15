@@ -42,7 +42,7 @@ resource "tsuru_service_instance" "my_reverse_proxy" {
 
 - `description` (String) Human readable description for instance
 - `parameters` (Map of String) Service instance addicional parameters
-- `plan` (String)
+- `plan` (String) Service plan name
 - `pool` (String) Service Pool
 - `tags` (List of String) Custom tags for instance
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
