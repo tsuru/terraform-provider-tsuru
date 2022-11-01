@@ -100,6 +100,7 @@ func resourceTsuruApplicationGrantRead(ctx context.Context, d *schema.ResourceDa
 
 	for _, t := range app.Teams {
 		if t == team {
+			d.Set("app", appName)
 			d.Set("team", t)
 			return nil
 		}
