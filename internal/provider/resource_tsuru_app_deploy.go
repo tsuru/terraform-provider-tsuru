@@ -6,13 +6,22 @@ package provider
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
+	"github.com/globalsign/mgo/bson"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
+	"github.com/tsuru/tsuru/cmd"
 )
 
 func resourceTsuruApplicationDeploy() *schema.Resource {
@@ -82,20 +91,45 @@ func resourceTsuruApplicationDeployDo(ctx context.Context, d *schema.ResourceDat
 	}
 
 	app := d.Get("app").(string)
-	image := d.Get("image").(string)
-	newVersion := d.Get("new_version").(bool)
-	overrideOldVersions := d.Get("override_old_versions").(bool)
-	wait := d.Get("wait").(bool)
 
-	resp, err := provider.TsuruClient.AppApi.AppDeploy(ctx, app, tsuru.AppDeployOptions{
-		Image:            image,
-		Message:          "deploy via terraform",
-		NewVersion:       newVersion,
-		OverrideVersions: overrideOldVersions,
-	})
+	values := url.Values{}
+	values.Set("origin", "image")
+	values.Set("image", d.Get("image").(string))
+	values.Set("message", "deploy via terraform")
+	values.Set("new-version", strconv.FormatBool(d.Get("new_version").(bool)))
+	values.Set("override-versions", strconv.FormatBool(d.Get("override_old_versions").(bool)))
 
+	var buf bytes.Buffer
+	buf.WriteString(values.Encode())
+
+	url := fmt.Sprintf("%s/1.0/apps/%s/deploy", provider.Host, app)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	token := provider.Token
+	if token == "" {
+		token = deployToken()
+	}
+	req.Header.Set("Authorization", token)
+
+	wait := d.Get("wait").(bool)
+
+	resp, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		log.Println("[DEBUG] failed to request deploy", err)
+		return diag.FromErr(err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return diag.Errorf("Could not deploy, status code: %d, message: %s", resp.StatusCode, string(body))
 	}
 
 	eventID := resp.Header.Get("X-Tsuru-Eventid")
@@ -116,12 +150,69 @@ func resourceTsuruApplicationDeployDo(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceTsuruApplicationDeployRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	//provider := meta.(*tsuruProvider)
-	// TODO read event and update status and output_image
+	provider := meta.(*tsuruProvider)
+
+	id := d.Id()
+
+	e, _, err := provider.TsuruClient.EventApi.EventInfo(ctx, id)
+
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	status := ""
+	if e.Running {
+		status = "running"
+	} else if e.Error != "" {
+		status = "error"
+	} else if !e.EndTime.IsZero() {
+		status = "finished"
+	}
+
+	d.Set("status", status)
+
+	data, err := decodeRawBSONMap(e.EndCustomData)
+	if err == nil {
+		image, found := data["image"]
+		if found {
+			d.Set("output_image", image.(string))
+		} else {
+			d.Set("output_image", "")
+		}
+	} else {
+		log.Println("[ERROR] found error decoding endCustomData", err)
+	}
+
 	return nil
 }
 
 func resourceTsuruApplicationDeployDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Println("[DEBUG] delete a deploy is a no-op by terraform")
 	return nil
+}
+
+func decodeRawBSONMap(input tsuru.EventStartCustomData) (map[string]interface{}, error) {
+	b, err := base64.StdEncoding.DecodeString(input.Data)
+	if err != nil {
+		return nil, err
+	}
+	r := bson.Raw{
+		Kind: byte(input.Kind),
+		Data: b,
+	}
+	data := map[string]interface{}{}
+	err = r.Unmarshal(&data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func deployToken() string {
+	if token, tokenErr := cmd.ReadToken(); tokenErr == nil && token != "" {
+		return "bearer " + token
+	}
+
+	return ""
 }

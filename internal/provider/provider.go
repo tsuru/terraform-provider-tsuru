@@ -82,6 +82,8 @@ func Provider() *schema.Provider {
 }
 
 type tsuruProvider struct {
+	Host        string
+	Token       string
 	TsuruClient *tsuru.APIClient
 }
 
@@ -130,6 +132,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 	}
 
 	return &tsuruProvider{
+		Host:        host,
+		Token:       token,
 		TsuruClient: client,
 	}, nil
 }
