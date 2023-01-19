@@ -18,7 +18,8 @@ import (
 func resourceTsuruApplicationDeploy() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Tsuru Application Deploy",
-		CreateContext: resourceTsuruApplicationDeployCreate,
+		CreateContext: resourceTsuruApplicationDeployDo,
+		UpdateContext: resourceTsuruApplicationDeployDo,
 		ReadContext:   resourceTsuruApplicationDeployRead,
 		DeleteContext: resourceTsuruApplicationDeployDelete,
 		Timeouts: &schema.ResourceTimeout{
@@ -37,14 +38,12 @@ func resourceTsuruApplicationDeploy() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "Docker Image",
 				Required:    true,
-				ForceNew:    true,
 			},
 
 			"new_version": {
 				Type:        schema.TypeBool,
 				Description: "Creates a new version for the current deployment while preserving existing versions",
 				Optional:    true,
-				ForceNew:    true,
 				Default:     false,
 			},
 
@@ -52,7 +51,6 @@ func resourceTsuruApplicationDeploy() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Force replace all deployed versions by this new deploy",
 				Optional:    true,
-				ForceNew:    true,
 				Default:     false,
 			},
 
@@ -60,7 +58,6 @@ func resourceTsuruApplicationDeploy() *schema.Resource {
 				Type:        schema.TypeBool,
 				Description: "Wait for the rollout of deploy",
 				Optional:    true,
-				ForceNew:    true,
 				Default:     true,
 			},
 
@@ -77,8 +74,12 @@ func resourceTsuruApplicationDeploy() *schema.Resource {
 	}
 }
 
-func resourceTsuruApplicationDeployCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTsuruApplicationDeployDo(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
+
+	if !d.HasChange("image") {
+		return nil
+	}
 
 	app := d.Get("app").(string)
 	image := d.Get("image").(string)
