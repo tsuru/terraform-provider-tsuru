@@ -59,6 +59,7 @@ func Provider() *schema.Provider {
 			"tsuru_app_cname":     resourceTsuruApplicationCName(),
 			"tsuru_app_router":    resourceTsuruApplicationRouter(),
 			"tsuru_app_grant":     resourceTsuruApplicationGrant(),
+			"tsuru_app_deploy":    resourceTsuruApplicationDeploy(),
 			"tsuru_app":           resourceTsuruApplication(),
 
 			"tsuru_router":          resourceTsuruRouter(),
