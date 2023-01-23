@@ -3,19 +3,20 @@ module github.com/tsuru/terraform-provider-tsuru
 go 1.18
 
 require (
+	github.com/antihax/optional v1.0.0
 	github.com/ghodss/yaml v1.0.0
+	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.1
-	github.com/tsuru/go-tsuruclient v0.0.0-20211213213525-0d2868229cfd
+	github.com/tsuru/go-tsuruclient v0.0.0-20230119193236-14d15ffc0035
 	k8s.io/apimachinery v0.20.4
 )
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/antihax/optional v1.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/docker v20.10.2+incompatible // indirect
