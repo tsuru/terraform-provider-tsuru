@@ -3,12 +3,12 @@
 page_title: "tsuru_app_deploy Resource - terraform-provider-tsuru"
 subcategory: ""
 description: |-
-  Do a deployment for an application, that currently only supports deploys via prebuilt docker images, to do deploys via tsuru platforms please use tsuru-client
+  Perform an application deploy. Currently, only supporting deploys via prebuilt container images; in order to deploy via tsuru platforms please use tsuru-client
 ---
 
 # tsuru_app_deploy (Resource)
 
-Do a deployment for an application, that currently only supports deploys via prebuilt docker images, to do deploys via tsuru platforms please use tsuru-client
+Perform an application deploy. Currently, only supporting deploys via prebuilt container images; in order to deploy via tsuru platforms please use tsuru-client
 
 ## Example Usage
 

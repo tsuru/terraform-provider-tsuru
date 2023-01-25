@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -26,7 +27,7 @@ import (
 
 func resourceTsuruApplicationDeploy() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Do a deployment for an application, that currently only supports deploys via prebuilt docker images, to do deploys via tsuru platforms please use tsuru-client",
+		Description:   "Perform an application deploy. Currently, only supporting deploys via prebuilt container images; in order to deploy via tsuru platforms please use tsuru-client",
 		CreateContext: resourceTsuruApplicationDeployDo,
 		UpdateContext: resourceTsuruApplicationDeployDo,
 		ReadContext:   resourceTsuruApplicationDeployRead,
@@ -146,9 +147,43 @@ func resourceTsuruApplicationDeployDo(ctx context.Context, d *schema.ResourceDat
 		if err := scanner.Err(); err != nil {
 			log.Fatal("[ERROR]", err)
 		}
+
+		err = waitForEventComplete(ctx, provider, eventID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	return resourceTsuruApplicationDeployRead(ctx, d, meta)
+}
+
+func waitForEventComplete(ctx context.Context, provider *tsuruProvider, eventID string) error {
+	deadline := time.Now().UTC().Add(time.Minute * 2)
+
+	for {
+		e, _, err := provider.TsuruClient.EventApi.EventInfo(ctx, eventID)
+
+		if err != nil {
+			return err
+		}
+
+		if e.Running {
+			log.Println("[DEBUG] event is still running, pooling in the next 20 seconds")
+			time.Sleep(time.Second * 20)
+			continue
+		}
+
+		if e.Error != "" {
+			return errors.New(e.Error + ", see details of event ID: " + eventID)
+		}
+
+		if time.Now().UTC().After(deadline) {
+			return errors.New("event is still running after deploy")
+		}
+
+		return nil
+	}
+
 }
 
 func resourceTsuruApplicationDeployRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
