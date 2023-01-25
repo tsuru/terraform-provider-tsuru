@@ -26,7 +26,7 @@ import (
 
 func resourceTsuruApplicationDeploy() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Tsuru Application Deploy",
+		Description:   "Do a deployment for an application, that currently only supports deploys via prebuilt docker images, to do deploys via tsuru platforms please use tsuru-client",
 		CreateContext: resourceTsuruApplicationDeployDo,
 		UpdateContext: resourceTsuruApplicationDeployDo,
 		ReadContext:   resourceTsuruApplicationDeployRead,
@@ -71,13 +71,15 @@ func resourceTsuruApplicationDeploy() *schema.Resource {
 			},
 
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "after apply may be three kinds of statuses: running or failed or finished",
+				Computed:    true,
 			},
 
 			"output_image": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Description: "Image generated after success of deploy",
+				Computed:    true,
 			},
 		},
 	}
