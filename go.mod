@@ -3,7 +3,6 @@ module github.com/tsuru/terraform-provider-tsuru
 go 1.18
 
 require (
-	github.com/antihax/optional v1.0.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
@@ -11,12 +10,14 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.1
 	github.com/tsuru/go-tsuruclient v0.0.0-20230119193236-14d15ffc0035
+	github.com/tsuru/tsuru v0.0.0-20180820205921-0e7f7f02eac5
 	k8s.io/apimachinery v0.20.4
 )
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/antihax/optional v1.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/docker v20.10.2+incompatible // indirect
@@ -61,7 +62,6 @@ require (
 	github.com/tsuru/config v0.0.0-20180418191556-87403ee7da02 // indirect
 	github.com/tsuru/gnuflag v0.0.0-20151217162021-86b8c1b864aa // indirect
 	github.com/tsuru/tablecli v0.0.0-20180215113938-82de88f75181 // indirect
-	github.com/tsuru/tsuru v0.0.0-20180820205921-0e7f7f02eac5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
@@ -69,11 +69,11 @@ require (
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/zclconf/go-cty v1.12.1 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/term v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20210423144448-3a41ef94ed2b // indirect
 	google.golang.org/grpc v1.50.1 // indirect
