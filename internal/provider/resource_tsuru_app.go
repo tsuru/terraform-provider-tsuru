@@ -35,6 +35,7 @@ func resourceTsuruApplication() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "Application name",
 				Required:    true,
+				ForceNew:    true,
 			},
 			"description": {
 				Type:        schema.TypeString,
