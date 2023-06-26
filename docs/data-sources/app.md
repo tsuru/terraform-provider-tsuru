@@ -59,5 +59,3 @@ Read-Only:
 - `addresses` (List of String)
 - `name` (String)
 - `options` (Map of String)
-
-

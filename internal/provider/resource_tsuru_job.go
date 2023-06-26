@@ -252,11 +252,6 @@ func resourceTsuruJobImport(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provider *tsuruProvider) (tsuru_client.InputJob, error) {
-	platform := d.Get("platform").(string)
-	if err := validPlatform(ctx, provider, platform); err != nil {
-		return tsuru_client.InputJob{}, err
-	}
-
 	pool := d.Get("pool").(string)
 	if err := validPool(ctx, provider, pool); err != nil {
 		return tsuru_client.InputJob{}, err
@@ -296,6 +291,10 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 
 	if desc, ok := d.GetOk("description"); ok {
 		job.Description = desc.(string)
+	}
+
+	if schedule, ok := d.GetOk("schedule"); ok {
+		job.Schedule = schedule.(string)
 	}
 
 	return job, nil
