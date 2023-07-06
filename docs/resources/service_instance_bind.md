@@ -26,12 +26,13 @@ resource "tsuru_service_instance_bind" "instance_bind" {
 
 ### Required
 
-- `app` (String) Application name
 - `service_instance` (String) Name of service instance
 - `service_name` (String) Name of service kind
 
 ### Optional
 
+- `app` (String) Application name
+- `job` (String) Application name
 - `restart_on_update` (Boolean) restart app after applying (default = true)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

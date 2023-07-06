@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,10 +47,18 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 				Description: "Name of service instance",
 			},
 			"app": {
-				Type:        schema.TypeString,
-				Description: "Application name",
-				ForceNew:    true,
-				Required:    true,
+				Type:         schema.TypeString,
+				Description:  "Application name",
+				ForceNew:     true,
+				Optional:     true,
+				ExactlyOneOf: []string{"job", "app"},
+			},
+			"job": {
+				Type:         schema.TypeString,
+				Description:  "Application name",
+				ForceNew:     true,
+				Optional:     true,
+				ExactlyOneOf: []string{"job", "app"},
 			},
 			"restart_on_update": {
 				Type:        schema.TypeBool,
@@ -66,7 +75,6 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 
 	service := d.Get("service_name").(string)
 	instance := d.Get("service_instance").(string)
-	app := d.Get("app").(string)
 
 	noRestart := false
 	ri := d.Get("restart_on_update").(bool)
@@ -74,10 +82,26 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 		noRestart = true
 	}
 
+	var idToSet, app_name, job_name string
+	if app, ok := d.GetOk("app"); ok {
+		app_name = app.(string)
+		idToSet = createID([]string{service, instance, app_name})
+	}
+	if job, ok := d.GetOk("job"); ok {
+		job_name = job.(string)
+		idToSet = createID([]string{service, instance, "tsuru-job", job_name})
+	}
+
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		resp, err := provider.TsuruClient.ServiceApi.ServiceInstanceBind(ctx, service, instance, app, tsuru_client.ServiceInstanceBind{
-			NoRestart: noRestart,
-		})
+		var resp *http.Response
+		var err error
+		if app_name != "" {
+			resp, err = provider.TsuruClient.ServiceApi.ServiceInstanceBind(ctx, service, instance, app_name, tsuru_client.ServiceInstanceBind{
+				NoRestart: noRestart,
+			})
+		} else {
+			resp, err = provider.TsuruClient.ServiceApi.JobServiceInstanceBind(ctx, service, instance, job_name, tsuru_client.JobServiceInstanceBind{})
+		}
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
@@ -96,7 +120,7 @@ func resourceTsuruServiceInstanceBindCreate(ctx context.Context, d *schema.Resou
 		return diag.FromErr(err)
 	}
 
-	d.SetId(createID([]string{service, instance, app}))
+	d.SetId(idToSet)
 
 	return resourceTsuruServiceInstanceBindRead(ctx, d, meta)
 }
@@ -115,7 +139,10 @@ func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.Resourc
 	}
 	service := parts[0]
 	instanceName := parts[1]
-	app := parts[2]
+	name := parts[2]
+	if name == "tsuru-job" {
+		name = parts[3]
+	}
 
 	instance, _, err := provider.TsuruClient.ServiceApi.InstanceGet(ctx, service, instanceName)
 	if err != nil {
@@ -127,8 +154,17 @@ func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.Resourc
 	}
 
 	for _, a := range instance.Apps {
-		if app == a {
+		if name == a {
 			d.Set("app", a)
+			d.Set("service_name", service)
+			d.Set("service_instance", instanceName)
+			return nil
+		}
+	}
+
+	for _, j := range instance.Jobs {
+		if name == j {
+			d.Set("job", j)
 			d.Set("service_name", service)
 			d.Set("service_instance", instanceName)
 			return nil
@@ -144,7 +180,14 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 
 	service := d.Get("service_name").(string)
 	instance := d.Get("service_instance").(string)
-	app := d.Get("app").(string)
+
+	var app, job string
+	if app, ok := d.GetOk("app"); ok {
+		app = app.(string)
+	}
+	if job, ok := d.GetOk("job"); ok {
+		job = job.(string)
+	}
 
 	noRestart := false
 	ri := d.Get("restart_on_update").(bool)
@@ -153,9 +196,14 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 	}
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		_, err := provider.TsuruClient.ServiceApi.ServiceInstanceUnbind(ctx, service, instance, app, tsuru_client.ServiceInstanceUnbind{
-			NoRestart: noRestart,
-		})
+		var err error
+		if app != "" {
+			_, err = provider.TsuruClient.ServiceApi.ServiceInstanceUnbind(ctx, service, instance, app, tsuru_client.ServiceInstanceUnbind{
+				NoRestart: noRestart,
+			})
+		} else {
+			_, err = provider.TsuruClient.ServiceApi.JobServiceInstanceUnbind(ctx, service, instance, job, tsuru_client.JobServiceInstanceUnbind{})
+		}
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
 			if errors.As(err, &apiError) {
