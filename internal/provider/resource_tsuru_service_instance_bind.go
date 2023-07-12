@@ -55,7 +55,7 @@ func resourceTsuruServiceInstanceBind() *schema.Resource {
 			},
 			"job": {
 				Type:         schema.TypeString,
-				Description:  "Application name",
+				Description:  "Job name",
 				ForceNew:     true,
 				Optional:     true,
 				ExactlyOneOf: []string{"job", "app"},
@@ -140,7 +140,7 @@ func resourceTsuruServiceInstanceBindRead(ctx context.Context, d *schema.Resourc
 	service := parts[0]
 	instanceName := parts[1]
 	name := parts[2]
-	if name == "tsuru-job" {
+	if len(parts) == 4 {
 		name = parts[3]
 	}
 

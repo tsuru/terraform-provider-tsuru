@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/pkg/errors"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
@@ -84,7 +86,7 @@ func resourceTsuruJob() *schema.Resource {
 
 			"schedule": {
 				Type:        schema.TypeString,
-				Description: "When trigger the job",
+				Description: "Cron-like schedule for when the job should be triggered",
 				Optional:    true,
 			},
 
@@ -111,29 +113,34 @@ func resourceTsuruJob() *schema.Resource {
 			},
 
 			"spec": {
-				Type:     schema.TypeList,
-				MaxItems: 1,
-				Optional: true,
+				Type:        schema.TypeList,
+				Description: "Check Kubernetes official Job specs docs for more details",
+				MaxItems:    1,
+				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"completions": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Description: "Successful executions for the job to be consider done. Default=1",
+							Optional:    true,
 						},
 
 						"parallelism": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Description: "Number of concurrent instances (Pods) of the job. Default=1",
+							Optional:    true,
 						},
 
 						"active_deadline_seconds": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Description: "Time a Job can run before its terminated. Has precedence over backoff_limit. Defaults to no deadline",
+							Optional:    true,
 						},
 
 						"backoff_limit": {
-							Type:     schema.TypeInt,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Description: "Number of retries before considering a Job as failed. Default=6",
+							Optional:    true,
 						},
 					},
 				},
@@ -150,7 +157,20 @@ func resourceTsuruJobCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(err)
 	}
 
-	_, err = provider.TsuruClient.JobApi.CreateJob(ctx, job)
+	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err = provider.TsuruClient.JobApi.CreateJob(ctx, job)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+
 	if err != nil {
 		return diag.Errorf("unable to create job %s: %v", job.Name, err)
 	}
@@ -168,13 +188,27 @@ func resourceTsuruJobUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	jobName := d.Id()
 
-	resp, err := provider.TsuruClient.JobApi.UpdateJob(ctx, jobName, job)
+	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		resp, err := provider.TsuruClient.JobApi.UpdateJob(ctx, jobName, job)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(err)
+		}
+
+		defer resp.Body.Close()
+		logTsuruStream(resp.Body)
+
+		return nil
+	})
+
 	if err != nil {
 		return diag.Errorf("unable to update job %s: %v", jobName, err)
 	}
-
-	defer resp.Body.Close()
-	logTsuruStream(resp.Body)
 
 	return resourceTsuruJobRead(ctx, d, meta)
 }
@@ -227,9 +261,22 @@ func resourceTsuruJobRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 func resourceTsuruJobDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
-	name := d.Get("name").(string)
+	name := d.Id()
 
-	_, err := provider.TsuruClient.JobApi.DeleteJob(ctx, name)
+	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		_, err := provider.TsuruClient.JobApi.DeleteJob(ctx, name)
+		if err != nil {
+			var apiError tsuru_client.GenericOpenAPIError
+			if errors.As(err, &apiError) {
+				if isRetryableError(apiError.Body()) {
+					return resource.RetryableError(err)
+				}
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+
 	if err != nil {
 		return diag.Errorf("unable to delete job %s: %v", name, err)
 	}

@@ -13,10 +13,17 @@ Tsuru Service Instance Bind
 ## Example Usage
 
 ```terraform
-resource "tsuru_service_instance_bind" "instance_bind" {
+resource "tsuru_service_instance_bind" "app_bind" {
   service_name      = "service01"
   service_instance  = "my-instance"
   app               = "app01"
+  restart_on_update = true
+}
+
+resource "tsuru_service_instance_bind" "job_bind" {
+  service_name      = "service01"
+  service_instance  = "my-instance"
+  job               = "job01"
   restart_on_update = true
 }
 ```
@@ -32,7 +39,7 @@ resource "tsuru_service_instance_bind" "instance_bind" {
 ### Optional
 
 - `app` (String) Application name
-- `job` (String) Application name
+- `job` (String) Job name
 - `restart_on_update` (Boolean) restart app after applying (default = true)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
@@ -54,8 +61,13 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
+# for apps
 terraform import service_instance_bind.resource_name "service::instance::app"
-
 # example
 terraform import service_instance_bind.instance_bind "service01::my-instance::app01"
+
+# for jobs
+terraform import service_instance_bind.resource_name "service::instance::tsuru-job::job"
+# example
+terraform import service_instance_bind.instance_bind "service01::my-instance::tsuru-job::job01"
 ```

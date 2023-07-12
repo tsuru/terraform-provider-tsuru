@@ -131,7 +131,7 @@ func resourceTsuruJobEnvironmentRead(ctx context.Context, d *schema.ResourceData
 func resourceTsuruJobEnvironmentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	job := d.Get("job").(string)
+	job := d.Id()
 	envs := &tsuru_client.EnvSetData{
 		Envs:        []tsuru_client.Env{},
 		ManagedBy:   "terraform",
@@ -140,10 +140,10 @@ func resourceTsuruJobEnvironmentUpdate(ctx context.Context, d *schema.ResourceDa
 	envs.Envs = append(envs.Envs, envsFromResource(d.Get("environment_variables"), false)...)
 	envs.Envs = append(envs.Envs, envsFromResource(d.Get("private_environment_variables"), true)...)
 
+	if len(envs.Envs) == 0 {
+		return diag.Errorf("No environment variables to update")
+	}
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
-		if len(envs.Envs) == 0 {
-			return resource.NonRetryableError(errors.Errorf("No environment variables to update"))
-		}
 		_, err := provider.TsuruClient.JobApi.JobEnvSet(ctx, job, *envs)
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
@@ -166,7 +166,7 @@ func resourceTsuruJobEnvironmentUpdate(ctx context.Context, d *schema.ResourceDa
 func resourceTsuruJobEnvironmentDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	job := d.Get("job").(string)
+	job := d.Id()
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 		_, err := provider.TsuruClient.JobApi.JobEnvSet(ctx, job, tsuru_client.EnvSetData{
