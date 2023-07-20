@@ -62,6 +62,9 @@ func Provider() *schema.Provider {
 			"tsuru_app_deploy":    resourceTsuruApplicationDeploy(),
 			"tsuru_app":           resourceTsuruApplication(),
 
+			"tsuru_job":     resourceTsuruJob(),
+			"tsuru_job_env": resourceTsuruJobEnvironment(),
+
 			"tsuru_router":          resourceTsuruRouter(),
 			"tsuru_plan":            resourceTsuruPlan(),
 			"tsuru_webhook":         resourceTsuruWebhook(),

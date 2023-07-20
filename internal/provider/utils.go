@@ -59,10 +59,10 @@ func createID(input []string) string {
 	return strings.TrimSpace(strings.Join(input, ID_SEPARATOR))
 }
 
-func IDtoParts(input string, expectedLength int) ([]string, error) {
+func IDtoParts(input string, minLength int) ([]string, error) {
 	output := strings.Split(input, ID_SEPARATOR)
-	if len(output) < expectedLength {
-		return nil, errors.Errorf("Mismatched length %d on input ID %s expected %d", len(output), input, expectedLength)
+	if len(output) < minLength {
+		return nil, errors.Errorf("Mismatched length %d on input ID %s expected %d", len(output), input, minLength)
 	}
 	return output, nil
 }
