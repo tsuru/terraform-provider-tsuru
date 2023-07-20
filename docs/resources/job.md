@@ -98,7 +98,7 @@ Optional:
 Import is supported using the following syntax:
 
 ```shell
-terraform import tsuru_job.resource_name "name"
+terraform import tsuru_job.resource_name "job"
 
 # example
 terraform import tsuru_job.my-job "sample-job"
