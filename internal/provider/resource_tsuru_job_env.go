@@ -170,8 +170,9 @@ func resourceTsuruJobEnvironmentDelete(ctx context.Context, d *schema.ResourceDa
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
 		_, err := provider.TsuruClient.JobApi.JobEnvSet(ctx, job, tsuru_client.EnvSetData{
-			Envs:      []tsuru.Env{},
-			ManagedBy: "terraform",
+			Envs:        []tsuru.Env{},
+			ManagedBy:   "terraform",
+			PruneUnused: true,
 		})
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
