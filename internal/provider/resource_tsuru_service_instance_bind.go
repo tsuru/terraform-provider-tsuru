@@ -181,12 +181,12 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 	service := d.Get("service_name").(string)
 	instance := d.Get("service_instance").(string)
 
-	var app, job string
+	var app_name, job_name string
 	if app, ok := d.GetOk("app"); ok {
-		app = app.(string)
+		app_name = app.(string)
 	}
 	if job, ok := d.GetOk("job"); ok {
-		job = job.(string)
+		job_name = job.(string)
 	}
 
 	noRestart := false
@@ -197,12 +197,12 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 
 	err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		var err error
-		if app != "" {
-			_, err = provider.TsuruClient.ServiceApi.ServiceInstanceUnbind(ctx, service, instance, app, tsuru_client.ServiceInstanceUnbind{
+		if app_name != "" {
+			_, err = provider.TsuruClient.ServiceApi.ServiceInstanceUnbind(ctx, service, instance, app_name, tsuru_client.ServiceInstanceUnbind{
 				NoRestart: noRestart,
 			})
 		} else {
-			_, err = provider.TsuruClient.ServiceApi.JobServiceInstanceUnbind(ctx, service, instance, job, tsuru_client.JobServiceInstanceUnbind{})
+			_, err = provider.TsuruClient.ServiceApi.JobServiceInstanceUnbind(ctx, service, instance, job_name, tsuru_client.JobServiceInstanceUnbind{})
 		}
 		if err != nil {
 			var apiError tsuru_client.GenericOpenAPIError
