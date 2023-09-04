@@ -71,5 +71,5 @@ Import is supported using the following syntax:
 terraform import tsuru_service_instance.resource_name "service::instance"
 
 # example
-terraform import tsuru_service_instance.my_reverse_proxy   = "rpaasv2::my-reverse-proxy"
+terraform import tsuru_service_instance.my_reverse_proxy "rpaasv2::my-reverse-proxy"
 ```
