@@ -42,6 +42,28 @@ func resourceTsuruPlan() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"cpu_burst": {
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": {
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "Factor of burst, ie: 1.1 means 10% of burst",
+						},
+						"max_allowed": {
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "max allowed when user customizes the burst",
+						},
+					},
+				},
+			},
 			"default": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -82,11 +104,17 @@ func planResourceData(d *schema.ResourceData) tsuru.Plan {
 	memoryString := d.Get("memory").(string)
 	memoryBytes, _ := parseMemoryQuantity(memoryString)
 
+	cpuBurst := tsuru.PlanCpuBurst{}
+	if m, ok := d.GetOk("cpu_burst"); ok {
+		cpuBurst = cpuBurstFromResourceData(m)
+	}
+
 	return tsuru.Plan{
 		Name:     d.Get("name").(string),
 		Memory:   memoryBytes,
 		Cpumilli: cpuMilli,
 		Default:  d.Get("default").(bool),
+		CpuBurst: cpuBurst,
 	}
 }
 
@@ -116,6 +144,19 @@ func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta int
 			d.Set("cpu", cpuMillisToPercentString(plan.Cpumilli))
 		} else if cpuFormat == "milli" {
 			d.Set("cpu", cpuMillisToString(plan.Cpumilli))
+		}
+
+		cpuBurst := map[string]interface{}{}
+		if plan.CpuBurst.Default != 0 {
+			cpuBurst["default"] = plan.CpuBurst.Default
+		}
+		if plan.CpuBurst.MaxAllowed != 0 {
+			cpuBurst["max_allowed"] = plan.CpuBurst.MaxAllowed
+		}
+		if len(cpuBurst) > 0 {
+			d.Set("cpu_burst", []interface{}{cpuBurst})
+		} else {
+			d.Set("cpu_burst", []interface{}{})
 		}
 
 		d.Set("default", plan.Default)
@@ -192,4 +233,25 @@ func parseMemoryQuantity(m string) (numBytes int64, err error) {
 
 	numBytes, _ = memoryQuantity.AsInt64()
 	return numBytes, nil
+}
+
+func cpuBurstFromResourceData(meta interface{}) tsuru.PlanCpuBurst {
+	cpuBurst := tsuru.PlanCpuBurst{}
+
+	m := meta.([]interface{})
+	if len(m) == 0 || m[0] == nil {
+		return cpuBurst
+	}
+
+	containerMap := m[0].(map[string]interface{})
+
+	if v, ok := containerMap["default"]; ok {
+		cpuBurst.Default = v.(float64)
+	}
+
+	if v, ok := containerMap["max_allowed"]; ok {
+		cpuBurst.MaxAllowed = v.(float64)
+	}
+
+	return cpuBurst
 }
