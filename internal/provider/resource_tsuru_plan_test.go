@@ -33,6 +33,15 @@ func TestAccTsuruPlan_basic(t *testing.T) {
 			Memory:   int64(1024 * 1024 * 1024),
 			Cpumilli: int32(2000),
 		},
+		{
+			Name:     "plan4",
+			Memory:   int64(1024 * 1024 * 1024),
+			Cpumilli: int32(2000),
+			CpuBurst: tsuru.PlanCpuBurst{
+				Default:    1.1,
+				MaxAllowed: 1.2,
+			},
+		},
 	}
 
 	fakeServer.POST("/1.0/plans", func(c echo.Context) error {
@@ -89,6 +98,9 @@ func TestAccTsuruPlan_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("tsuru_plan.plan1", "memory", "64Mi"),
 					resource.TestCheckResourceAttr("tsuru_plan.plan2", "memory", "1Gi"),
 					resource.TestCheckResourceAttr("tsuru_plan.plan3", "memory", "1Gi"),
+
+					resource.TestCheckResourceAttr("tsuru_plan.plan4", "cpu_burst.0.default", "1.1"),
+					resource.TestCheckResourceAttr("tsuru_plan.plan4", "cpu_burst.0.max_allowed", "1.2"),
 				),
 			},
 		},
@@ -114,6 +126,17 @@ resource "tsuru_plan" "plan3" {
 	name = "plan3"
 	cpu = "200%"
 	memory = "1Gi"
+}
+
+resource "tsuru_plan" "plan4" {
+	name = "plan4"
+	cpu = "200%"
+	memory = "1Gi"
+
+	cpu_burst {
+		default     = 1.1
+		max_allowed = 1.2
+	}
 }
 `
 }
