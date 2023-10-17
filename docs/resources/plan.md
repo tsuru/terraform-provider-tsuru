@@ -32,12 +32,22 @@ resource "tsuru_plan" "plan1" {
 
 ### Optional
 
+- `cpu_burst` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cpu_burst))
 - `default` (Boolean)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--cpu_burst"></a>
+### Nested Schema for `cpu_burst`
+
+Optional:
+
+- `default` (Number) Factor of burst, ie: 1.1 means 10% of burst
+- `max_allowed` (Number) max allowed when user customizes the burst
+
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
