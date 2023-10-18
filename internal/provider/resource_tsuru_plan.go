@@ -121,7 +121,7 @@ func planResourceData(d *schema.ResourceData) tsuru.Plan {
 func resourceTsuruPlanRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	name := d.Get("name").(string)
+	name := d.Id()
 	cpu := d.Get("cpu").(string)
 	cpuFormat := cpuFormat(cpu)
 
