@@ -89,6 +89,43 @@ func TestAccResourceTsuruApp(t *testing.T) {
 						},
 					},
 				},
+				Processes: []tsuru.AppProcess{
+					{
+						Name: "web",
+						Plan: "c2m2",
+						Metadata: tsuru.Metadata{
+							Labels: []tsuru.MetadataItem{
+								{
+									Name:  "weblabel",
+									Value: "value",
+								},
+							},
+							Annotations: []tsuru.MetadataItem{
+								{
+									Name:  "webannotation",
+									Value: "nice",
+								},
+							},
+						},
+					},
+					{
+						Name: "worker",
+						Metadata: tsuru.Metadata{
+							Labels: []tsuru.MetadataItem{
+								{
+									Name:  "workerlabel",
+									Value: "value",
+								},
+							},
+							Annotations: []tsuru.MetadataItem{
+								{
+									Name:  "workerannotation",
+									Value: "nice",
+								},
+							},
+						},
+					},
+				},
 			}
 			return c.JSON(http.StatusOK, app)
 		}
@@ -154,6 +191,32 @@ func testAccResourceTsuruApp_basic() string {
 			}
 			annotations = {
 				"annotation1": "some really long value"
+			}
+		}
+
+		process {
+			name = "web"
+			plan = "c2m2"
+			metadata {
+				labels = {
+					"weblabel" = "value"
+				}
+				annotations = {
+					"webannotation": "nice"
+				}
+			}
+		}
+
+		process {
+			name = "worker"
+
+			metadata {
+				labels = {
+					"workerlabel" = "value"
+				}
+				annotations = {
+					"workerannotation": "nice"
+				}
 			}
 		}
 	}

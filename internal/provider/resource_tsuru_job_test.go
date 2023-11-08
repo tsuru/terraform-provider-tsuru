@@ -37,6 +37,9 @@ func TestAccResourceTsuruJob(t *testing.T) {
 		assert.Equal(t, "c1m1", job.Plan)
 		assert.Equal(t, "my-team", job.TeamOwner)
 		assert.Equal(t, "prod", job.Pool)
+		assert.Equal(t, []string{"sleep", "600"}, job.Container.Command)
+		assert.Equal(t, "tsuru/scratch:latest", job.Container.Image)
+
 		iterationCount++
 		return c.JSON(http.StatusOK, map[string]interface{}{
 			"status":  "success",
@@ -57,6 +60,15 @@ func TestAccResourceTsuruJob(t *testing.T) {
 				TeamOwner:   "my-team",
 				Plan:        tsuru.Plan{Name: "c1m1"},
 				Pool:        "prod",
+				Spec: tsuru.JobSpec{
+					Container: tsuru.JobSpecContainer{
+						Image: "tsuru/scratch:latest",
+						Command: []string{
+							"sleep",
+							"600",
+						},
+					},
+				},
 			}
 			return c.JSON(http.StatusOK, tsuru.JobInfo{Job: *job})
 		}

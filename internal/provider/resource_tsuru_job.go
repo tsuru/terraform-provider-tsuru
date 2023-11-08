@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pkg/errors"
+	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
@@ -231,30 +232,13 @@ func resourceTsuruJobRead(ctx context.Context, d *schema.ResourceData, meta inte
 	d.Set("plan", job.Job.Plan.Name)
 	d.Set("team_owner", job.Job.TeamOwner)
 
+	d.Set("container", flattenJobContainer(job.Job.Spec.Container))
+
 	if job.Job.Description != "" {
 		d.Set("description", job.Job.Description)
 	}
 
-	annotations := map[string]interface{}{}
-	if len(job.Job.Metadata.Annotations) > 0 {
-		for _, annotation := range job.Job.Metadata.Annotations {
-			annotations[annotation.Name] = annotation.Value
-		}
-	}
-
-	labels := map[string]interface{}{}
-	if len(job.Job.Metadata.Labels) > 0 {
-		for _, label := range job.Job.Metadata.Labels {
-			labels[label.Name] = label.Value
-		}
-	}
-
-	if len(annotations) > 0 || len(labels) > 0 {
-		d.Set("metadata", []map[string]interface{}{{
-			"annotations": annotations,
-			"labels":      labels,
-		}})
-	}
+	d.Set("metadata", flattenMetadata(job.Job.Metadata))
 
 	return nil
 }
@@ -314,7 +298,7 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 		tags = append(tags, item.(string))
 	}
 
-	var container tsuru_client.InputJobContainer
+	var container tsuru_client.JobSpecContainer
 
 	if m, ok := d.GetOk("container"); ok {
 		container = jobContainerFromResourceData(m)
@@ -347,8 +331,8 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 	return job, nil
 }
 
-func jobContainerFromResourceData(meta interface{}) tsuru_client.InputJobContainer {
-	container := tsuru_client.InputJobContainer{}
+func jobContainerFromResourceData(meta interface{}) tsuru_client.JobSpecContainer {
+	container := tsuru_client.JobSpecContainer{}
 
 	m := meta.([]interface{})
 	if len(m) == 0 || m[0] == nil {
@@ -368,4 +352,14 @@ func jobContainerFromResourceData(meta interface{}) tsuru_client.InputJobContain
 	}
 
 	return container
+}
+
+func flattenJobContainer(container tsuru.JobSpecContainer) []interface{} {
+
+	m := map[string]interface{}{
+		"image":   container.Image,
+		"command": container.Command,
+	}
+
+	return []interface{}{m}
 }

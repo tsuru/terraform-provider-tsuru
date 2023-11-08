@@ -75,22 +75,21 @@ func resourceTsuruApplication() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"metadata": {
+			"metadata": metadataSchema(),
+			"process": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"labels": {
-							Type:     schema.TypeMap,
-							Optional: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
 						},
-						"annotations": {
-							Type:     schema.TypeMap,
+						"plan": {
+							Type:     schema.TypeString,
 							Optional: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
 						},
+						"metadata": metadataSchema(),
 					},
 				},
 			},
@@ -161,6 +160,28 @@ func resourceTsuruApplication() *schema.Resource {
 	}
 }
 
+func metadataSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"labels": {
+					Type:     schema.TypeMap,
+					Optional: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+				"annotations": {
+					Type:     schema.TypeMap,
+					Optional: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+			},
+		},
+	}
+}
+
 func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
@@ -203,6 +224,13 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 		metadata := metadataFromResourceData(m)
 		if metadata != nil {
 			app.Metadata = *metadata
+		}
+	}
+
+	if m, ok := d.GetOk("process"); ok {
+		processes := processesFromResourceData(m)
+		if processes != nil {
+			app.Processes = processes
 		}
 	}
 
@@ -308,29 +336,10 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 
 	d.Set("tags", app.Tags)
 
-	annotations := map[string]interface{}{}
-	if len(app.Metadata.Annotations) > 0 {
-		for _, annotation := range app.Metadata.Annotations {
-			annotations[annotation.Name] = annotation.Value
-		}
-	}
-
-	labels := map[string]interface{}{}
-	if len(app.Metadata.Labels) > 0 {
-		for _, label := range app.Metadata.Labels {
-			labels[label.Name] = label.Value
-		}
-	}
-
-	if len(annotations) > 0 || len(labels) > 0 {
-		d.Set("metadata", []map[string]interface{}{{
-			"annotations": annotations,
-			"labels":      labels,
-		}})
-	}
-
+	d.Set("metadata", flattenMetadata(app.Metadata))
 	d.Set("internal_address", flattenInternalAddresses(app.InternalAddresses))
 	d.Set("router", flattenRouters(app.Routers))
+	d.Set("process", flattenProcesses(app.Processes))
 
 	return nil
 }
@@ -359,6 +368,45 @@ func resourceTsuruApplicationImport(ctx context.Context, d *schema.ResourceData,
 	d.SetId(app.Name)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func processesFromResourceData(meta interface{}) []tsuru_client.AppProcess {
+	m := meta.([]interface{})
+
+	if len(m) == 0 {
+		return nil
+	}
+
+	processes := []tsuru_client.AppProcess{}
+
+	for _, iface := range m {
+		process := tsuru_client.AppProcess{}
+		m := iface.(map[string]interface{})
+
+		if v, ok := m["name"]; ok {
+			process.Name = v.(string)
+		}
+
+		if v, ok := m["plan"]; ok {
+			process.Plan = v.(string)
+		}
+
+		if process.Plan == "" {
+			process.Plan = "$default"
+		}
+
+		if v, ok := m["metadata"]; ok {
+			metadata := metadataFromResourceData(v)
+
+			if metadata != nil {
+				process.Metadata = *metadata
+			}
+		}
+
+		processes = append(processes, process)
+	}
+
+	return processes
 }
 
 func metadataFromResourceData(meta interface{}) *tsuru_client.Metadata {
@@ -398,6 +446,7 @@ func validPlatform(ctx context.Context, provider *tsuruProvider, platform string
 		return err
 	}
 
+	platformParts := strings.SplitN(platform, ":", 2)
 	availablePlatforms := []string{}
 	for _, p := range platforms {
 		if p.Disabled {
@@ -405,7 +454,7 @@ func validPlatform(ctx context.Context, provider *tsuruProvider, platform string
 		}
 
 		availablePlatforms = append(availablePlatforms, p.Name)
-		if p.Name == platform {
+		if p.Name == platformParts[0] {
 			return nil
 		}
 	}

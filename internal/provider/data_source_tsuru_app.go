@@ -88,6 +88,25 @@ func dataSourceTsuruApp() *schema.Resource {
 				},
 			},
 
+			"metadata": metadataSchema(),
+			"process": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"plan": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"metadata": metadataSchema(),
+					},
+				},
+			},
+
 			"router": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -137,7 +156,8 @@ func dataSourceTsuruAppRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	d.Set("internal_address", flattenInternalAddresses(app.InternalAddresses))
 	d.Set("router", flattenRouters(app.Routers))
-
+	d.Set("metadata", flattenMetadata(app.Metadata))
+	d.Set("process", flattenProcesses(app.Processes))
 	d.Set("team_owner", app.TeamOwner)
 	d.Set("teams", app.Teams)
 
@@ -168,6 +188,47 @@ func flattenRouters(routers []tsuru.AppRouters) []interface{} {
 			"addresses": router.Addresses,
 			"name":      router.Name,
 			"options":   router.Opts,
+		})
+	}
+
+	return result
+}
+
+func flattenMetadata(metadata tsuru.Metadata) []interface{} {
+	annotations := map[string]interface{}{}
+	if len(metadata.Annotations) > 0 {
+		for _, annotation := range metadata.Annotations {
+			annotations[annotation.Name] = annotation.Value
+		}
+	}
+
+	labels := map[string]interface{}{}
+	if len(metadata.Labels) > 0 {
+		for _, label := range metadata.Labels {
+			labels[label.Name] = label.Value
+		}
+	}
+
+	if len(annotations) > 0 || len(labels) > 0 {
+		return []interface{}{
+			map[string]interface{}{
+				"annotations": annotations,
+				"labels":      labels,
+			},
+		}
+	}
+
+	return []interface{}{}
+}
+
+func flattenProcesses(processes []tsuru.AppProcess) []interface{} {
+	result := []interface{}{}
+
+	for _, process := range processes {
+		result = append(result, map[string]interface{}{
+			"name":     process.Name,
+			"plan":     process.Plan,
+			"metadata": flattenMetadata(process.Metadata),
 		})
 	}
 
