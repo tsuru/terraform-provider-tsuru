@@ -25,6 +25,10 @@ data "tsuru_app" "my-app" {
 
 - `name` (String) Unique name of app
 
+### Optional
+
+- `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
+
 ### Read-Only
 
 - `cluster` (String)
@@ -33,11 +37,21 @@ data "tsuru_app" "my-app" {
 - `internal_address` (Block List) (see [below for nested schema](#nestedblock--internal_address))
 - `platform` (String)
 - `pool` (String)
+- `process` (List of Object) (see [below for nested schema](#nestedatt--process))
 - `router` (Block List) (see [below for nested schema](#nestedblock--router))
 - `tags` (List of String)
 - `team_owner` (String)
 - `teams` (List of String)
 - `tsuru_provisioner` (String)
+
+<a id="nestedblock--metadata"></a>
+### Nested Schema for `metadata`
+
+Optional:
+
+- `annotations` (Map of String)
+- `labels` (Map of String)
+
 
 <a id="nestedblock--internal_address"></a>
 ### Nested Schema for `internal_address`
@@ -49,6 +63,25 @@ Read-Only:
 - `process` (String)
 - `protocol` (String)
 - `version` (String)
+
+
+<a id="nestedatt--process"></a>
+### Nested Schema for `process`
+
+Read-Only:
+
+- `metadata` (List of Object) (see [below for nested schema](#nestedobjatt--process--metadata))
+- `name` (String)
+- `plan` (String)
+
+<a id="nestedobjatt--process--metadata"></a>
+### Nested Schema for `process.metadata`
+
+Read-Only:
+
+- `annotations` (Map of String)
+- `labels` (Map of String)
+
 
 
 <a id="nestedblock--router"></a>

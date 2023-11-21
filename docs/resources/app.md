@@ -53,6 +53,7 @@ resource "tsuru_app" "my-app" {
 - `default_router` (String) Default router at creation of app
 - `description` (String) Application description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
+- `process` (Block List) (see [below for nested schema](#nestedblock--process))
 - `restart_on_update` (Boolean) Restart app after applying changes
 - `tags` (List of String) Tags
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -71,6 +72,28 @@ Optional:
 
 - `annotations` (Map of String)
 - `labels` (Map of String)
+
+
+<a id="nestedblock--process"></a>
+### Nested Schema for `process`
+
+Required:
+
+- `name` (String)
+
+Optional:
+
+- `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--process--metadata))
+- `plan` (String)
+
+<a id="nestedblock--process--metadata"></a>
+### Nested Schema for `process.metadata`
+
+Optional:
+
+- `annotations` (Map of String)
+- `labels` (Map of String)
+
 
 
 <a id="nestedblock--timeouts"></a>
