@@ -199,6 +199,11 @@ func kubeConfigAuthExecSchema() *schema.Schema {
 						Type: schema.TypeString,
 					},
 				},
+				"interactive_mode": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Default:  "Never",
+				},
 				"env": {
 					Type:     schema.TypeList,
 					Optional: true,
@@ -431,12 +436,12 @@ func kubeConfigUserFromResourceData(data interface{}) tsuru.ClusterKubeConfigUse
 	return user
 }
 
-func authProviderFromResourceData(data interface{}) tsuru.ClusterKubeConfigUserAuthprovider {
-	authProvider := tsuru.ClusterKubeConfigUserAuthprovider{}
+func authProviderFromResourceData(data interface{}) *tsuru.ClusterKubeConfigUserAuthprovider {
+	authProvider := &tsuru.ClusterKubeConfigUserAuthprovider{}
 
 	dataArray := data.([]interface{})
 	if len(dataArray) == 0 {
-		return authProvider
+		return nil
 	}
 
 	authProviderRaw, _ := dataArray[0].(map[string]interface{})
@@ -467,6 +472,7 @@ func execFromResourceData(data interface{}) *tsuru.ClusterKubeConfigUserExec {
 
 	exec.ApiVersion, _ = execRaw["api_version"].(string)
 	exec.Command, _ = execRaw["command"].(string)
+	exec.InteractiveMode = execRaw["interactive_mode"].(string)
 
 	argsRaw, _ := execRaw["args"].([]interface{})
 	for _, arg := range argsRaw {
@@ -513,9 +519,10 @@ func flattenKubeConfigUser(user tsuru.ClusterKubeConfigUser) []interface{} {
 		"username":                user.Username,
 		"password":                user.Password,
 		"token":                   user.Token,
-		"auth_provider":           flattenAuthProvider(user.AuthProvider),
 	}
-
+	if user.AuthProvider != nil {
+		result["auth_provider"] = flattenAuthProvider(user.AuthProvider)
+	}
 	if user.Exec != nil {
 		result["exec"] = flattenExec(user.Exec)
 	}
@@ -523,7 +530,7 @@ func flattenKubeConfigUser(user tsuru.ClusterKubeConfigUser) []interface{} {
 	return []interface{}{result}
 }
 
-func flattenAuthProvider(authProvider tsuru.ClusterKubeConfigUserAuthprovider) []interface{} {
+func flattenAuthProvider(authProvider *tsuru.ClusterKubeConfigUserAuthprovider) []interface{} {
 	result := map[string]interface{}{
 		"name":   authProvider.Name,
 		"config": authProvider.Config,
@@ -534,10 +541,11 @@ func flattenAuthProvider(authProvider tsuru.ClusterKubeConfigUserAuthprovider) [
 
 func flattenExec(exec *tsuru.ClusterKubeConfigUserExec) []interface{} {
 	result := map[string]interface{}{
-		"args":        exec.Args,
-		"api_version": exec.ApiVersion,
-		"command":     exec.Command,
-		"env":         flattenEnvs(exec.Env),
+		"args":             exec.Args,
+		"api_version":      exec.ApiVersion,
+		"command":          exec.Command,
+		"interactive_mode": exec.InteractiveMode,
+		"env":              flattenEnvs(exec.Env),
 	}
 
 	return []interface{}{result}

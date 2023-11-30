@@ -96,7 +96,7 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			InsecureSkipTlsVerify:    true,
 		},
 		User: tsuru.ClusterKubeConfigUser{
-			AuthProvider: tsuru.ClusterKubeConfigUserAuthprovider{
+			AuthProvider: &tsuru.ClusterKubeConfigUserAuthprovider{
 				Name: "tsuru",
 				Config: map[string]string{
 					"tsuru-flag-01": "result",
@@ -108,9 +108,10 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			ClientCertificateData: "client-cert",
 			ClientKeyData:         "client-key",
 			Exec: &tsuru.ClusterKubeConfigUserExec{
-				ApiVersion: "api-version",
-				Command:    "tsuru",
-				Args:       []string{"cluster", "login"},
+				ApiVersion:      "api-version",
+				Command:         "tsuru",
+				Args:            []string{"cluster", "login"},
+				InteractiveMode: "Never",
 				Env: []tsuru.ClusterKubeConfigUserExecEnv{
 					{
 						Name:  "TSURU_TOKEN",
@@ -127,7 +128,7 @@ func TestAccTsuruCluster_kubeConfig(t *testing.T) {
 			CertificateAuthorityData: "server-cert",
 		},
 		User: tsuru.ClusterKubeConfigUser{
-			AuthProvider: tsuru.ClusterKubeConfigUserAuthprovider{
+			AuthProvider: &tsuru.ClusterKubeConfigUserAuthprovider{
 				Name: "mycloud",
 			},
 		},

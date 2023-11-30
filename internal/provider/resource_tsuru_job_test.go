@@ -61,7 +61,7 @@ func TestAccResourceTsuruJob(t *testing.T) {
 				Plan:        tsuru.Plan{Name: "c1m1"},
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
-					Container: tsuru.JobSpecContainer{
+					Container: tsuru.InputJobContainer{
 						Image: "tsuru/scratch:latest",
 						Command: []string{
 							"sleep",

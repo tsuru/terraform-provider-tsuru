@@ -131,6 +131,7 @@ Optional:
 - `args` (List of String)
 - `command` (String)
 - `env` (Block List) (see [below for nested schema](#nestedblock--kube_config--user--exec--env))
+- `interactive_mode` (String)
 
 <a id="nestedblock--kube_config--user--exec--env"></a>
 ### Nested Schema for `kube_config.user.exec.env`
