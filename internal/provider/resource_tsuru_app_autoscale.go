@@ -62,9 +62,36 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Required:    true,
 			},
 			"cpu_average": {
-				Type:        schema.TypeString,
-				Description: "CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.",
-				Required:    true,
+				Type:         schema.TypeString,
+				Description:  "CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.",
+				Optional:     true,
+				AtLeastOneOf: []string{"cpu_average", "schedules"},
+			},
+			"schedules": {
+				Type:        schema.TypeList,
+				Description: "List of schedules that determine scheduled up/downscales",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"min_replicas": {
+							Type:     schema.TypeInt,
+							Required: true,
+						},
+						"start": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"end": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"timezone": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+				Optional:     true,
+				AtLeastOneOf: []string{"cpu_average", "schedules"},
 			},
 		},
 	}
@@ -100,13 +127,22 @@ func resourceTsuruApplicationAutoscaleSet(ctx context.Context, d *schema.Resourc
 	if minUnits > maxUnits {
 		minUnits = maxUnits
 	}
-	cpu := d.Get("cpu_average").(string)
 
 	autoscale := tsuru_client.AutoScaleSpec{
-		Process:    process,
-		MinUnits:   int32(minUnits),
-		MaxUnits:   int32(maxUnits),
-		AverageCPU: cpu,
+		Process:  process,
+		MinUnits: int32(minUnits),
+		MaxUnits: int32(maxUnits),
+	}
+
+	if cpu, ok := d.GetOk("cpu_average"); ok {
+		autoscale.AverageCPU = cpu.(string)
+	}
+
+	if m, ok := d.GetOk("schedules"); ok {
+		schedules := schedulesFromResourceData(m)
+		if schedules != nil {
+			autoscale.Schedules = schedules
+		}
 	}
 
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -170,9 +206,12 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 				d.Set("cpu_average", autoscale.AverageCPU)
 			} else if strings.HasSuffix(autoscale.AverageCPU, "m") {
 				d.Set("cpu_average", milliToPercentage(autoscale.AverageCPU))
-			} else {
+			} else if currentCPUAverage != "" {
 				d.Set("cpu_average", autoscale.AverageCPU)
 			}
+
+			d.Set("schedules", flattenSchedules(autoscale.Schedules))
+
 			return nil
 		}
 
@@ -239,4 +278,55 @@ func milliToPercentage(milli string) string {
 	}
 
 	return fmt.Sprintf("%.2g", milliInt/10)
+}
+
+func schedulesFromResourceData(meta interface{}) []tsuru_client.AutoScaleSchedule {
+	scheduleMeta := meta.([]interface{})
+
+	if len(scheduleMeta) == 0 {
+		return nil
+	}
+
+	schedules := []tsuru_client.AutoScaleSchedule{}
+
+	for _, iface := range scheduleMeta {
+		schedule := tsuru_client.AutoScaleSchedule{}
+		sm := iface.(map[string]interface{})
+
+		if v, ok := sm["min_replicas"]; ok {
+			minReplicas := v.(int)
+			schedule.MinReplicas = int32(minReplicas)
+		}
+
+		if v, ok := sm["start"]; ok {
+			schedule.Start = v.(string)
+		}
+
+		if v, ok := sm["end"]; ok {
+			schedule.End = v.(string)
+		}
+
+		if v, ok := sm["timezone"]; ok {
+			schedule.Timezone = v.(string)
+		}
+
+		schedules = append(schedules, schedule)
+	}
+
+	return schedules
+}
+
+func flattenSchedules(schedules []tsuru_client.AutoScaleSchedule) []interface{} {
+	result := []interface{}{}
+
+	for _, schedule := range schedules {
+		result = append(result, map[string]interface{}{
+			"min_replicas": schedule.MinReplicas,
+			"start":        schedule.Start,
+			"end":          schedule.End,
+			"timezone":     schedule.Timezone,
+		})
+	}
+
+	return result
 }
