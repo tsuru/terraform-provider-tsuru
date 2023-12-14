@@ -396,14 +396,14 @@ func testAccResourceTsuruAppAutoscale_schedules() string {
 		max_units = 10
 		cpu_average = "80%"
 
-		schedules {
+		schedule {
 			min_replicas = 2
 			start = "15 7 * * *"
 			end = "0 17 * * *"
 			timezone = "America/Sao_Paulo"
 		}
 
-		schedules {
+		schedule {
 			min_replicas = 3
 			start = "0 5 * * *"
 			end = "30 5 * * *"
@@ -513,14 +513,14 @@ func testAccResourceTsuruAppAutoscale_withoutCpu() string {
 		min_units = 3
 		max_units = 10
 
-		schedules {
+		schedule {
 			min_replicas = 2
 			start = "15 7 * * *"
 			end = "0 17 * * *"
 			timezone = "America/Sao_Paulo"
 		}
 
-		schedules {
+		schedule {
 			min_replicas = 3
 			start = "0 5 * * *"
 			end = "30 5 * * *"
@@ -542,7 +542,7 @@ func TestAccTsuruAutoscaleSetShouldErrorWithoutScheduleAndCPU(t *testing.T) {
 					min_units = 3
 					max_units = 10
 				}`,
-				ExpectError: regexp.MustCompile("one of `cpu_average,schedules` must be specified"),
+				ExpectError: regexp.MustCompile("one of `cpu_average,schedule` must be specified"),
 			},
 		},
 	})

@@ -20,14 +20,14 @@ resource "tsuru_app_autoscale" "web" {
   max_units   = 10
   cpu_average = "60%"
 
-  schedules {
+  schedule {
     min_replicas = 5
     start = "0 18 * * *"
     end = "0 0 * * *"
     timezone = "America/Sao_Paulo"
   }
 
-  schedules {
+  schedule {
     min_replicas = 10
     start = "0 18 * * *"
     end = "0 19 * * *"
@@ -49,15 +49,15 @@ resource "tsuru_app_autoscale" "web" {
 
 - `cpu_average` (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
 - `min_units` (Number) minimum number of units
-- `schedules` (Block List) List of schedules that determine scheduled up/downscales (see [below for nested schema](#nestedblock--schedules))
+- `schedule` (Block List) List of schedules that determine scheduled up/downscales (see [below for nested schema](#nestedblock--schedule))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--schedules"></a>
-### Nested Schema for `schedules`
+<a id="nestedblock--schedule"></a>
+### Nested Schema for `schedule`
 
 Required:
 

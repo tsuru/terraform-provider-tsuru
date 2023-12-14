@@ -65,9 +65,9 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.",
 				Optional:     true,
-				AtLeastOneOf: []string{"cpu_average", "schedules"},
+				AtLeastOneOf: []string{"cpu_average", "schedule"},
 			},
-			"schedules": {
+			"schedule": {
 				Type:        schema.TypeList,
 				Description: "List of schedules that determine scheduled up/downscales",
 				Elem: &schema.Resource{
@@ -91,7 +91,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 					},
 				},
 				Optional:     true,
-				AtLeastOneOf: []string{"cpu_average", "schedules"},
+				AtLeastOneOf: []string{"cpu_average", "schedule"},
 			},
 		},
 	}
@@ -138,7 +138,7 @@ func resourceTsuruApplicationAutoscaleSet(ctx context.Context, d *schema.Resourc
 		autoscale.AverageCPU = cpu.(string)
 	}
 
-	if m, ok := d.GetOk("schedules"); ok {
+	if m, ok := d.GetOk("schedule"); ok {
 		schedules := schedulesFromResourceData(m)
 		if schedules != nil {
 			autoscale.Schedules = schedules
@@ -210,7 +210,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 				d.Set("cpu_average", autoscale.AverageCPU)
 			}
 
-			d.Set("schedules", flattenSchedules(autoscale.Schedules))
+			d.Set("schedule", flattenSchedules(autoscale.Schedules))
 
 			return nil
 		}
