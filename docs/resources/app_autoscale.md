@@ -19,6 +19,20 @@ resource "tsuru_app_autoscale" "web" {
   min_units   = 3
   max_units   = 10
   cpu_average = "60%"
+
+  schedule {
+    min_replicas = 5
+    start = "0 18 * * *"
+    end = "0 0 * * *"
+    timezone = "America/Sao_Paulo"
+  }
+
+  schedule {
+    min_replicas = 10
+    start = "0 18 * * *"
+    end = "0 19 * * *"
+    timezone = "UTC"
+  }
 }
 ```
 
@@ -28,18 +42,33 @@ resource "tsuru_app_autoscale" "web" {
 ### Required
 
 - `app` (String) Application name
-- `cpu_average` (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
 - `max_units` (Number) maximum number of units
 - `process` (String) Application process
 
 ### Optional
 
+- `cpu_average` (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
 - `min_units` (Number) minimum number of units
+- `schedule` (Block List) List of schedules that determine scheduled up/downscales (see [below for nested schema](#nestedblock--schedule))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--schedule"></a>
+### Nested Schema for `schedule`
+
+Required:
+
+- `end` (String)
+- `min_replicas` (Number)
+- `start` (String)
+
+Optional:
+
+- `timezone` (String)
+
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
