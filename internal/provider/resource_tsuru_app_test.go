@@ -130,10 +130,87 @@ func TestAccResourceTsuruApp(t *testing.T) {
 			return c.JSON(http.StatusOK, app)
 		}
 
+		if iterationCount == 2 {
+			app := &tsuru.App{
+				Name:        name,
+				Description: "my app description",
+				TeamOwner:   "my-team",
+				Platform:    "python",
+				Plan:        tsuru.Plan{Name: "c2m4"},
+				Cluster:     "my-cluster-01",
+				Pool:        "prod",
+				Provisioner: "kubernetes",
+				Tags:        []string{"tagA", "tagB"},
+				Metadata: tsuru.Metadata{
+					Labels: []tsuru.MetadataItem{{Name: "label1", Value: "value1"}, {Name: "label3", Value: "value3"}},
+				},
+				Deploys: 2,
+				Units: []tsuru.Unit{
+					{Processname: "web"},
+				},
+				InternalAddresses: []tsuru.AppInternalAddresses{
+					{
+						Version:  "10",
+						Port:     8888,
+						Process:  "web",
+						Domain:   "app01.namespace.svc.cluster.local",
+						Protocol: "TCP",
+					},
+				},
+				Routers: []tsuru.AppRouters{
+					{
+						Name: "default-router",
+						Addresses: []string{
+							"my-app.router.io",
+						},
+					},
+				},
+				Processes: []tsuru.AppProcess{
+					{
+						Name: "web",
+						Plan: "c2m2",
+						Metadata: tsuru.Metadata{
+							Labels: []tsuru.MetadataItem{
+								{
+									Name:  "weblabel",
+									Value: "value",
+								},
+							},
+							Annotations: []tsuru.MetadataItem{
+								{
+									Name:  "webannotation",
+									Value: "nice",
+								},
+							},
+						},
+					},
+					{
+						Name: "worker",
+						Metadata: tsuru.Metadata{
+							Labels: []tsuru.MetadataItem{
+								{
+									Name:  "workerlabel",
+									Value: "value",
+								},
+							},
+							Annotations: []tsuru.MetadataItem{
+								{
+									Name:  "workerannotation",
+									Value: "nice",
+								},
+							},
+						},
+					},
+				},
+			}
+			return c.JSON(http.StatusOK, app)
+		}
+
 		return c.JSON(http.StatusNotFound, nil)
 	})
 
 	fakeServer.PUT("/1.0/apps/:name", func(c echo.Context) error {
+		iterationCount++
 		return c.JSON(http.StatusOK, nil)
 	})
 
@@ -171,6 +248,19 @@ func TestAccResourceTsuruApp(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "internal_address.0.domain", "app01.namespace.svc.cluster.local"),
 				),
 			},
+			{
+				Config: testAccResourceTsuruApp_metadataAfterUpdate(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", "app01"),
+					resource.TestCheckResourceAttr(resourceName, "description", "my app description"),
+					resource.TestCheckResourceAttr(resourceName, "platform", "python"),
+					resource.TestCheckResourceAttr(resourceName, "plan", "c2m4"),
+					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
+					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
+					resource.TestCheckResourceAttr(resourceName, "tags.0", "tagA"),
+				),
+			},
 		},
 	})
 }
@@ -191,6 +281,52 @@ func testAccResourceTsuruApp_basic() string {
 			}
 			annotations = {
 				"annotation1": "some really long value"
+			}
+		}
+
+		process {
+			name = "web"
+			plan = "c2m2"
+			metadata {
+				labels = {
+					"weblabel" = "value"
+				}
+				annotations = {
+					"webannotation": "nice"
+				}
+			}
+		}
+
+		process {
+			name = "worker"
+
+			metadata {
+				labels = {
+					"workerlabel" = "value"
+				}
+				annotations = {
+					"workerannotation": "nice"
+				}
+			}
+		}
+	}
+`
+}
+
+func testAccResourceTsuruApp_metadataAfterUpdate() string {
+	return `
+	resource "tsuru_app" "app" {
+		name = "app01"
+		description = "my app description"
+		platform = "python"
+		plan = "c2m4"
+		team_owner = "my-team"
+		pool = "prod"
+		tags = ["tagA", "tagB"]
+		metadata {
+			labels = {
+				"label1" = "value1"
+				"label3" = "value3"
 			}
 		}
 
