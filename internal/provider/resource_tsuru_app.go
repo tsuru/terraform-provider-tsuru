@@ -279,10 +279,15 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		Tags:      tags,
 	}
 
-	if m, ok := d.GetOk("metadata"); ok {
-		metadata := metadataFromResourceData(m)
-		if metadata != nil {
-			app.Metadata = *metadata
+	_, ok := d.GetOk("metadata")
+	if ok && d.HasChange("metadata") {
+		old, new := d.GetChange("metadata")
+		oldMetadata := metadataFromResourceData(old)
+		newMetadata := metadataFromResourceData(new)
+
+		app.Metadata = tsuru_client.Metadata{
+			Annotations: markRemovedMetadataItemAsDeleted(oldMetadata.Annotations, newMetadata.Annotations),
+			Labels:      markRemovedMetadataItemAsDeleted(oldMetadata.Labels, newMetadata.Labels),
 		}
 	}
 
