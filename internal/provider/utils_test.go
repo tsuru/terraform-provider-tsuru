@@ -59,7 +59,7 @@ func TestMarkRemovedMetadataItemWhenOldIsReplaced(t *testing.T) {
 	assert.Equal(t, expectedList, resultMetadataItemList)
 }
 
-func TestMarkRemovedMetadataItemWhenOldIsRemvedNewIsAdded(t *testing.T) {
+func TestMarkRemovedMetadataItemWhenOldIsRemovedNewIsAdded(t *testing.T) {
 	oldMetadataItemsList := []tsuru_client.MetadataItem{{
 		Name:  "label_name",
 		Value: "label_value",

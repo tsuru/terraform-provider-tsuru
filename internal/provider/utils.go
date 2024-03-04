@@ -68,17 +68,14 @@ func IDtoParts(input string, minLength int) ([]string, error) {
 }
 
 func markRemovedMetadataItemAsDeleted(oldMetadataItems []tsuru_client.MetadataItem, newMetadataItems []tsuru_client.MetadataItem) []tsuru_client.MetadataItem {
+	newMap := map[string]bool{}
+	for _, newMetadataItem := range newMetadataItems {
+		newMap[newMetadataItem.Name] = true
+	}
+
 	newMetadataItemsList := newMetadataItems
 	for _, oldMetadataItem := range oldMetadataItems {
-		found := false
-		for _, newMetadataItem := range newMetadataItems {
-			if oldMetadataItem.Name == newMetadataItem.Name {
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		if _, found := newMap[oldMetadataItem.Name]; !found {
 			oldMetadataItem.Delete = true
 			newMetadataItemsList = append(newMetadataItemsList, oldMetadataItem)
 		}
