@@ -22,6 +22,11 @@ type MaxRetriesError struct {
 	Meta    interface{}
 }
 
+type ChangedProcess struct {
+	Old tsuru_client.AppProcess
+	New tsuru_client.AppProcess
+}
+
 func (e *MaxRetriesError) Error() string {
 	return e.Message
 }
@@ -81,4 +86,72 @@ func markRemovedMetadataItemAsDeleted(oldMetadataItems []tsuru_client.MetadataIt
 		}
 	}
 	return newMetadataItemsList
+}
+
+func markRemovedProcessAsDefaultPlan(oldProcesses []tsuru_client.AppProcess, newProcesses []tsuru_client.AppProcess) []tsuru_client.AppProcess {
+	onlyInOldList, onlyInNewList, inBoth := checkProcessesListsChanges(oldProcesses, newProcesses)
+
+	newProcessesList := onlyInNewList
+	for _, oldProcess := range onlyInOldList {
+		removedProcess := tsuru_client.AppProcess{
+			Name: oldProcess.Name,
+			Plan: "$default",
+			Metadata: tsuru_client.Metadata{
+				Annotations: markRemovedMetadataItemAsDeleted(oldProcess.Metadata.Annotations, []tsuru_client.MetadataItem{}),
+				Labels:      markRemovedMetadataItemAsDeleted(oldProcess.Metadata.Labels, []tsuru_client.MetadataItem{}),
+			},
+		}
+		newProcessesList = append(newProcessesList, removedProcess)
+	}
+
+	for _, changedProcess := range inBoth {
+		processChange := tsuru_client.AppProcess{
+			Name: changedProcess.New.Name,
+			Plan: changedProcess.New.Plan,
+			Metadata: tsuru_client.Metadata{
+				Annotations: markRemovedMetadataItemAsDeleted(changedProcess.Old.Metadata.Annotations, changedProcess.New.Metadata.Annotations),
+				Labels:      markRemovedMetadataItemAsDeleted(changedProcess.Old.Metadata.Labels, changedProcess.New.Metadata.Labels),
+			},
+		}
+		newProcessesList = append(newProcessesList, processChange)
+	}
+
+	return newProcessesList
+}
+
+func checkProcessesListsChanges(oldProcesses []tsuru_client.AppProcess, newProcesses []tsuru_client.AppProcess) ([]tsuru_client.AppProcess, []tsuru_client.AppProcess, []ChangedProcess) {
+	oldMap := map[string]tsuru_client.AppProcess{}
+	newMap := map[string]tsuru_client.AppProcess{}
+
+	for _, oldProcess := range oldProcesses {
+		oldMap[oldProcess.Name] = oldProcess
+	}
+
+	for _, newProcess := range newProcesses {
+		newMap[newProcess.Name] = newProcess
+	}
+
+	onlyInOldList := []tsuru_client.AppProcess{}
+	onlyInNewList := []tsuru_client.AppProcess{}
+	inBoth := []ChangedProcess{}
+
+	for key, oldValue := range oldMap {
+		if _, found := newMap[key]; found {
+			changedProcess := ChangedProcess{
+				Old: oldMap[key],
+				New: newMap[key],
+			}
+			inBoth = append(inBoth, changedProcess)
+		} else {
+			onlyInOldList = append(onlyInOldList, oldValue)
+		}
+	}
+
+	for key, newValue := range newMap {
+		if _, found := oldMap[key]; !found {
+			onlyInNewList = append(onlyInNewList, newValue)
+		}
+	}
+
+	return onlyInOldList, onlyInNewList, inBoth
 }

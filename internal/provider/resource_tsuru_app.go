@@ -296,13 +296,26 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	if m, ok := d.GetOk("process"); ok {
+	if d.HasChange("process") {
+		old, new := d.GetChange("process")
+		oldProcesses := processesFromResourceData(old)
+		if oldProcesses == nil {
+			oldProcesses = []tsuru_client.AppProcess{}
+		}
+		newProcesses := processesFromResourceData(new)
+		if newProcesses == nil {
+			newProcesses = []tsuru_client.AppProcess{}
+		}
+
+		app.Processes = markRemovedProcessAsDefaultPlan(oldProcesses, newProcesses)
+	}
+	/* if m, ok := d.GetOk("process"); ok {
 		processes := processesFromResourceData(m)
 		if processes != nil {
 			app.Processes = processes
 		}
 	}
-
+	*/
 	if desc, ok := d.GetOk("description"); ok {
 		app.Description = desc.(string)
 	}
