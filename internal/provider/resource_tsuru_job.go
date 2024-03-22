@@ -113,38 +113,16 @@ func resourceTsuruJob() *schema.Resource {
 				},
 			},
 
-			"spec": {
-				Type:        schema.TypeList,
-				Description: "Check Kubernetes official Job specs docs for more details",
-				MaxItems:    1,
+			"active_deadline_seconds": {
+				Type:        schema.TypeInt,
+				Description: "Time a Job can run before its terminated. Defaults is 3600",
 				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"completions": {
-							Type:        schema.TypeInt,
-							Description: "Successful executions for the job to be consider done. Default=1",
-							Optional:    true,
-						},
+			},
 
-						"parallelism": {
-							Type:        schema.TypeInt,
-							Description: "Number of concurrent instances (Pods) of the job. Default=1",
-							Optional:    true,
-						},
-
-						"active_deadline_seconds": {
-							Type:        schema.TypeInt,
-							Description: "Time a Job can run before its terminated. Has precedence over backoff_limit. Defaults to no deadline",
-							Optional:    true,
-						},
-
-						"backoff_limit": {
-							Type:        schema.TypeInt,
-							Description: "Number of retries before considering a Job as failed. Default=6",
-							Optional:    true,
-						},
-					},
-				},
+			"concurrency_policy": {
+				Type:        schema.TypeString,
+				Description: "Concurrency policy",
+				Optional:    true,
 			},
 		},
 	}
@@ -238,6 +216,10 @@ func resourceTsuruJobRead(ctx context.Context, d *schema.ResourceData, meta inte
 		d.Set("description", job.Job.Description)
 	}
 
+	for key, value := range flattenJobSpec(job.Job.Spec) {
+		d.Set(key, value)
+	}
+
 	d.Set("metadata", flattenMetadata(job.Job.Metadata))
 
 	return nil
@@ -327,6 +309,15 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 	if schedule, ok := d.GetOk("schedule"); ok {
 		job.Schedule = schedule.(string)
 	}
+	if concurrencyPolicyInterface, ok := d.GetOk("concurrency_policy"); ok {
+		concurrencyPolicy := concurrencyPolicyInterface.(string)
+		job.ConcurrencyPolicy = &concurrencyPolicy
+	}
+
+	if activeDeadLineSecondsInterface, ok := d.GetOk("active_deadline_seconds"); ok {
+		activeDeadLineSeconds := int64(activeDeadLineSecondsInterface.(int))
+		job.ActiveDeadlineSeconds = &activeDeadLineSeconds
+	}
 
 	return job, nil
 }
@@ -362,4 +353,18 @@ func flattenJobContainer(container tsuru.InputJobContainer) []interface{} {
 	}
 
 	return []interface{}{m}
+}
+
+func flattenJobSpec(spec tsuru.JobSpec) map[string]any {
+	m := map[string]any{}
+
+	if spec.ConcurrencyPolicy != nil {
+		m["concurrency_policy"] = spec.ConcurrencyPolicy
+	}
+
+	if spec.ActiveDeadlineSeconds != nil {
+		m["active_deadline_seconds"] = *spec.ActiveDeadlineSeconds
+	}
+
+	return m
 }

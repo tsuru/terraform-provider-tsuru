@@ -41,10 +41,11 @@ resource "tsuru_job" "my-job" {
 
 ### Optional
 
+- `active_deadline_seconds` (Number) Time a Job can run before its terminated. Defaults is 3600
+- `concurrency_policy` (String) Concurrency policy
 - `description` (String) Job description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
 - `schedule` (String) Cron-like schedule for when the job should be triggered
-- `spec` (Block List, Max: 1) Check Kubernetes official Job specs docs for more details (see [below for nested schema](#nestedblock--spec))
 - `tags` (List of String) Tags
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
@@ -71,17 +72,6 @@ Optional:
 
 - `annotations` (Map of String)
 - `labels` (Map of String)
-
-
-<a id="nestedblock--spec"></a>
-### Nested Schema for `spec`
-
-Optional:
-
-- `active_deadline_seconds` (Number) Time a Job can run before its terminated. Has precedence over backoff_limit. Defaults to no deadline
-- `backoff_limit` (Number) Number of retries before considering a Job as failed. Default=6
-- `completions` (Number) Successful executions for the job to be consider done. Default=1
-- `parallelism` (Number) Number of concurrent instances (Pods) of the job. Default=1
 
 
 <a id="nestedblock--timeouts"></a>
