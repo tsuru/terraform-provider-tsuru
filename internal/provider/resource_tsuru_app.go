@@ -309,13 +309,7 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 
 		app.Processes = markRemovedProcessAsDefaultPlan(oldProcesses, newProcesses)
 	}
-	/* if m, ok := d.GetOk("process"); ok {
-		processes := processesFromResourceData(m)
-		if processes != nil {
-			app.Processes = processes
-		}
-	}
-	*/
+
 	if desc, ok := d.GetOk("description"); ok {
 		app.Description = desc.(string)
 	}
