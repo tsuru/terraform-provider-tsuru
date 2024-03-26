@@ -121,6 +121,8 @@ func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("unable to get app %s: %v", appName, err)
 	}
 
+	d.Set("app", appName)
+
 	for _, router := range routers {
 		if name != router.Name {
 			continue
