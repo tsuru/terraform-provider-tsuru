@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -115,6 +116,10 @@ func markRemovedProcessAsDefaultPlan(oldProcesses []tsuru_client.AppProcess, new
 		}
 		newProcessesList = append(newProcessesList, processChange)
 	}
+
+	sort.Slice(newProcessesList, func(i, j int) bool {
+		return newProcessesList[i].Name < newProcessesList[j].Name
+	})
 
 	return newProcessesList
 }
