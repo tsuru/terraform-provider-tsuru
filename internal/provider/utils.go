@@ -92,8 +92,8 @@ func markRemovedMetadataItemAsDeleted(oldMetadataItems []tsuru_client.MetadataIt
 func markRemovedProcessAsDefaultPlan(oldProcesses []tsuru_client.AppProcess, newProcesses []tsuru_client.AppProcess) []tsuru_client.AppProcess {
 	onlyInOldList, onlyInNewList, inBoth := checkProcessesListsChanges(oldProcesses, newProcesses)
 
-	newProcessesList := onlyInNewList
-	for _, oldProcess := range onlyInOldList {
+	newProcessesList := onlyInNewList          //new processes need no change and can be added directly
+	for _, oldProcess := range onlyInOldList { //any process deleted needs to be marked as $default plan and needs annotations and labels mark to deletion
 		removedProcess := tsuru_client.AppProcess{
 			Name: oldProcess.Name,
 			Plan: "$default",
@@ -105,7 +105,7 @@ func markRemovedProcessAsDefaultPlan(oldProcesses []tsuru_client.AppProcess, new
 		newProcessesList = append(newProcessesList, removedProcess)
 	}
 
-	for _, changedProcess := range inBoth {
+	for _, changedProcess := range inBoth { //for processes changes, we need to check if metadata was changed and properly update or delete them
 		processChange := tsuru_client.AppProcess{
 			Name: changedProcess.New.Name,
 			Plan: changedProcess.New.Plan,
@@ -117,7 +117,7 @@ func markRemovedProcessAsDefaultPlan(oldProcesses []tsuru_client.AppProcess, new
 		newProcessesList = append(newProcessesList, processChange)
 	}
 
-	sort.Slice(newProcessesList, func(i, j int) bool {
+	sort.Slice(newProcessesList, func(i, j int) bool { //sort for consistent output
 		return newProcessesList[i].Name < newProcessesList[j].Name
 	})
 
