@@ -7,6 +7,7 @@ package provider
 import (
 	"context"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -20,6 +21,11 @@ const ID_SEPARATOR = "::"
 type MaxRetriesError struct {
 	Message string
 	Meta    interface{}
+}
+
+type ChangedProcess struct {
+	Old tsuru_client.AppProcess
+	New tsuru_client.AppProcess
 }
 
 func (e *MaxRetriesError) Error() string {
@@ -81,4 +87,76 @@ func markRemovedMetadataItemAsDeleted(oldMetadataItems []tsuru_client.MetadataIt
 		}
 	}
 	return newMetadataItemsList
+}
+
+func markRemovedProcessAsDefaultPlan(oldProcesses []tsuru_client.AppProcess, newProcesses []tsuru_client.AppProcess) []tsuru_client.AppProcess {
+	onlyInOldList, onlyInNewList, inBoth := checkProcessesListsChanges(oldProcesses, newProcesses)
+
+	newProcessesList := onlyInNewList          //new processes need no change and can be added directly
+	for _, oldProcess := range onlyInOldList { //any process deleted needs to be marked as $default plan and needs annotations and labels mark to deletion
+		removedProcess := tsuru_client.AppProcess{
+			Name: oldProcess.Name,
+			Plan: "$default",
+			Metadata: tsuru_client.Metadata{
+				Annotations: markRemovedMetadataItemAsDeleted(oldProcess.Metadata.Annotations, []tsuru_client.MetadataItem{}),
+				Labels:      markRemovedMetadataItemAsDeleted(oldProcess.Metadata.Labels, []tsuru_client.MetadataItem{}),
+			},
+		}
+		newProcessesList = append(newProcessesList, removedProcess)
+	}
+
+	for _, changedProcess := range inBoth { //for processes changes, we need to check if metadata was changed and properly update or delete them
+		processChange := tsuru_client.AppProcess{
+			Name: changedProcess.New.Name,
+			Plan: changedProcess.New.Plan,
+			Metadata: tsuru_client.Metadata{
+				Annotations: markRemovedMetadataItemAsDeleted(changedProcess.Old.Metadata.Annotations, changedProcess.New.Metadata.Annotations),
+				Labels:      markRemovedMetadataItemAsDeleted(changedProcess.Old.Metadata.Labels, changedProcess.New.Metadata.Labels),
+			},
+		}
+		newProcessesList = append(newProcessesList, processChange)
+	}
+
+	sort.Slice(newProcessesList, func(i, j int) bool { //sort for consistent output
+		return newProcessesList[i].Name < newProcessesList[j].Name
+	})
+
+	return newProcessesList
+}
+
+func checkProcessesListsChanges(oldProcesses []tsuru_client.AppProcess, newProcesses []tsuru_client.AppProcess) ([]tsuru_client.AppProcess, []tsuru_client.AppProcess, []ChangedProcess) {
+	oldMap := map[string]tsuru_client.AppProcess{}
+	newMap := map[string]tsuru_client.AppProcess{}
+
+	for _, oldProcess := range oldProcesses {
+		oldMap[oldProcess.Name] = oldProcess
+	}
+
+	for _, newProcess := range newProcesses {
+		newMap[newProcess.Name] = newProcess
+	}
+
+	onlyInOldList := []tsuru_client.AppProcess{}
+	onlyInNewList := []tsuru_client.AppProcess{}
+	inBoth := []ChangedProcess{}
+
+	for key, oldValue := range oldMap {
+		if _, found := newMap[key]; found {
+			changedProcess := ChangedProcess{
+				Old: oldMap[key],
+				New: newMap[key],
+			}
+			inBoth = append(inBoth, changedProcess)
+		} else {
+			onlyInOldList = append(onlyInOldList, oldValue)
+		}
+	}
+
+	for key, newValue := range newMap {
+		if _, found := oldMap[key]; !found {
+			onlyInNewList = append(onlyInNewList, newValue)
+		}
+	}
+
+	return onlyInOldList, onlyInNewList, inBoth
 }
