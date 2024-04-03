@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
-	"github.com/tsuru/tsuru/cmd"
+	tsuruClientConfig "github.com/tsuru/tsuru-client/tsuru/config"
 )
 
 func resourceTsuruApplicationDeploy() *schema.Resource {
@@ -247,7 +247,7 @@ func decodeRawBSONMap(input tsuru.EventStartCustomData) (map[string]interface{},
 }
 
 func deployToken() string {
-	if token, tokenErr := cmd.ReadToken(); tokenErr == nil && token != "" {
+	if token, tokenErr := tsuruClientConfig.DefaultTokenProvider.Token(); tokenErr == nil && token != "" {
 		return "bearer " + token
 	}
 
