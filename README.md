@@ -9,4 +9,4 @@ The tsuru provider for Terraform is a plugin that enables lifecycle management o
 ## Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) 1.4.4
--	[Go](https://golang.org/doc/install) 1.20.2 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.21.0 (to build the provider plugin)
