@@ -118,6 +118,11 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 							Optional:    true,
 							Description: "Custom Prometheus URL. If not specified, it will use the default Prometheus from the app's pool",
 						},
+						"prometheus_address": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Custom Prometheus URL. If not specified, it will use the default Prometheus from the app's pool",
+						},
 					},
 				},
 				Optional:     true,
@@ -248,7 +253,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 			}
 
 			d.Set("schedule", flattenSchedules(autoscale.Schedules))
-			d.Set("prometheus", flattenPrometheus(autoscale.Prometheus))
+			d.Set("prometheus", flattenPrometheus(autoscale.Prometheus, d))
 
 			return nil
 		}
@@ -404,15 +409,18 @@ func flattenSchedules(schedules []tsuru_client.AutoScaleSchedule) []interface{} 
 	return result
 }
 
-func flattenPrometheus(prometheus []tsuru_client.AutoScalePrometheus) []interface{} {
+func flattenPrometheus(prometheus []tsuru_client.AutoScalePrometheus, d *schema.ResourceData) []interface{} {
 	result := []interface{}{}
 
-	for _, prom := range prometheus {
+	for i, prom := range prometheus {
+		customAddressStr := fmt.Sprintf("prometheus.%d.custom_address", i)
+		customAddress := d.Get(customAddressStr).(string)
 		result = append(result, map[string]interface{}{
-			"name":           prom.Name,
-			"threshold":      prom.Threshold,
-			"query":          prom.Query,
-			"custom_address": prom.PrometheusAddress,
+			"name":               prom.Name,
+			"threshold":          prom.Threshold,
+			"query":              prom.Query,
+			"custom_address":     customAddress,
+			"prometheus_address": prom.PrometheusAddress,
 		})
 	}
 
