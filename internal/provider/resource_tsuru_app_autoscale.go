@@ -65,7 +65,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.",
 				Optional:     true,
-				AtLeastOneOf: []string{"cpu_average", "schedule"},
+				AtLeastOneOf: []string{"cpu_average", "schedule", "prometheus"},
 			},
 			"schedule": {
 				Type:        schema.TypeList,
@@ -91,7 +91,37 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 					},
 				},
 				Optional:     true,
-				AtLeastOneOf: []string{"cpu_average", "schedule"},
+				AtLeastOneOf: []string{"cpu_average", "schedule", "prometheus"},
+			},
+			"prometheus": {
+				Type:        schema.TypeList,
+				Description: "List of Prometheus autoscale rules",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Name of the Prometheus autoscale rule",
+						},
+						"threshold": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "Threshold value to trigger the autoscaler",
+						},
+						"query": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Prometheus query to be used in the autoscale rule",
+						},
+						"custom_address": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Custom Prometheus URL. If not specified, it will use the default Prometheus from the app's pool",
+						},
+					},
+				},
+				Optional:     true,
+				AtLeastOneOf: []string{"cpu_average", "schedule", "prometheus"},
 			},
 		},
 	}
@@ -142,6 +172,13 @@ func resourceTsuruApplicationAutoscaleSet(ctx context.Context, d *schema.Resourc
 		schedules := schedulesFromResourceData(m)
 		if schedules != nil {
 			autoscale.Schedules = schedules
+		}
+	}
+
+	if p, ok := d.GetOk("prometheus"); ok {
+		prometheus := prometheusFromResourceData(p)
+		if prometheus != nil {
+			autoscale.Prometheus = prometheus
 		}
 	}
 
@@ -211,6 +248,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 			}
 
 			d.Set("schedule", flattenSchedules(autoscale.Schedules))
+			d.Set("prometheus", flattenPrometheus(autoscale.Prometheus))
 
 			return nil
 		}
@@ -316,6 +354,42 @@ func schedulesFromResourceData(meta interface{}) []tsuru_client.AutoScaleSchedul
 	return schedules
 }
 
+func prometheusFromResourceData(meta interface{}) []tsuru_client.AutoScalePrometheus {
+	prometheusMeta := meta.([]interface{})
+
+	if len(prometheusMeta) == 0 {
+		return nil
+	}
+
+	prometheus := []tsuru_client.AutoScalePrometheus{}
+
+	for _, iface := range prometheusMeta {
+		prom := tsuru_client.AutoScalePrometheus{}
+		pm := iface.(map[string]interface{})
+
+		if v, ok := pm["name"]; ok {
+			prom.Name = v.(string)
+		}
+
+		if v, ok := pm["threshold"]; ok {
+			threshold := v.(int)
+			prom.Threshold = float64(threshold)
+		}
+
+		if v, ok := pm["query"]; ok {
+			prom.Query = v.(string)
+		}
+
+		if v, ok := pm["custom_address"]; ok {
+			prom.PrometheusAddress = v.(string)
+		}
+
+		prometheus = append(prometheus, prom)
+	}
+
+	return prometheus
+}
+
 func flattenSchedules(schedules []tsuru_client.AutoScaleSchedule) []interface{} {
 	result := []interface{}{}
 
@@ -325,6 +399,21 @@ func flattenSchedules(schedules []tsuru_client.AutoScaleSchedule) []interface{} 
 			"start":        schedule.Start,
 			"end":          schedule.End,
 			"timezone":     schedule.Timezone,
+		})
+	}
+
+	return result
+}
+
+func flattenPrometheus(prometheus []tsuru_client.AutoScalePrometheus) []interface{} {
+	result := []interface{}{}
+
+	for _, prom := range prometheus {
+		result = append(result, map[string]interface{}{
+			"name":          prom.Name,
+			"threshold":     prom.Threshold,
+			"query":         prom.Query,
+			"custom_address": prom.PrometheusAddress,
 		})
 	}
 

@@ -8,8 +8,8 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.4
-	github.com/tsuru/go-tsuruclient v0.0.0-20240403182619-fe8da980483b
+	github.com/stretchr/testify v1.9.0
+	github.com/tsuru/go-tsuruclient v0.0.0-20240409125509-22a1e08326f4
 	github.com/tsuru/tsuru-client v0.0.0-20240325204824-8c0dc602a5be
 	k8s.io/apimachinery v0.26.2
 )
@@ -63,12 +63,12 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/zclconf/go-cty v1.13.1 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/oauth2 v0.19.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/term v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230227214838-9b19f0bdc514 // indirect
