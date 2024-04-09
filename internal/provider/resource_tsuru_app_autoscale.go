@@ -104,7 +104,7 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 							Description: "Name of the Prometheus autoscale rule",
 						},
 						"threshold": {
-							Type:        schema.TypeInt,
+							Type:        schema.TypeFloat,
 							Required:    true,
 							Description: "Threshold value to trigger the autoscaler",
 						},
@@ -372,8 +372,7 @@ func prometheusFromResourceData(meta interface{}) []tsuru_client.AutoScalePromet
 		}
 
 		if v, ok := pm["threshold"]; ok {
-			threshold := v.(int)
-			prom.Threshold = float64(threshold)
+			prom.Threshold = v.(float64)
 		}
 
 		if v, ok := pm["query"]; ok {
@@ -410,9 +409,9 @@ func flattenPrometheus(prometheus []tsuru_client.AutoScalePrometheus) []interfac
 
 	for _, prom := range prometheus {
 		result = append(result, map[string]interface{}{
-			"name":          prom.Name,
-			"threshold":     prom.Threshold,
-			"query":         prom.Query,
+			"name":           prom.Name,
+			"threshold":      prom.Threshold,
+			"query":          prom.Query,
 			"custom_address": prom.PrometheusAddress,
 		})
 	}
