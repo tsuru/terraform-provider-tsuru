@@ -449,10 +449,16 @@ func TestAccResourceTsuruAppAutoscaleWithPrometheus(t *testing.T) {
 				AverageCPU: "800m",
 				Prometheus: []tsuru.AutoScalePrometheus{
 					{
-						Name:              "prom_metric",
+						Name:              "requests_scale",
 						Threshold:         2.5,
-						Query:             "sum(rate(my_query{app='my-app'}[5m]))",
-						PrometheusAddress: "http://ronaldo",
+						Query:             "sum(rate(http_requests{app='my-app'}[5m]))",
+						PrometheusAddress: "http://default-prometheus.namespace.svc.cluster.local:9090",
+					},
+					{
+						Name:              "queue_size_scale",
+						Threshold:         10.0,
+						Query:             "sum(queue_size{tsuru_app='my-app'})",
+						PrometheusAddress: "http://default-prometheus.namespace.svc.cluster.local:9090",
 					},
 				},
 			}})
@@ -464,10 +470,10 @@ func TestAccResourceTsuruAppAutoscaleWithPrometheus(t *testing.T) {
 				AverageCPU: "800m",
 				Prometheus: []tsuru.AutoScalePrometheus{
 					{
-						Name:              "prom_metric",
+						Name:              "requests_scale",
 						Threshold:         2.5,
-						Query:             "sum(rate(my_query{app='my-app'}[5m]))",
-						PrometheusAddress: "http://my-prometheus.namespace.svc.cluster.local:9090",
+						Query:             "sum(rate(http_requests{app='my-app'}[5m]))",
+						PrometheusAddress: "http://custom-prometheus.namespace.svc.cluster.local:9090",
 					},
 				},
 			}})
@@ -505,22 +511,27 @@ func TestAccResourceTsuruAppAutoscaleWithPrometheus(t *testing.T) {
 				Config: testAccResourceTsuruAppAutoscalePrometheus(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccResourceExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "prometheus.0.name", "prom_metric"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.0.name", "requests_scale"),
 					resource.TestCheckResourceAttr(resourceName, "prometheus.0.threshold", "2.5"),
-					resource.TestCheckResourceAttr(resourceName, "prometheus.0.query", "sum(rate(my_query{app='my-app'}[5m]))"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.0.query", "sum(rate(http_requests{app='my-app'}[5m]))"),
 					resource.TestCheckResourceAttr(resourceName, "prometheus.0.custom_address", ""),
-					resource.TestCheckResourceAttr(resourceName, "prometheus.0.prometheus_address", "http://ronaldo"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.0.prometheus_address", "http://default-prometheus.namespace.svc.cluster.local:9090"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.1.name", "queue_size_scale"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.1.threshold", "10"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.1.query", "sum(queue_size{tsuru_app='my-app'})"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.1.custom_address", ""),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.1.prometheus_address", "http://default-prometheus.namespace.svc.cluster.local:9090"),
 				),
 			},
 			{
 				Config: testAccResourceTsuruAppAutoscalePrometheusWithCustomAddress(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccResourceExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "prometheus.0.name", "prom_metric"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.0.name", "requests_scale"),
 					resource.TestCheckResourceAttr(resourceName, "prometheus.0.threshold", "2.5"),
-					resource.TestCheckResourceAttr(resourceName, "prometheus.0.query", "sum(rate(my_query{app='my-app'}[5m]))"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.0.query", "sum(rate(http_requests{app='my-app'}[5m]))"),
 					resource.TestCheckResourceAttr(resourceName, "prometheus.0.custom_address", "http://my-prometheus.namespace.svc.cluster.local:9090"),
-					resource.TestCheckResourceAttr(resourceName, "prometheus.0.prometheus_address", "http://my-prometheus.namespace.svc.cluster.local:9090"),
+					resource.TestCheckResourceAttr(resourceName, "prometheus.0.prometheus_address", "http://custom-prometheus.namespace.svc.cluster.local:9090"),
 				),
 			},
 		},
@@ -537,9 +548,15 @@ func testAccResourceTsuruAppAutoscalePrometheus() string {
 		cpu_average = "80%"
 
 		prometheus {
-			name           = "prom_metric"
+			name           = "requests_scale"
 			threshold      = 2.5
-			query          = "sum(rate(my_query{app='my-app'}[5m]))"
+			query          = "sum(rate(http_requests{app='my-app'}[5m]))"
+		}
+
+		prometheus {
+			name           = "queue_size_scale"
+			threshold      = 10
+			query          = "sum(queue_size{tsuru_app='my-app'})"
 		}
 	}
 `
@@ -555,9 +572,9 @@ func testAccResourceTsuruAppAutoscalePrometheusWithCustomAddress() string {
 		cpu_average = "80%"
 
 		prometheus {
-			name           = "prom_metric"
+			name           = "requests_scale"
 			threshold      = 2.5
-			query          = "sum(rate(my_query{app='my-app'}[5m]))"
+			query          = "sum(rate(http_requests{app='my-app'}[5m]))"
 			custom_address = "http://my-prometheus.namespace.svc.cluster.local:9090"
 		}
 	}
