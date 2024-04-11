@@ -49,12 +49,31 @@ resource "tsuru_app_autoscale" "web" {
 
 - `cpu_average` (String) CPU average, for example: 20%, mean that we trigger autoscale when the average of CPU Usage of units is 20%.
 - `min_units` (Number) minimum number of units
+- `prometheus` (Block List) List of Prometheus autoscale rules (see [below for nested schema](#nestedblock--prometheus))
 - `schedule` (Block List) List of schedules that determine scheduled up/downscales (see [below for nested schema](#nestedblock--schedule))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--prometheus"></a>
+### Nested Schema for `prometheus`
+
+Required:
+
+- `name` (String) Name of the Prometheus autoscale rule
+- `query` (String) Prometheus query to be used in the autoscale rule
+- `threshold` (Number) Threshold value to trigger the autoscaler
+
+Optional:
+
+- `custom_address` (String) Custom Prometheus URL. If not specified, it will use the default Prometheus from the app's pool
+
+Read-Only:
+
+- `prometheus_address` (String) Custom Prometheus URL. If not specified, it will use the default Prometheus from the app's pool
+
 
 <a id="nestedblock--schedule"></a>
 ### Nested Schema for `schedule`
