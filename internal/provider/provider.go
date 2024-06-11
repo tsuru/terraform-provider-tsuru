@@ -92,9 +92,9 @@ func Provider() *schema.Provider {
 }
 
 type tsuruProvider struct {
-	Host                    string
-	Token                   string
-	TsuruClient             *tsuru.APIClient
+	Host                   string
+	Token                  string
+	TsuruClient            *tsuru.APIClient
 	SkipEnvsManagedByTsuru bool
 }
 
@@ -145,9 +145,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 	skipManagedByValidation := d.Get("skip_envs_managed_by_tsuru").(bool)
 
 	return &tsuruProvider{
-		Host:                    host,
-		Token:                   token,
-		TsuruClient:             client,
+		Host:                   host,
+		Token:                  token,
+		TsuruClient:            client,
 		SkipEnvsManagedByTsuru: skipManagedByValidation,
 	}, nil
 }
