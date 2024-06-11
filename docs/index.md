@@ -19,4 +19,5 @@ description: |-
 
 - `host` (String) Target to tsuru API
 - `skip_cert_verification` (Boolean) Disable certificate verification
+- `skip_envs_managed_by_tsuru` (Boolean) Skip environment variables managed by Tsuru (optional)
 - `token` (String) Token to authenticate on tsuru API (optional)
