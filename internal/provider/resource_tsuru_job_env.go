@@ -109,7 +109,7 @@ func resourceTsuruJobEnvironmentRead(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("unable to read envs for job %s: %v", job, err)
 	}
 
-	envs = filterUnmanagedTerraformEnvs(envs, provider.SkipEnvsManagedByTsuru)
+	envs = filterUnmanagedTerraformEnvs(envs, provider.FullManagementEnvs)
 
 	envVars := map[string]string{}
 	sensitiveEnvVars := map[string]string{}
