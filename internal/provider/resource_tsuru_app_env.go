@@ -243,10 +243,13 @@ func filterUnmanagedTerraformEnvs(envs []tsuru.EnvVar, fullManagementEnvs bool) 
 		if isReservedEnv(env.Name) {
 			continue
 		}
-		
-		if !(SkipEnvsManagedByTsuru) && (env.ManagedBy != "terraform") {
+		if !fullManagementEnvs && env.ManagedBy != "terraform" {
 			continue
 		}
+		if fullManagementEnvs && !(env.ManagedBy == "terraform" || env.ManagedBy == "") {
+			continue
+		}
+
 		envs[n] = env
 		n++
 	}
