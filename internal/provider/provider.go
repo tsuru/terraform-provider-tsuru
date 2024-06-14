@@ -49,7 +49,7 @@ func Provider() *schema.Provider {
 				Description: "Use `true` to manage all user environment variables. (Default: false)",
 				Default:     false,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("TSURU_SKIP_ENVS_MANAGED_BY_TSURU", nil),
+				DefaultFunc: schema.EnvDefaultFunc("TSURU_FULL_MANAGEMENT_OF_USER_ENVIRONMENT_VARIABLES", nil),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
