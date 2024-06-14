@@ -240,19 +240,23 @@ func envsFromResource(envvars interface{}, private bool) []tsuru_client.Env {
 func filterUnmanagedTerraformEnvs(envs []tsuru.EnvVar, fullManagementEnvs bool) []tsuru.EnvVar {
 	n := 0
 	for _, env := range envs {
-		if isReservedEnv(env.Name) {
-			continue
-		}
-		if !fullManagementEnvs && env.ManagedBy != "terraform" {
-			continue
-		}
-		if fullManagementEnvs && !(env.ManagedBy == "terraform" || env.ManagedBy == "") {
+		if isReservedEnv(env.Name) { //reserved Envs, skip
 			continue
 		}
 
-		envs[n] = env
-		n++
+		if fullManagementEnvs { //full management mode, read ManagedBy terraform or empty string
+			if env.ManagedBy == "terraform" || env.ManagedBy == "" {
+				envs[n] = env
+				n++
+			}
+		} else { //non-full management mode, read only ManagedBy terraform 
+			if env.ManagedBy == "terraform" {
+				envs[n] = env
+				n++
+			}
+		}
 	}
+
 	envs = envs[:n]
 	return envs
 }
