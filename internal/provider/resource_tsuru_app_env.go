@@ -244,17 +244,10 @@ func filterUnmanagedTerraformEnvs(envs []tsuru.EnvVar, fullManagementEnvs bool) 
 			continue
 		}
 
-		if fullManagementEnvs { //full management mode, read ManagedBy terraform or empty string
-			if env.ManagedBy == "terraform" || env.ManagedBy == "" {
-				envs[n] = env
-				n++
-			}
-		} else { //non-full management mode, read only ManagedBy terraform 
-			if env.ManagedBy == "terraform" {
-				envs[n] = env
-				n++
-			}
-		}
+		if env.ManagedBy == "terraform" || (fullManagementEnvs && env.ManagedBy == "") {
+			envs[n] = env
+			n++
+		} 
 	}
 
 	envs = envs[:n]
