@@ -44,6 +44,13 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("TSURU_SKIP_CERT_VERIFICATION", nil),
 			},
+			"full_management_of_user_environment_variables": {
+				Type:        schema.TypeBool,
+				Description: "Use `true` to manage all user environment variables. (Default: false)",
+				Default:     false,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("TSURU_FULL_MANAGEMENT_OF_USER_ENVIRONMENT_VARIABLES", nil),
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"tsuru_service_instance_bind":  resourceTsuruServiceInstanceBind(),
@@ -85,9 +92,10 @@ func Provider() *schema.Provider {
 }
 
 type tsuruProvider struct {
-	Host        string
-	Token       string
-	TsuruClient *tsuru.APIClient
+	Host               string
+	Token              string
+	TsuruClient        *tsuru.APIClient
+	FullManagementEnvs bool
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVersion string) (interface{}, diag.Diagnostics) {
@@ -134,10 +142,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 		return nil, diag.FromErr(err)
 	}
 
+	fullManagementEnvs := d.Get("full_management_of_user_environment_variables").(bool)
+
 	return &tsuruProvider{
-		Host:        host,
-		Token:       token,
-		TsuruClient: client,
+		Host:               host,
+		Token:              token,
+		TsuruClient:        client,
+		FullManagementEnvs: fullManagementEnvs,
 	}, nil
 }
 

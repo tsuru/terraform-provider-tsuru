@@ -125,8 +125,8 @@ func resourceTsuruApplicationEnvironmentRead(ctx context.Context, d *schema.Reso
 		}
 		return diag.Errorf("unable to read envs for app %s: %v", app, err)
 	}
-
-	envs = filterUnmanagedTerraformEnvs(envs)
+	
+	envs = filterUnmanagedTerraformEnvs(envs, provider.FullManagementEnvs)
 
 	envVars := map[string]string{}
 	sensitiveEnvVars := map[string]string{}
@@ -237,18 +237,19 @@ func envsFromResource(envvars interface{}, private bool) []tsuru_client.Env {
 	return envs
 }
 
-func filterUnmanagedTerraformEnvs(envs []tsuru.EnvVar) []tsuru.EnvVar {
+func filterUnmanagedTerraformEnvs(envs []tsuru.EnvVar, fullManagementEnvs bool) []tsuru.EnvVar {
 	n := 0
 	for _, env := range envs {
-		if isReservedEnv(env.Name) {
+		if isReservedEnv(env.Name) { //reserved Envs, skip
 			continue
 		}
-		if env.ManagedBy != "terraform" {
-			continue
-		}
-		envs[n] = env
-		n++
+
+		if env.ManagedBy == "terraform" || (fullManagementEnvs && env.ManagedBy == "") {
+			envs[n] = env
+			n++
+		} 
 	}
+
 	envs = envs[:n]
 	return envs
 }
