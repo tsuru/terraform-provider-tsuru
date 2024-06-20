@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/tsuru/go-tsuruclient/pkg/client"
+	"github.com/tsuru/go-tsuruclient/pkg/config"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
@@ -127,11 +128,21 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, terraformVer
 		}
 	}
 
+	var err error
 	host := d.Get("host").(string)
-	if host != "" {
-		cfg.BasePath = host
-		os.Setenv("TSURU_TARGET", host)
+	if host == "" {
+		host = os.Getenv("TSURU_TARGET")
 	}
+	if host == "" {
+		host, err = config.GetTarget()
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+	}
+
+	cfg.BasePath = host
+	os.Setenv("TSURU_TARGET", host)
+
 	token := d.Get("token").(string)
 	if token != "" {
 		cfg.DefaultHeader["Authorization"] = token
