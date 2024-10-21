@@ -63,6 +63,7 @@ func resourceTsuruToken() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "Tsuru token",
 				Computed:    true,
+				Sensitive:   true,
 			},
 			"created_at": {
 				Type:        schema.TypeString,
