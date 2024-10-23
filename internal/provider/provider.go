@@ -81,6 +81,7 @@ func Provider() *schema.Provider {
 			"tsuru_pool":            resourceTsuruPool(),
 			"tsuru_cluster_pool":    resourceTsuruClusterPool(),
 			"tsuru_cluster":         resourceTsuruCluster(),
+			"tsuru_token":           resourceTsuruToken(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"tsuru_app": dataSourceTsuruApp(),
