@@ -206,8 +206,8 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tsuru/gnuflag v0.0.0-20151217162021-86b8c1b864aa h1:JlLQP1xa13a994p/Aau2e3K9xXYaHNoNvTDVIMHSUa4=
 github.com/tsuru/gnuflag v0.0.0-20151217162021-86b8c1b864aa/go.mod h1:UibOSvkMFKRe/eiwktAPAvQG8L+p8nYsECJvu3Dgw7I=
-github.com/tsuru/go-tsuruclient v0.0.0-20240409125509-22a1e08326f4 h1:MGmG6AxKP8XRe7nQqIQR+Tsb5tCzHnYpYk0tiuXVgxY=
-github.com/tsuru/go-tsuruclient v0.0.0-20240409125509-22a1e08326f4/go.mod h1:qwh/KJ6ypa2GISRI79XFOHhnSjGOe1cZVPHF3nfrf18=
+github.com/tsuru/go-tsuruclient v0.0.0-20241029183502-e219a905d873 h1:Rs3urDCvqLpmGpUKOJNRiOCij/A+EcemdeOaGmGcs/E=
+github.com/tsuru/go-tsuruclient v0.0.0-20241029183502-e219a905d873/go.mod h1:qwh/KJ6ypa2GISRI79XFOHhnSjGOe1cZVPHF3nfrf18=
 github.com/tsuru/tablecli v0.0.0-20190131152944-7ded8a3383c6 h1:1XDdWFAjIbCSG1OjN9v9KdWhuM8UtYlFcfHe/Ldkchk=
 github.com/tsuru/tablecli v0.0.0-20190131152944-7ded8a3383c6/go.mod h1:ztYpOhW+u1k21FEqp7nZNgpWbr0dUKok5lgGCZi+1AQ=
 github.com/tsuru/tsuru v0.0.0-20240325190920-410c71393b77 h1:cuWFjNLaemdQZhojqJbb/rOXO97tlcPeLAHg/x+EQGk=

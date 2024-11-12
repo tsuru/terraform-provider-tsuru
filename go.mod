@@ -9,7 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
-	github.com/tsuru/go-tsuruclient v0.0.0-20240409125509-22a1e08326f4
+	github.com/tsuru/go-tsuruclient v0.0.0-20241029183502-e219a905d873
 	github.com/tsuru/tsuru-client v0.0.0-20240325204824-8c0dc602a5be
 	k8s.io/apimachinery v0.26.2
 )
