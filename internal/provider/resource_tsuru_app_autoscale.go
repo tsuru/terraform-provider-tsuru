@@ -128,6 +128,31 @@ func resourceTsuruApplicationAutoscale() *schema.Resource {
 				Optional:     true,
 				AtLeastOneOf: []string{"cpu_average", "schedule", "prometheus"},
 			},
+			"scale_down": {
+				Type:        schema.TypeList,
+				Description: "Behavior of the auto scale down",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"units": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Number of units to scale down",
+						},
+						"percentage": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Percentage of units to scale down",
+						},
+						"stabilization_window": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Stabilization window in seconds",
+						},
+					},
+				},
+				Optional:     true,
+				AtLeastOneOf: []string{"cpu_average", "schedule", "prometheus"},
+			},
 		},
 	}
 }
@@ -167,6 +192,9 @@ func resourceTsuruApplicationAutoscaleSet(ctx context.Context, d *schema.Resourc
 		Process:  process,
 		MinUnits: int32(minUnits),
 		MaxUnits: int32(maxUnits),
+		Behavior: tsuru_client.AutoScaleSpecBehavior{
+			ScaleDown: tsuru_client.AutoScaleSpecBehaviorScaleDown{},
+		},
 	}
 
 	if cpu, ok := d.GetOk("cpu_average"); ok {
@@ -185,6 +213,10 @@ func resourceTsuruApplicationAutoscaleSet(ctx context.Context, d *schema.Resourc
 		if prometheus != nil {
 			autoscale.Prometheus = prometheus
 		}
+	}
+	if m, ok := d.GetOk("scale_down"); ok {
+		scaleDown := scaleDownFromResourceData(m)
+		autoscale.Behavior.ScaleDown = scaleDown
 	}
 
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
@@ -254,7 +286,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 
 			d.Set("schedule", flattenSchedules(autoscale.Schedules))
 			d.Set("prometheus", flattenPrometheus(autoscale.Prometheus, d))
-
+			d.Set("scale_down", flattenScaleDown(autoscale.Behavior.ScaleDown))
 			return nil
 		}
 
@@ -394,6 +426,33 @@ func prometheusFromResourceData(meta interface{}) []tsuru_client.AutoScalePromet
 	return prometheus
 }
 
+func scaleDownFromResourceData(meta interface{}) tsuru_client.AutoScaleSpecBehaviorScaleDown {
+	scaleDownMeta := meta.([]interface{})
+	if len(scaleDownMeta) == 0 {
+		return tsuru_client.AutoScaleSpecBehaviorScaleDown{}
+	}
+	scaleDown := tsuru_client.AutoScaleSpecBehaviorScaleDown{}
+	for _, iFace := range scaleDownMeta {
+		sd := iFace.(map[string]interface{})
+		if v, ok := sd["percentage"]; ok {
+			if val, ok := v.(int); ok {
+				scaleDown.PercentagePolicyValue = int32(val)
+			}
+		}
+		if v, ok := sd["units"]; ok {
+			if val, ok := v.(int); ok {
+				scaleDown.UnitsPolicyValue = int32(val)
+			}
+		}
+		if v, ok := sd["stabilization_window"]; ok {
+			if val, ok := v.(int); ok {
+				scaleDown.StabilizationWindow = int32(val)
+			}
+		}
+	}
+	return scaleDown
+}
+
 func flattenSchedules(schedules []tsuru_client.AutoScaleSchedule) []interface{} {
 	result := []interface{}{}
 
@@ -425,4 +484,12 @@ func flattenPrometheus(prometheus []tsuru_client.AutoScalePrometheus, d *schema.
 	}
 
 	return result
+}
+
+func flattenScaleDown(scaleDown tsuru_client.AutoScaleSpecBehaviorScaleDown) interface{} {
+	return map[string]interface{}{
+		"percentage":           scaleDown.PercentagePolicyValue,
+		"stabilization_window": scaleDown.StabilizationWindow,
+		"units":                scaleDown.UnitsPolicyValue,
+	}
 }
