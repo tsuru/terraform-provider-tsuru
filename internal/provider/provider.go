@@ -70,6 +70,8 @@ func Provider() *schema.Provider {
 			"tsuru_app_deploy":    resourceTsuruApplicationDeploy(),
 			"tsuru_app":           resourceTsuruApplication(),
 
+			"tsuru_certificate_issuer": resourceTsuruCertificateIssuer(),
+
 			"tsuru_job":        resourceTsuruJob(),
 			"tsuru_job_env":    resourceTsuruJobEnvironment(),
 			"tsuru_job_deploy": resourceTsuruJobDeploy(),
