@@ -257,6 +257,8 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 
 	retryCount := 0
 	maxRetries := 5
+
+	_, proposed := d.GetChange("scale_down")
 	// autoscale info reflects near realtime
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		retryCount++
@@ -286,7 +288,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 
 			d.Set("schedule", flattenSchedules(autoscale.Schedules))
 			d.Set("prometheus", flattenPrometheus(autoscale.Prometheus, d))
-			d.Set("scale_down", flattenScaleDown(autoscale.Behavior.ScaleDown))
+			d.Set("scale_down", newFlattenScaleDown(autoscale.Behavior.ScaleDown, proposed).execute())
 			return nil
 		}
 
@@ -484,12 +486,4 @@ func flattenPrometheus(prometheus []tsuru_client.AutoScalePrometheus, d *schema.
 	}
 
 	return result
-}
-
-func flattenScaleDown(scaleDown tsuru_client.AutoScaleSpecBehaviorScaleDown) interface{} {
-	return map[string]interface{}{
-		"percentage":           scaleDown.PercentagePolicyValue,
-		"stabilization_window": scaleDown.StabilizationWindow,
-		"units":                scaleDown.UnitsPolicyValue,
-	}
 }
