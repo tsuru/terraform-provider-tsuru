@@ -90,7 +90,7 @@ func TestFluentDown(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		readToDiff := newFlattenScaleDown(test.scaleDownRead, test.scaleDownInput).execute()
+		readToDiff := flattenScaleDown(test.scaleDownRead, test.scaleDownInput)
 		assert.Equal(test.expected, readToDiff)
 	}
 }

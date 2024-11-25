@@ -11,7 +11,7 @@ import (
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
-type flattenScaleDown struct {
+type flattenScaleDownBehavior struct {
 	PERCENTAGE_VALUE           int32
 	PERCENTAGE_LABEL           string
 	STABILIZATION_WINDOW_VALUE int32
@@ -22,8 +22,8 @@ type flattenScaleDown struct {
 	Proposed                   interface{}
 }
 
-func newFlattenScaleDown(scaleDownRead tsuru_client.AutoScaleSpecBehaviorScaleDown, proposed interface{}) *flattenScaleDown {
-	return &flattenScaleDown{
+func flattenScaleDown(scaleDownRead tsuru_client.AutoScaleSpecBehaviorScaleDown, proposed interface{}) interface{} {
+	fsd := &flattenScaleDownBehavior{
 		PERCENTAGE_VALUE:           10,
 		PERCENTAGE_LABEL:           "percentage",
 		STABILIZATION_WINDOW_VALUE: 300,
@@ -33,9 +33,10 @@ func newFlattenScaleDown(scaleDownRead tsuru_client.AutoScaleSpecBehaviorScaleDo
 		ScaleDownRead:              scaleDownRead,
 		Proposed:                   proposed,
 	}
+	return fsd.execute()
 }
 
-func (fsd *flattenScaleDown) execute() interface{} {
+func (fsd *flattenScaleDownBehavior) execute() interface{} {
 	if fsd.ScaleDownRead == (tsuru_client.AutoScaleSpecBehaviorScaleDown{}) {
 		return nil
 	}
@@ -53,7 +54,7 @@ func (fsd *flattenScaleDown) execute() interface{} {
 	return fsd.withInputParameters(proposedList)
 }
 
-func (fsd *flattenScaleDown) withInputParameters(proposedList []map[string]interface{}) (value []map[string]interface{}) {
+func (fsd *flattenScaleDownBehavior) withInputParameters(proposedList []map[string]interface{}) (value []map[string]interface{}) {
 	scaleDownCurrent := []map[string]interface{}{{}}
 	percentage, ok := fsd.findScaleDownInProposedList(proposedList, fsd.PERCENTAGE_LABEL)
 	if ok && percentage != 0 || fsd.ScaleDownRead.PercentagePolicyValue != int32(fsd.PERCENTAGE_VALUE) {
@@ -70,7 +71,7 @@ func (fsd *flattenScaleDown) withInputParameters(proposedList []map[string]inter
 	return scaleDownCurrent
 }
 
-func (fsd *flattenScaleDown) noInputParameters(proposedList []map[string]interface{}) (value interface{}, ok bool) {
+func (fsd *flattenScaleDownBehavior) noInputParameters(proposedList []map[string]interface{}) (value interface{}, ok bool) {
 	if len(proposedList) != 0 {
 		return nil, false
 	}
@@ -90,7 +91,7 @@ func (fsd *flattenScaleDown) noInputParameters(proposedList []map[string]interfa
 	return scaleDownCurrent, true
 }
 
-func (fsd *flattenScaleDown) findScaleDownInProposedList(proposedList []map[string]interface{}, key string) (value int, ok bool) {
+func (fsd *flattenScaleDownBehavior) findScaleDownInProposedList(proposedList []map[string]interface{}, key string) (value int, ok bool) {
 	for _, item := range proposedList {
 		if v, ok := item[key]; ok {
 			return v.(int), true
@@ -99,7 +100,7 @@ func (fsd *flattenScaleDown) findScaleDownInProposedList(proposedList []map[stri
 	return 0, false
 }
 
-func (fsd *flattenScaleDown) convertToMapSlice(input interface{}) ([]map[string]interface{}, error) {
+func (fsd *flattenScaleDownBehavior) convertToMapSlice(input interface{}) ([]map[string]interface{}, error) {
 	var result []map[string]interface{}
 	if reflect.TypeOf(input).Kind() != reflect.Slice {
 		return nil, fmt.Errorf("scale down: invalid input type, slice expected")
@@ -114,7 +115,7 @@ func (fsd *flattenScaleDown) convertToMapSlice(input interface{}) ([]map[string]
 	return result, nil
 }
 
-func (fsd *flattenScaleDown) isScaleDownEmpty(param []map[string]interface{}) bool {
+func (fsd *flattenScaleDownBehavior) isScaleDownEmpty(param []map[string]interface{}) bool {
 	if len(param) != 1 {
 		return false
 	}

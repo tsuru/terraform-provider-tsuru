@@ -288,7 +288,7 @@ func resourceTsuruApplicationAutoscaleRead(ctx context.Context, d *schema.Resour
 
 			d.Set("schedule", flattenSchedules(autoscale.Schedules))
 			d.Set("prometheus", flattenPrometheus(autoscale.Prometheus, d))
-			d.Set("scale_down", newFlattenScaleDown(autoscale.Behavior.ScaleDown, proposed).execute())
+			d.Set("scale_down", flattenScaleDown(autoscale.Behavior.ScaleDown, proposed))
 			return nil
 		}
 
