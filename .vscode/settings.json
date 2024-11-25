@@ -1,0 +1,6 @@
+{
+    "go.testEnvVars": {
+        "TF_ACC": "1",
+        "TF_ACC_TERRAFORM_VERSION": "1.4.4"
+    }
+}
