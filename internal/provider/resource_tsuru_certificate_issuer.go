@@ -131,14 +131,18 @@ func resourceTsuruCertificateIssuerRead(ctx context.Context, d *schema.ResourceD
 	usedCertificates := []string{}
 
 	for routerName, router := range certificates.Routers {
-		if cnameInRouter, ok := router.Cnames[cname]; ok {
-			if cnameInRouter.Issuer == issuer {
-				usedRouters = append(usedRouters, routerName)
+		cnameInRouter, ok := router.Cnames[cname]
+		if !ok {
+			continue
+		}
 
-				if cnameInRouter.Certificate != "" {
-					usedCertificates = append(usedCertificates, cnameInRouter.Certificate)
-				}
-			}
+		if cnameInRouter.Issuer != issuer {
+			continue
+		}
+		usedRouters = append(usedRouters, routerName)
+
+		if cnameInRouter.Certificate != "" {
+			usedCertificates = append(usedCertificates, cnameInRouter.Certificate)
 		}
 	}
 
