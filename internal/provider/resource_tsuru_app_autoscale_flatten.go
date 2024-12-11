@@ -57,15 +57,15 @@ func (fsd *flattenScaleDownBehavior) execute() interface{} {
 func (fsd *flattenScaleDownBehavior) withInputParameters(proposedList []map[string]interface{}) (value []map[string]interface{}) {
 	scaleDownCurrent := []map[string]interface{}{{}}
 	percentage, ok := fsd.findScaleDownInProposedList(proposedList, fsd.PERCENTAGE_LABEL)
-	if ok && percentage != 0 || fsd.ScaleDownRead.PercentagePolicyValue != int32(fsd.PERCENTAGE_VALUE) {
+	if ok && percentage != 0 || int32Value(fsd.ScaleDownRead.PercentagePolicyValue) != int32(fsd.PERCENTAGE_VALUE) {
 		scaleDownCurrent[0][fsd.PERCENTAGE_LABEL] = fsd.ScaleDownRead.PercentagePolicyValue
 	}
 	stabilizationWindow, ok := fsd.findScaleDownInProposedList(proposedList, fsd.STABILIZATION_WINDOW_LABEL)
-	if ok && stabilizationWindow != 0 || fsd.ScaleDownRead.StabilizationWindow != int32(fsd.STABILIZATION_WINDOW_VALUE) {
+	if ok && stabilizationWindow != 0 || int32Value(fsd.ScaleDownRead.StabilizationWindow) != int32(fsd.STABILIZATION_WINDOW_VALUE) {
 		scaleDownCurrent[0][fsd.STABILIZATION_WINDOW_LABEL] = fsd.ScaleDownRead.StabilizationWindow
 	}
 	units, ok := fsd.findScaleDownInProposedList(proposedList, fsd.UNITS_LABEL)
-	if ok && units != 0 || fsd.ScaleDownRead.UnitsPolicyValue != int32(fsd.UNITS_VALUE) {
+	if ok && units != 0 || int32Value(fsd.ScaleDownRead.UnitsPolicyValue) != int32(fsd.UNITS_VALUE) {
 		scaleDownCurrent[0][fsd.UNITS_LABEL] = fsd.ScaleDownRead.UnitsPolicyValue
 	}
 	return scaleDownCurrent
@@ -76,19 +76,26 @@ func (fsd *flattenScaleDownBehavior) noInputParameters(proposedList []map[string
 		return nil, false
 	}
 	scaleDownCurrent := []map[string]interface{}{{}}
-	if fsd.ScaleDownRead.PercentagePolicyValue != fsd.PERCENTAGE_VALUE {
+	if int32Value(fsd.ScaleDownRead.PercentagePolicyValue) != fsd.PERCENTAGE_VALUE {
 		scaleDownCurrent[0][fsd.PERCENTAGE_LABEL] = fsd.ScaleDownRead.PercentagePolicyValue
 	}
-	if fsd.ScaleDownRead.StabilizationWindow != fsd.STABILIZATION_WINDOW_VALUE {
+	if int32Value(fsd.ScaleDownRead.StabilizationWindow) != fsd.STABILIZATION_WINDOW_VALUE {
 		scaleDownCurrent[0][fsd.STABILIZATION_WINDOW_LABEL] = fsd.ScaleDownRead.StabilizationWindow
 	}
-	if fsd.ScaleDownRead.UnitsPolicyValue != fsd.UNITS_VALUE {
+	if int32Value(fsd.ScaleDownRead.UnitsPolicyValue) != fsd.UNITS_VALUE {
 		scaleDownCurrent[0][fsd.UNITS_LABEL] = fsd.ScaleDownRead.UnitsPolicyValue
 	}
 	if fsd.isScaleDownEmpty(scaleDownCurrent) {
 		return nil, true
 	}
 	return scaleDownCurrent, true
+}
+
+func int32Value(ptr *int32) int32 {
+	if ptr != nil {
+		return *ptr
+	}
+	return 0
 }
 
 func (fsd *flattenScaleDownBehavior) findScaleDownInProposedList(proposedList []map[string]interface{}, key string) (value int, ok bool) {
