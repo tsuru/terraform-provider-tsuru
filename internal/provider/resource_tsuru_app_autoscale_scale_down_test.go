@@ -39,7 +39,7 @@ func TestFluentDown(t *testing.T) {
 				map[string]interface{}{"units": 3},
 			},
 			expected: []map[string]interface{}{{
-				"units": int32(3),
+				"units": ptr.To(int32(3)),
 			}},
 		},
 		{
@@ -54,9 +54,9 @@ func TestFluentDown(t *testing.T) {
 				map[string]interface{}{"percentage": 10},
 			},
 			expected: []map[string]interface{}{{
-				"units":                int32(3),
-				"stabilization_window": int32(300),
-				"percentage":           int32(10),
+				"units":                ptr.To(int32(3)),
+				"stabilization_window": ptr.To(int32(300)),
+				"percentage":           ptr.To(int32(10)),
 			}},
 		},
 		{
@@ -71,9 +71,9 @@ func TestFluentDown(t *testing.T) {
 				map[string]interface{}{"percentage": 10},
 			},
 			expected: []map[string]interface{}{{
-				"units":                int32(21),
-				"stabilization_window": int32(21),
-				"percentage":           int32(21),
+				"units":                ptr.To(int32(21)),
+				"stabilization_window": ptr.To(int32(21)),
+				"percentage":           ptr.To(int32(21)),
 			}},
 		},
 		{
@@ -84,9 +84,9 @@ func TestFluentDown(t *testing.T) {
 			},
 			scaleDownInput: []interface{}{},
 			expected: []map[string]interface{}{{
-				"units":                int32(21),
-				"stabilization_window": int32(21),
-				"percentage":           int32(21),
+				"units":                ptr.To(int32(21)),
+				"stabilization_window": ptr.To(int32(21)),
+				"percentage":           ptr.To(int32(21)),
 			}},
 		},
 	}
