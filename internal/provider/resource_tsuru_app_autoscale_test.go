@@ -15,6 +15,7 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
+	"k8s.io/utils/ptr"
 )
 
 func TestAccResourceTsuruAppAutoscalePercentage(t *testing.T) {
@@ -753,9 +754,9 @@ func TestAccResourceTsuruAppAutoscaleScaleDown(t *testing.T) {
 				AverageCPU: "800m",
 				Behavior: tsuru.AutoScaleSpecBehavior{
 					ScaleDown: tsuru.AutoScaleSpecBehaviorScaleDown{
-						StabilizationWindow:   80,
-						UnitsPolicyValue:      5,
-						PercentagePolicyValue: 15,
+						StabilizationWindow:   ptr.To(int32(80)),
+						UnitsPolicyValue:      ptr.To(int32(5)),
+						PercentagePolicyValue: ptr.To(int32(15)),
 					},
 				},
 			}})
