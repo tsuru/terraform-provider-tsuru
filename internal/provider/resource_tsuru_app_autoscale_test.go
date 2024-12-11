@@ -51,6 +51,9 @@ func TestAccResourceTsuruAppAutoscalePercentage(t *testing.T) {
 				MinUnits:   3,
 				MaxUnits:   10,
 				AverageCPU: "800m",
+				Behavior: tsuru.AutoScaleSpecBehavior{
+					ScaleDown: tsuru.AutoScaleSpecBehaviorScaleDown{},
+				},
 			}})
 		}
 		return c.JSON(http.StatusOK, nil)
@@ -714,4 +717,105 @@ func TestAccTsuruAutoscaleSetShouldErrorWithoutCPUOrScheduleOrPrometheus(t *test
 			},
 		},
 	})
+}
+
+func TestAccResourceTsuruAppAutoscaleScaleDown(t *testing.T) {
+	fakeServer := echo.New()
+	iterationCount := 0
+	fakeServer.GET("/1.0/apps/:name", func(c echo.Context) error {
+		name := c.Param("name")
+		if name != "app01" {
+			return nil
+		}
+
+		return c.JSON(http.StatusOK, &tsuru.App{
+			Name:        name,
+			Description: "my beautiful application",
+			TeamOwner:   "myteam",
+			Teams: []string{
+				"mysupport-team",
+				"mysponsors",
+			},
+			Cluster:     "my-cluster-01",
+			Pool:        "my-pool",
+			Provisioner: "kubernetes",
+			Deploys:     2,
+		})
+
+	})
+
+	fakeServer.GET("/1.9/apps/:app/units/autoscale", func(c echo.Context) error {
+		if iterationCount == 1 {
+			return c.JSON(http.StatusOK, []tsuru.AutoScaleSpec{{
+				Process:    "web",
+				MinUnits:   3,
+				MaxUnits:   10,
+				AverageCPU: "800m",
+				Behavior: tsuru.AutoScaleSpecBehavior{
+					ScaleDown: tsuru.AutoScaleSpecBehaviorScaleDown{
+						StabilizationWindow:   80,
+						UnitsPolicyValue:      5,
+						PercentagePolicyValue: 15,
+					},
+				},
+			}})
+		}
+		return c.JSON(http.StatusOK, nil)
+	})
+
+	fakeServer.POST("/1.9/apps/:app/units/autoscale", func(c echo.Context) error {
+		autoscale := tsuru.AutoScaleSpec{}
+		c.Bind(&autoscale)
+		assert.Equal(t, "web", autoscale.Process)
+		iterationCount++
+		return c.JSON(http.StatusOK, map[string]interface{}{"ok": "true"})
+	})
+
+	fakeServer.DELETE("/1.9/apps/:app/units/autoscale", func(c echo.Context) error {
+		p := c.QueryParam("process")
+		assert.Equal(t, "web", p)
+		return c.NoContent(http.StatusNoContent)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resourceName := "tsuru_app_autoscale.autoscale"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceTsuruAppAutoscale_scaleDown(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "app", "app01"),
+					resource.TestCheckResourceAttr(resourceName, "scale_down.0.percentage", "15"),
+					resource.TestCheckResourceAttr(resourceName, "scale_down.0.stabilization_window", "80"),
+					resource.TestCheckResourceAttr(resourceName, "scale_down.0.units", "5"),
+				),
+			},
+		},
+	})
+}
+
+func testAccResourceTsuruAppAutoscale_scaleDown() string {
+	return `
+	resource "tsuru_app_autoscale" "autoscale" {
+		app       = "app01"
+		process   = "web"
+		min_units = 3
+		max_units = 10
+		cpu_average = "800m"
+		scale_down {
+    		units                = 5
+    		percentage           = 15
+    		stabilization_window = 80
+  		}
+	}
+`
 }
