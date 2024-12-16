@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -261,6 +262,10 @@ func TestAccResourceTsuruApp(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tags.0", "tagA"),
 				),
 			},
+			{
+				Config:      testAccResourceTsuruApp_invalidProcessOrder(),
+				ExpectError: regexp.MustCompile("please, sort app processes alphabetically"),
+			},
 		},
 	})
 }
@@ -357,4 +362,44 @@ func testAccResourceTsuruApp_metadataAfterUpdate() string {
 		}
 	}
 `
+}
+
+func testAccResourceTsuruApp_invalidProcessOrder() string {
+	return `
+	resource "tsuru_app" "app" {
+		name = "app01"
+		description = "my app description"
+		platform = "python"
+		plan = "c2m4"
+		team_owner = "my-team"
+		pool = "prod"
+		tags = ["tagA", "tagB"]
+
+		process {
+			name = "worker"
+			
+			metadata {
+				labels = {
+					"workerlabel" = "value"
+				}
+				annotations = {
+					"workerannotation" = "nice"
+				}
+			}
+		}
+
+		process {
+			name = "web"
+			plan = "c2m2"
+			metadata {
+				labels = {
+					"weblabel" = "value"
+				}
+				annotations = {
+					"webannotation" = "nice"
+				}
+			}
+		}
+	}
+    `
 }
