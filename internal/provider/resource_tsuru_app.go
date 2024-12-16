@@ -229,8 +229,9 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 
 	if m, ok := d.GetOk("process"); ok {
 		processes := processesFromResourceData(m)
-		if processes != nil {
-			app.Processes = processes
+		err := isProcessListSorted(processes)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -306,6 +307,10 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		if newProcesses == nil {
 			newProcesses = []tsuru_client.AppProcess{}
 		}
+		err := isProcessListSorted(newProcesses)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		app.Processes = markRemovedProcessAsDefaultPlan(oldProcesses, newProcesses)
 	}
@@ -332,6 +337,15 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 	logTsuruStream(resp.Body)
 
 	return resourceTsuruApplicationRead(ctx, d, meta)
+}
+
+func isProcessListSorted(processes []tsuru_client.AppProcess) error {
+	for i := 1; i < len(processes); i++ {
+		if processes[i-1].Name > processes[i].Name {
+			return errors.Errorf("please, sort app processes alphabetically")
+		}
+	}
+	return nil
 }
 
 func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
