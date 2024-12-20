@@ -229,9 +229,12 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 
 	if m, ok := d.GetOk("process"); ok {
 		processes := processesFromResourceData(m)
-		err := isProcessListSorted(processes)
-		if err != nil {
-			return diag.FromErr(err)
+		if processes != nil {
+			err := isProcessListSorted(processes)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			app.Processes = processes
 		}
 	}
 
