@@ -230,7 +230,7 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 	if m, ok := d.GetOk("process"); ok {
 		processes := processesFromResourceData(m)
 		if processes != nil {
-			err := isProcessListSorted(processes)
+			err := validateProcessesOrder(processes)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -310,7 +310,7 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		if newProcesses == nil {
 			newProcesses = []tsuru_client.AppProcess{}
 		}
-		err := isProcessListSorted(newProcesses)
+		err := validateProcessesOrder(newProcesses)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -342,7 +342,7 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 	return resourceTsuruApplicationRead(ctx, d, meta)
 }
 
-func isProcessListSorted(processes []tsuru_client.AppProcess) error {
+func validateProcessesOrder(processes []tsuru_client.AppProcess) error {
 	for i := 1; i < len(processes); i++ {
 		if processes[i-1].Name > processes[i].Name {
 			return errors.Errorf("please, sort app processes alphabetically")
