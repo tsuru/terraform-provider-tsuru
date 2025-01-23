@@ -51,18 +51,16 @@ resource "tsuru_job" "my-job" {
 
 ### Read-Only
 
+- `cluster` (String) The name of cluster
 - `id` (String) The ID of this resource.
 
 <a id="nestedblock--container"></a>
 ### Nested Schema for `container`
 
-Required:
-
-- `image` (String)
-
 Optional:
 
 - `command` (List of String) Command
+- `image` (String)
 
 
 <a id="nestedblock--metadata"></a>
