@@ -57,6 +57,11 @@ func resourceTsuruJob() *schema.Resource {
 				Description: "The name of pool",
 				Required:    true,
 			},
+			"cluster": {
+				Type:        schema.TypeString,
+				Description: "The name of cluster",
+				Computed:    true,
+			},
 			"tags": {
 				Type:        schema.TypeList,
 				Description: "Tags",
@@ -99,7 +104,7 @@ func resourceTsuruJob() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"image": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"command": {
 							Type:        schema.TypeList,
@@ -207,6 +212,8 @@ func resourceTsuruJobRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	d.Set("name", name)
 	d.Set("pool", job.Job.Pool)
+	d.Set("cluster", job.Cluster)
+
 	d.Set("plan", job.Job.Plan.Name)
 	d.Set("team_owner", job.Job.TeamOwner)
 

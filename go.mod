@@ -9,9 +9,10 @@ require (
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
-	github.com/tsuru/go-tsuruclient v0.0.0-20241122210020-b97d66b89165
+	github.com/tsuru/go-tsuruclient v0.0.0-20250123194536-680fecb3501a
 	github.com/tsuru/tsuru-client v0.0.0-20240325204824-8c0dc602a5be
 	k8s.io/apimachinery v0.26.2
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 )
 
 require (
@@ -78,5 +79,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
-	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 )
