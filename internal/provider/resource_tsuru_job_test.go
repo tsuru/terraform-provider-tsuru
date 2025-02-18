@@ -38,6 +38,7 @@ func TestAccResourceTsuruJob(t *testing.T) {
 		assert.Equal(t, "c1m1", job.Plan)
 		assert.Equal(t, "my-team", job.TeamOwner)
 		assert.Equal(t, "prod", job.Pool)
+		assert.Equal(t, "* * * * *", job.Schedule)
 		assert.Equal(t, []string{"sleep", "600"}, job.Container.Command)
 		assert.Equal(t, "tsuru/scratch:latest", job.Container.Image)
 
@@ -62,6 +63,7 @@ func TestAccResourceTsuruJob(t *testing.T) {
 				Plan:        tsuru.Plan{Name: "c1m1"},
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
+					Schedule: "* * * * *",
 					Container: tsuru.InputJobContainer{
 						Image: "tsuru/scratch:latest",
 						Command: []string{
@@ -108,6 +110,7 @@ func TestAccResourceTsuruJob(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "plan", "c1m1"),
 					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
 					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
+					resource.TestCheckResourceAttr(resourceName, "schedule", "* * * * *"),
 				),
 			},
 		},
@@ -135,6 +138,7 @@ func TestAccResourceTsuruJobComplete(t *testing.T) {
 		assert.Equal(t, "c1m1", job.Plan)
 		assert.Equal(t, "my-team", job.TeamOwner)
 		assert.Equal(t, "prod", job.Pool)
+		assert.Equal(t, "* * * * *", job.Schedule)
 		assert.Equal(t, []string{"sleep", "600"}, job.Container.Command)
 		assert.Equal(t, "tsuru/scratch:latest", job.Container.Image)
 		require.NotNil(t, job.ConcurrencyPolicy)
@@ -167,6 +171,7 @@ func TestAccResourceTsuruJobComplete(t *testing.T) {
 				Plan:        tsuru.Plan{Name: "c1m1"},
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
+					Schedule: "* * * * *",
 					Container: tsuru.InputJobContainer{
 						Image: "tsuru/scratch:latest",
 						Command: []string{
@@ -215,6 +220,7 @@ func TestAccResourceTsuruJobComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "plan", "c1m1"),
 					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
 					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
+					resource.TestCheckResourceAttr(resourceName, "schedule", "* * * * *"),
 				),
 			},
 		},

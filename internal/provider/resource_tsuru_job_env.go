@@ -124,6 +124,7 @@ func resourceTsuruJobEnvironmentRead(ctx context.Context, d *schema.ResourceData
 
 	d.Set("environment_variables", envVars)
 	d.Set("private_environment_variables", sensitiveEnvVars)
+	d.Set("job", job)
 
 	return nil
 }
