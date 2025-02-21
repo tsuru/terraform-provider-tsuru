@@ -55,12 +55,18 @@ func TestAccResourceTsuruApp(t *testing.T) {
 		}
 
 		if iterationCount == 1 {
+			cpuBurstValue := 1.5
 			app := &tsuru.App{
 				Name:        name,
 				Description: "my app description",
 				TeamOwner:   "my-team",
 				Platform:    "python",
-				Plan:        tsuru.Plan{Name: "c2m4"},
+				Plan: tsuru.Plan{
+					Name: "c2m4",
+					Override: tsuru.PlanOverride{
+						CpuBurst: &cpuBurstValue,
+					},
+				},
 				Cluster:     "my-cluster-01",
 				Pool:        "prod",
 				Provisioner: "kubernetes",
@@ -241,6 +247,7 @@ func TestAccResourceTsuruApp(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "description", "my app description"),
 					resource.TestCheckResourceAttr(resourceName, "platform", "python"),
 					resource.TestCheckResourceAttr(resourceName, "plan", "c2m4"),
+					resource.TestCheckResourceAttr(resourceName, "burst_factory", "1.5"),
 					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
 					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
 					resource.TestCheckResourceAttr(resourceName, "tags.0", "tagA"),
@@ -277,6 +284,7 @@ func testAccResourceTsuruApp_basic() string {
 		description = "my app description"
 		platform = "python"
 		plan = "c2m4"
+		burst_factory = "1.5"
 		team_owner = "my-team"
 		pool = "prod"
 		tags = ["tagA", "tagB"]
