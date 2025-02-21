@@ -52,7 +52,7 @@ func resourceTsuruApplication() *schema.Resource {
 				Description: "Plan",
 				Required:    true,
 			},
-			"burst_factory": {
+			"custom_cpu_burst": {
 				Type:        schema.TypeFloat,
 				Description: "CPU burst factory override",
 				Optional:    true,
@@ -288,7 +288,7 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		Tags:      tags,
 	}
 
-	if cpu_burst, ok := d.GetOk("burst_factory"); ok {
+	if cpu_burst, ok := d.GetOk("custom_cpu_burst"); ok {
 		cpuBurstValue := cpu_burst.(float64)
 		app.Planoverride.CpuBurst = &cpuBurstValue
 	}
@@ -382,7 +382,7 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("cluster", app.Cluster)
 
 	if app.Plan.Override.CpuBurst != nil {
-		d.Set("burst_factory", app.Plan.Override.CpuBurst)
+		d.Set("custom_cpu_burst", app.Plan.Override.CpuBurst)
 	}
 
 	if app.Description != "" {

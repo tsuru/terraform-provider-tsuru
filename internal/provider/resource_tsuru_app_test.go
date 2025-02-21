@@ -247,7 +247,7 @@ func TestAccResourceTsuruApp(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "description", "my app description"),
 					resource.TestCheckResourceAttr(resourceName, "platform", "python"),
 					resource.TestCheckResourceAttr(resourceName, "plan", "c2m4"),
-					resource.TestCheckResourceAttr(resourceName, "burst_factory", "1.5"),
+					resource.TestCheckResourceAttr(resourceName, "custom_cpu_burst", "1.5"),
 					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
 					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
 					resource.TestCheckResourceAttr(resourceName, "tags.0", "tagA"),
@@ -284,7 +284,7 @@ func testAccResourceTsuruApp_basic() string {
 		description = "my app description"
 		platform = "python"
 		plan = "c2m4"
-		burst_factory = "1.5"
+		custom_cpu_burst = "1.5"
 		team_owner = "my-team"
 		pool = "prod"
 		tags = ["tagA", "tagB"]
