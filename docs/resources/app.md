@@ -50,6 +50,7 @@ resource "tsuru_app" "my-app" {
 
 ### Optional
 
+- `custom_cpu_burst` (Number) CPU burst factory override
 - `default_router` (String) Default router at creation of app
 - `description` (String) Application description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
