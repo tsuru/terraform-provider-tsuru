@@ -6,7 +6,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"time"
 
@@ -27,7 +26,7 @@ func resourceTsuruCertificateIssuer() *schema.Resource {
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceTsuruCertificateIssuerImport,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: map[string]*schema.Schema{
 			"app": {
@@ -159,45 +158,4 @@ func resourceTsuruCertificateIssuerRead(ctx context.Context, d *schema.ResourceD
 	d.Set("ready", len(usedCertificates) > 0)
 
 	return nil
-}
-
-func resourceTsuruCertificateIssuerImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	provider := meta.(*tsuruProvider)
-	parts, err := IDtoParts(d.Id(), 3)
-	if err != nil {
-		// Try with just app::cname format and assume import needs to find the issuer
-		parts, err = IDtoParts(d.Id(), 2)
-		if err != nil {
-			return nil, err
-		}
-
-		app := parts[0]
-		cname := parts[1]
-
-		// Need to find the issuer by retrieving certificates
-		certificates, _, err := provider.TsuruClient.AppApi.AppGetCertificates(context.Background(), app)
-		if err != nil {
-			return nil, err
-		}
-
-		var issuer string
-		found := false
-
-		for _, router := range certificates.Routers {
-			cnameInRouter, ok := router.Cnames[cname]
-			if ok && cnameInRouter.Issuer != "" {
-				issuer = cnameInRouter.Issuer
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return nil, errors.New("certificate issuer not found for app " + app + " and cname " + cname)
-		}
-
-		d.SetId(app + "::" + cname + "::" + issuer)
-	}
-
-	return []*schema.ResourceData{d}, nil
 }

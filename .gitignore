@@ -16,3 +16,4 @@ terraform.rc
 terraform
 
 .idea
+.DS_Store
