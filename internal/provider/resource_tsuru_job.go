@@ -172,6 +172,23 @@ func resourceTsuruJobUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	jobName := d.Id()
 
+	if d.HasChange("metadata") {
+		old, new := d.GetChange("metadata")
+		oldMetadata := metadataFromResourceData(old)
+		if oldMetadata == nil {
+			oldMetadata = &tsuru_client.Metadata{}
+		}
+		newMetadata := metadataFromResourceData(new)
+		if newMetadata == nil {
+			newMetadata = &tsuru_client.Metadata{}
+		}
+
+		job.Metadata = tsuru_client.Metadata{
+			Annotations: markRemovedMetadataItemAsDeleted(oldMetadata.Annotations, newMetadata.Annotations),
+			Labels:      markRemovedMetadataItemAsDeleted(oldMetadata.Labels, newMetadata.Labels),
+		}
+	}
+
 	err = resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		resp, err := provider.TsuruClient.JobApi.UpdateJob(ctx, jobName, job)
 		if err != nil {
