@@ -25,6 +25,16 @@ resource "tsuru_job" "my-job" {
     image   = "tsuru/scratch:latest"
     command = ["echo", "hello"]
   }
+
+  metadata {
+    labels = {
+      "label1" = "value1"
+    }
+    annotations = {
+      "annotation1" = "value1"
+      "annotation2" = "value2"
+    }
+  }
 }
 ```
 
@@ -84,6 +94,8 @@ Optional:
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 terraform import tsuru_job.resource_name "job"
