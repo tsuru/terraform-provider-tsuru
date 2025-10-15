@@ -10,4 +10,14 @@ resource "tsuru_job" "my-job" {
     image   = "tsuru/scratch:latest"
     command = ["echo", "hello"]
   }
+
+  metadata {
+    labels = {
+      "label1" = "value1"
+    }
+    annotations = {
+      "annotation1" = "value1"
+      "annotation2" = "value2"
+    }
+  }
 }
