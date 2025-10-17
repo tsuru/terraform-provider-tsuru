@@ -98,8 +98,9 @@ func resourceTsuruJob() *schema.Resource {
 
 			"container": {
 				Type:     schema.TypeList,
+				MinItems: 0,
 				MaxItems: 1,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"image": {
@@ -371,6 +372,9 @@ func jobContainerFromResourceData(meta interface{}) tsuru_client.InputJobContain
 }
 
 func flattenJobContainer(container tsuru.InputJobContainer) []interface{} {
+	if container.Image == "" && len(container.Command) == 0 {
+		return []interface{}{}
+	}
 
 	m := map[string]interface{}{
 		"image":   container.Image,
