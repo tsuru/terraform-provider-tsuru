@@ -53,6 +53,7 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("TSURU_FULL_MANAGEMENT_OF_USER_ENVIRONMENT_VARIABLES", nil),
 			},
 		},
+
 		ResourcesMap: map[string]*schema.Resource{
 			"tsuru_service_instance_bind":  resourceTsuruServiceInstanceBind(),
 			"tsuru_service_instance_grant": resourceTsuruServiceInstanceGrant(),
@@ -77,6 +78,7 @@ func Provider() *schema.Provider {
 			"tsuru_job_deploy": resourceTsuruJobDeploy(),
 
 			"tsuru_router":          resourceTsuruRouter(),
+			"tsuru_service":         resourceTsuruService(), // 👈 novo recurso adicionado!
 			"tsuru_plan":            resourceTsuruPlan(),
 			"tsuru_webhook":         resourceTsuruWebhook(),
 			"tsuru_pool_constraint": resourceTsuruPoolConstraint(),
@@ -85,10 +87,12 @@ func Provider() *schema.Provider {
 			"tsuru_cluster":         resourceTsuruCluster(),
 			"tsuru_token":           resourceTsuruToken(),
 		},
+
 		DataSourcesMap: map[string]*schema.Resource{
 			"tsuru_app": dataSourceTsuruApp(),
 		},
 	}
+
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		return providerConfigure(ctx, d, p.TerraformVersion)
 	}
