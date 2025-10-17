@@ -13,7 +13,18 @@ Tsuru Job
 ## Example Usage
 
 ```terraform
-resource "tsuru_job" "my-job" {
+resource "tsuru_job" "basic-job" {
+  name        = "sample-job"
+  description = "job created with terraform"
+  plan        = "c0.1m0.1"
+  team_owner  = "admin"
+  pool        = "staging"
+  schedule    = "0 0 1 * *"
+  tags        = ["tag1", "tag2"]
+}
+
+
+resource "tsuru_job" "full-featured-job" {
   name        = "sample-job"
   description = "job created with terraform"
   plan        = "c0.1m0.1"
@@ -43,7 +54,6 @@ resource "tsuru_job" "my-job" {
 
 ### Required
 
-- `container` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--container))
 - `name` (String) Job name
 - `plan` (String) Plan
 - `pool` (String) The name of pool
@@ -53,6 +63,7 @@ resource "tsuru_job" "my-job" {
 
 - `active_deadline_seconds` (Number) Time a Job can run before its terminated. Defaults is 3600
 - `concurrency_policy` (String) Concurrency policy
+- `container` (Block List, Max: 1) (see [below for nested schema](#nestedblock--container))
 - `description` (String) Job description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
 - `schedule` (String) Cron-like schedule for when the job should be triggered

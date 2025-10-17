@@ -17,7 +17,7 @@ import (
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
-func TestAccResourceTsuruJob(t *testing.T) {
+func TestAccResourceTsuruJobBasic(t *testing.T) {
 	fakeServer := echo.New()
 
 	iterationCount := 0
@@ -39,8 +39,8 @@ func TestAccResourceTsuruJob(t *testing.T) {
 		assert.Equal(t, "my-team", job.TeamOwner)
 		assert.Equal(t, "prod", job.Pool)
 		assert.Equal(t, "* * * * *", job.Schedule)
-		assert.Equal(t, []string{"sleep", "600"}, job.Container.Command)
-		assert.Equal(t, "tsuru/scratch:latest", job.Container.Image)
+		assert.Nil(t, job.Container.Command)
+		assert.Equal(t, "", job.Container.Image)
 
 		iterationCount++
 		return c.JSON(http.StatusOK, map[string]interface{}{
@@ -64,13 +64,6 @@ func TestAccResourceTsuruJob(t *testing.T) {
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
 					Schedule: "* * * * *",
-					Container: tsuru.InputJobContainer{
-						Image: "tsuru/scratch:latest",
-						Command: []string{
-							"sleep",
-							"600",
-						},
-					},
 				},
 			}
 			return c.JSON(http.StatusOK, tsuru.JobInfo{Job: *job})
@@ -230,16 +223,12 @@ func TestAccResourceTsuruJobComplete(t *testing.T) {
 func testAccResourceTsuruJob_basic() string {
 	return `
 	resource "tsuru_job" "job" {
-		name = "job01"
+		name        = "job01"
 		description = "my job description"
-		plan = "c1m1"
-		team_owner = "my-team"
-		pool = "prod"
-		schedule = "* * * * *"
-		container {
-			image   = "tsuru/scratch:latest"
-			command = ["sleep", 600]
-		}
+		plan        = "c1m1"
+		team_owner  = "my-team"
+		pool        = "prod"
+		schedule    = "* * * * *"
 	}
 `
 }
