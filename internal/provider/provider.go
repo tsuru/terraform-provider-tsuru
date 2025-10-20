@@ -58,6 +58,8 @@ func Provider() *schema.Provider {
 			"tsuru_service_instance_grant": resourceTsuruServiceInstanceGrant(),
 			"tsuru_service_instance":       resourceTsuruServiceInstance(),
 
+			"tsuru_service_broker": resourceTsuruServiceBroker(),
+
 			"tsuru_volume_bind": resourceTsuruVolumeBind(),
 			"tsuru_volume":      resourceTsuruVolume(),
 
