@@ -92,7 +92,7 @@ func resourceTsuruJob() *schema.Resource {
 
 			"schedule": {
 				Type:        schema.TypeString,
-				Description: "Cron-like schedule for when the job should be triggered",
+				Description: "Cron-like schedule for when the job should be triggered (keep empty for manual jobs)",
 				Optional:    true,
 			},
 
@@ -155,7 +155,6 @@ func resourceTsuruJobCreate(ctx context.Context, d *schema.ResourceData, meta in
 		}
 		return nil
 	})
-
 	if err != nil {
 		return diag.Errorf("unable to create job %s: %v", job.Name, err)
 	}
@@ -207,7 +206,6 @@ func resourceTsuruJobUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 		return nil
 	})
-
 	if err != nil {
 		return diag.Errorf("unable to update job %s: %v", jobName, err)
 	}
@@ -268,7 +266,6 @@ func resourceTsuruJobDelete(ctx context.Context, d *schema.ResourceData, meta in
 		}
 		return nil
 	})
-
 	if err != nil {
 		return diag.Errorf("unable to delete job %s: %v", name, err)
 	}
@@ -334,6 +331,8 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 
 	if schedule, ok := d.GetOk("schedule"); ok {
 		job.Schedule = schedule.(string)
+	} else {
+		job.Manual = true
 	}
 	if concurrencyPolicyInterface, ok := d.GetOk("concurrency_policy"); ok {
 		concurrencyPolicy := concurrencyPolicyInterface.(string)
