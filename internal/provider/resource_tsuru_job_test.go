@@ -33,6 +33,7 @@ func TestAccResourceTsuruJobBasic(t *testing.T) {
 	fakeServer.POST("/1.13/jobs", func(c echo.Context) error {
 		job := tsuru.InputJob{}
 		c.Bind(&job)
+
 		assert.Equal(t, "job01", job.Name)
 		assert.Equal(t, "my job description", job.Description)
 		assert.Equal(t, "c1m1", job.Plan)
@@ -69,10 +70,32 @@ func TestAccResourceTsuruJobBasic(t *testing.T) {
 			return c.JSON(http.StatusOK, tsuru.JobInfo{Job: *job})
 		}
 
+		if iterationCount == 2 {
+			job := &tsuru.Job{
+				Name:        name,
+				Description: "my job description",
+				TeamOwner:   "my-team",
+				Plan:        tsuru.Plan{Name: "c1m1"},
+				Pool:        "prod",
+				Spec: tsuru.JobSpec{
+					Schedule: "manual",
+				},
+			}
+			return c.JSON(http.StatusOK, tsuru.JobInfo{Job: *job})
+		}
+
 		return c.JSON(http.StatusNotFound, nil)
 	})
 
 	fakeServer.PUT("/1.13/jobs/:name", func(c echo.Context) error {
+		job := tsuru.InputJob{}
+		c.Bind(&job)
+
+		assert.Equal(t, "job01", job.Name)
+		assert.Equal(t, "", job.Schedule)
+		assert.Equal(t, true, job.Manual)
+
+		iterationCount++
 		return c.JSON(http.StatusOK, nil)
 	})
 
@@ -104,6 +127,18 @@ func TestAccResourceTsuruJobBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
 					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
 					resource.TestCheckResourceAttr(resourceName, "schedule", "* * * * *"),
+				),
+			},
+			{
+				Config: testAccResourceTsuruJobManual_basic(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", "job01"),
+					resource.TestCheckResourceAttr(resourceName, "description", "my job description"),
+					resource.TestCheckResourceAttr(resourceName, "plan", "c1m1"),
+					resource.TestCheckResourceAttr(resourceName, "team_owner", "my-team"),
+					resource.TestCheckResourceAttr(resourceName, "pool", "prod"),
+					resource.TestCheckResourceAttr(resourceName, "schedule", "manual"),
 				),
 			},
 		},
@@ -229,6 +264,19 @@ func testAccResourceTsuruJob_basic() string {
 		team_owner  = "my-team"
 		pool        = "prod"
 		schedule    = "* * * * *"
+	}
+`
+}
+
+func testAccResourceTsuruJobManual_basic() string {
+	return `
+	resource "tsuru_job" "job" {
+		name         = "job01"
+		description  = "my job description"
+		plan         = "c1m1"
+		team_owner   = "my-team"
+		pool         = "prod"
+		schedule     = "manual"
 	}
 `
 }

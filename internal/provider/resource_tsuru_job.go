@@ -16,6 +16,8 @@ import (
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
+const jobDefaultSchedule = "* * 31 2 *"
+
 func resourceTsuruJob() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Tsuru Job",
@@ -89,13 +91,11 @@ func resourceTsuruJob() *schema.Resource {
 					},
 				},
 			},
-
 			"schedule": {
 				Type:        schema.TypeString,
-				Description: "Cron-like schedule for when the job should be triggered",
-				Optional:    true,
+				Description: "Cron-like schedule for when the job should be triggered or set to 'manual' to run only when explicitly triggered by the user",
+				Required:    true,
 			},
-
 			"container": {
 				Type:     schema.TypeList,
 				MinItems: 0,
@@ -236,7 +236,12 @@ func resourceTsuruJobRead(ctx context.Context, d *schema.ResourceData, meta inte
 	d.Set("team_owner", job.Job.TeamOwner)
 
 	d.Set("container", flattenJobContainer(job.Job.Spec.Container))
-	d.Set("schedule", job.Job.Spec.Schedule)
+
+	if job.Job.Spec.Schedule == jobDefaultSchedule {
+		d.Set("schedule", "manual")
+	} else {
+		d.Set("schedule", job.Job.Spec.Schedule)
+	}
 
 	if job.Job.Description != "" {
 		d.Set("description", job.Job.Description)
@@ -332,9 +337,14 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 		job.Description = desc.(string)
 	}
 
-	if schedule, ok := d.GetOk("schedule"); ok {
-		job.Schedule = schedule.(string)
+	schedule := d.Get("schedule").(string)
+	if schedule == "manual" {
+		job.Schedule = ""
+		job.Manual = true
+	} else {
+		job.Schedule = schedule
 	}
+
 	if concurrencyPolicyInterface, ok := d.GetOk("concurrency_policy"); ok {
 		concurrencyPolicy := concurrencyPolicyInterface.(string)
 		job.ConcurrencyPolicy = &concurrencyPolicy
