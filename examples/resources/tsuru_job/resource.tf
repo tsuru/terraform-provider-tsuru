@@ -4,7 +4,7 @@ resource "tsuru_job" "basic-job" {
   plan        = "c0.1m0.1"
   team_owner  = "admin"
   pool        = "staging"
-  schedule    = "0 0 1 * *"
+  schedule    = "0 0 1 * *" # or "manual"
   tags        = ["tag1", "tag2"]
 }
 

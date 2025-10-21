@@ -19,7 +19,7 @@ resource "tsuru_job" "basic-job" {
   plan        = "c0.1m0.1"
   team_owner  = "admin"
   pool        = "staging"
-  schedule    = "0 0 1 * *"
+  schedule    = "0 0 1 * *" # or "manual"
   tags        = ["tag1", "tag2"]
 }
 
@@ -57,6 +57,7 @@ resource "tsuru_job" "full-featured-job" {
 - `name` (String) Job name
 - `plan` (String) Plan
 - `pool` (String) The name of pool
+- `schedule` (String) Cron-like schedule for when the job should be triggered or set to 'manual' to run only when explicitly triggered by the user
 - `team_owner` (String) Job owner
 
 ### Optional
@@ -66,7 +67,6 @@ resource "tsuru_job" "full-featured-job" {
 - `container` (Block List, Max: 1) (see [below for nested schema](#nestedblock--container))
 - `description` (String) Job description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
-- `schedule` (String) Cron-like schedule for when the job should be triggered
 - `tags` (List of String) Tags
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
