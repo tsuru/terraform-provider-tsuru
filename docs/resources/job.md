@@ -66,7 +66,7 @@ resource "tsuru_job" "full-featured-job" {
 - `container` (Block List, Max: 1) (see [below for nested schema](#nestedblock--container))
 - `description` (String) Job description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
-- `schedule` (String) Cron-like schedule for when the job should be triggered
+- `schedule` (String) Cron-like schedule for when the job should be triggered (keep empty for manual jobs)
 - `tags` (List of String) Tags
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
