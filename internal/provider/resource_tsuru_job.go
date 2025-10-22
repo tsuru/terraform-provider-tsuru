@@ -235,7 +235,7 @@ func resourceTsuruJobRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	d.Set("container", flattenJobContainer(job.Job.Spec.Container))
 
-	if job.Job.Spec.Schedule == "* * 31 2 *" {
+	if job.Job.Spec.Manual {
 		d.Set("schedule", "")
 	} else {
 		d.Set("schedule", job.Job.Spec.Schedule)
