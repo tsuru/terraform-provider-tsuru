@@ -172,7 +172,7 @@ func resourceTsuruServiceBrokerRead(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	if broker == nil {
+	if broker == nil || broker.Name == "" {
 		d.SetId("")
 		return nil
 	}
@@ -180,11 +180,52 @@ func resourceTsuruServiceBrokerRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("name", broker.Name)
 	d.Set("url", broker.URL)
 
-	if &broker.Config != nil {
-		if err := d.Set("config", flattenServiceBrokerConfig(&broker.Config)); err != nil {
-			return diag.Errorf("could not set config: %v", err)
-		}
+	if err := d.Set("config", flattenServiceBrokerConfig(&broker.Config)); err != nil {
+		return diag.Errorf("could not set config: %v", err)
 	}
+
+	return nil
+}
+
+func resourceTsuruServiceBrokerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	provider := meta.(*tsuruProvider)
+
+	name := d.Get("name").(string)
+	url := d.Get("url").(string)
+
+	broker := tsuru.ServiceBroker{
+		Name: name,
+		URL:  url,
+	}
+
+	if v, ok := d.GetOk("config"); ok {
+		broker.Config = *expandServiceBrokerConfig(v.([]interface{}))
+	}
+
+	_, err := provider.TsuruClient.ServiceApi.ServiceBrokerUpdate(ctx, name, broker)
+	if err != nil {
+		return diag.Errorf("Could not update tsuru service broker, err: %s", err.Error())
+	}
+
+	return resourceTsuruServiceBrokerRead(ctx, d, meta)
+}
+
+func resourceTsuruServiceBrokerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	provider := meta.(*tsuruProvider)
+
+	name := d.Id()
+
+	_, err := provider.TsuruClient.ServiceApi.ServiceBrokerDelete(ctx, name)
+	if err != nil {
+
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.Errorf("Could not delete tsuru service broker: %s", err.Error())
+	}
+
+	d.SetId("")
 
 	return nil
 }
@@ -201,10 +242,10 @@ func expandServiceBrokerConfig(config []interface{}) *tsuru.ServiceBrokerConfig 
 		brokerConfig.Insecure = v
 	}
 
-	if v, ok := cfg["context"].(map[string]string); ok && len(v) > 0 {
+	if v, ok := cfg["context"].(map[string]interface{}); ok && len(v) > 0 {
 		context := make(map[string]string)
 		for key, val := range v {
-			context[key] = val
+			context[key] = fmt.Sprint(val)
 		}
 		brokerConfig.Context = context
 	}
