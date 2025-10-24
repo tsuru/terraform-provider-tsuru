@@ -47,8 +47,8 @@ func resourceTsuruServiceInstance() *schema.Resource {
 				Description: "Name of service kind",
 			},
 			"plan": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
 				Description: "Service plan name",
 			},
 			"owner": {
