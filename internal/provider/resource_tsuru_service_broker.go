@@ -135,8 +135,8 @@ func resourceTsuruServiceBrokerCreate(ctx context.Context, d *schema.ResourceDat
 		URL:  url,
 	}
 
-	if v, ok := d.GetOk("config"); ok {
-		broker.Config = *expandServiceBrokerConfig(v.([]interface{}))
+	if config, ok := d.GetOk("config"); ok {
+		broker.Config = *expandServiceBrokerConfig(config.([]interface{}))
 	}
 
 	_, err := provider.TsuruClient.ServiceApi.ServiceBrokerCreate(ctx, broker)
@@ -157,10 +157,6 @@ func resourceTsuruServiceBrokerRead(ctx context.Context, d *schema.ResourceData,
 
 	brokers, _, err := provider.TsuruClient.ServiceApi.ServiceBrokerList(ctx)
 	if err != nil {
-		if isNotFoundError(err) {
-			d.SetId("")
-			return nil
-		}
 		return diag.Errorf("could not read tsuru service broker: %v", err)
 	}
 
@@ -217,15 +213,8 @@ func resourceTsuruServiceBrokerDelete(ctx context.Context, d *schema.ResourceDat
 
 	_, err := provider.TsuruClient.ServiceApi.ServiceBrokerDelete(ctx, name)
 	if err != nil {
-
-		if isNotFoundError(err) {
-			d.SetId("")
-			return nil
-		}
 		return diag.Errorf("Could not delete tsuru service broker: %s", err.Error())
 	}
-
-	d.SetId("")
 
 	return nil
 }
@@ -235,27 +224,27 @@ func expandServiceBrokerConfig(config []interface{}) *tsuru.ServiceBrokerConfig 
 		return nil
 	}
 
-	cfg := config[0].(map[string]interface{})
+	indexedConfig := config[0].(map[string]interface{})
 	brokerConfig := &tsuru.ServiceBrokerConfig{}
 
-	if v, ok := cfg["insecure"].(bool); ok {
-		brokerConfig.Insecure = v
+	if insecure, ok := indexedConfig["insecure"].(bool); ok {
+		brokerConfig.Insecure = insecure
 	}
 
-	if v, ok := cfg["context"].(map[string]interface{}); ok && len(v) > 0 {
+	if contexts, ok := indexedConfig["context"].(map[string]interface{}); ok && len(contexts) > 0 {
 		context := make(map[string]string)
-		for key, val := range v {
+		for key, val := range contexts {
 			context[key] = fmt.Sprint(val)
 		}
 		brokerConfig.Context = context
 	}
 
-	if v, ok := cfg["cache_expiration_seconds"].(int); ok && v > 0 {
-		expiration := int32(v)
+	if cacheInSeconds, ok := indexedConfig["cache_expiration_seconds"].(int); ok && cacheInSeconds > 0 {
+		expiration := int32(cacheInSeconds)
 		brokerConfig.CacheExpirationSeconds = expiration
 	}
 
-	if authConfigList, ok := cfg["auth_config"].([]interface{}); ok && len(authConfigList) > 0 {
+	if authConfigList, ok := indexedConfig["auth_config"].([]interface{}); ok && len(authConfigList) > 0 {
 		authCfg := authConfigList[0].(map[string]interface{})
 		brokerConfig.AuthConfig = *expandAuthConfig(authCfg)
 	}
@@ -266,18 +255,18 @@ func expandServiceBrokerConfig(config []interface{}) *tsuru.ServiceBrokerConfig 
 func expandAuthConfig(inputAuthConfig map[string]interface{}) *tsuru.ServiceBrokerConfigAuthConfig {
 	authConfig := &tsuru.ServiceBrokerConfigAuthConfig{}
 
-	if basicAuthMap, ok := inputAuthConfig["basic_auth_config"].([]interface{}); ok && len(basicAuthMap) > 0 {
-		basicAuth := basicAuthMap[0].(map[string]interface{})
+	if basicAuthConfig, ok := inputAuthConfig["basic_auth_config"].([]interface{}); ok && len(basicAuthConfig) > 0 {
+		indexedBasicAuth := basicAuthConfig[0].(map[string]interface{})
 		authConfig.BasicAuthConfig = tsuru.ServiceBrokerConfigAuthConfigBasicAuthConfig{
-			Username: basicAuth["username"].(string),
-			Password: basicAuth["password"].(string),
+			Username: indexedBasicAuth["username"].(string),
+			Password: indexedBasicAuth["password"].(string),
 		}
 	}
 
-	if bearerMap, ok := inputAuthConfig["bearer_config"].([]interface{}); ok && len(bearerMap) > 0 {
-		bearer := bearerMap[0].(map[string]interface{})
+	if bearerConfig, ok := inputAuthConfig["bearer_config"].([]interface{}); ok && len(bearerConfig) > 0 {
+		indexedBearer := bearerConfig[0].(map[string]interface{})
 		authConfig.BearerConfig = tsuru.ServiceBrokerConfigAuthConfigBearerConfig{
-			Token: bearer["token"].(string),
+			Token: indexedBearer["token"].(string),
 		}
 	}
 
@@ -289,27 +278,27 @@ func flattenServiceBrokerConfig(config *tsuru.ServiceBrokerConfig) []interface{}
 		return nil
 	}
 
-	cfg := make(map[string]interface{})
+	outputConfig := make(map[string]interface{})
 
-	cfg["insecure"] = config.Insecure
+	outputConfig["insecure"] = config.Insecure
 
-	if config.Context != nil && len(config.Context) > 0 {
+	if len(config.Context) > 0 {
 		contextMap := make(map[string]interface{})
 		for key, val := range config.Context {
 			contextMap[key] = fmt.Sprintf("%v", val)
 		}
-		cfg["context"] = contextMap
+		outputConfig["context"] = contextMap
 	}
 
-	if &config.CacheExpirationSeconds != nil {
-		cfg["cache_expiration_seconds"] = int(config.CacheExpirationSeconds)
+	if config.CacheExpirationSeconds > 0 {
+		outputConfig["cache_expiration_seconds"] = int(config.CacheExpirationSeconds)
 	}
 
-	if &config.AuthConfig != nil {
-		cfg["auth_config"] = flattenAuthConfig(&config.AuthConfig)
+	if config.AuthConfig != (tsuru.ServiceBrokerConfigAuthConfig{}) {
+		outputConfig["auth_config"] = flattenAuthConfig(&config.AuthConfig)
 	}
 
-	return []interface{}{cfg}
+	return []interface{}{outputConfig}
 }
 
 func flattenAuthConfig(authConfig *tsuru.ServiceBrokerConfigAuthConfig) []interface{} {
@@ -319,7 +308,7 @@ func flattenAuthConfig(authConfig *tsuru.ServiceBrokerConfigAuthConfig) []interf
 
 	auth := make(map[string]interface{})
 
-	if &authConfig.BasicAuthConfig != nil {
+	if authConfig.BasicAuthConfig != (tsuru.ServiceBrokerConfigAuthConfigBasicAuthConfig{}) {
 		basicAuth := map[string]interface{}{
 			"username": authConfig.BasicAuthConfig.Username,
 			"password": authConfig.BasicAuthConfig.Password,
@@ -327,7 +316,7 @@ func flattenAuthConfig(authConfig *tsuru.ServiceBrokerConfigAuthConfig) []interf
 		auth["basic_auth_config"] = []interface{}{basicAuth}
 	}
 
-	if &authConfig.BearerConfig != nil {
+	if authConfig.BearerConfig != (tsuru.ServiceBrokerConfigAuthConfigBearerConfig{}) {
 		bearer := map[string]interface{}{
 			"token": authConfig.BearerConfig.Token,
 		}
