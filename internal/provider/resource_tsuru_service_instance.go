@@ -47,8 +47,8 @@ func resourceTsuruServiceInstance() *schema.Resource {
 				Description: "Name of service kind",
 			},
 			"plan": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
 				Description: "Service plan name",
 			},
 			"owner": {
@@ -131,7 +131,6 @@ func resourceTsuruServiceInstanceCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	_, err := provider.TsuruClient.ServiceApi.InstanceCreate(ctx, serviceName, instance)
-
 	if err != nil {
 		return diag.Errorf("Could not create tsuru service instance, err : %s", err.Error())
 	}
@@ -198,7 +197,6 @@ func resourceTsuruServiceInstanceRead(ctx context.Context, d *schema.ResourceDat
 	d.Set("status", status)
 
 	return nil
-
 }
 
 func resourceTsuruServiceInstanceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -288,11 +286,19 @@ func waitForServiceInstanceStatusUpFunc(ctx context.Context, provider *tsuruProv
 		return resource.RetryableError(fmt.Errorf("current status %q", currentStatus))
 	}
 }
-func parseTags(data interface{}) []string {
+
+func parseTags(data any) []string {
 	values := []string{}
 
-	for _, item := range data.([]interface{}) {
-		values = append(values, item.(string))
+	for _, item := range data.([]any) {
+		if item == nil {
+			continue
+		}
+		s, ok := item.(string)
+		if !ok || s == "" {
+			continue
+		}
+		values = append(values, s)
 	}
 
 	return values

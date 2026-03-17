@@ -107,3 +107,18 @@ resource "tsuru_service_instance"  "my_reverse_proxy"   {
 }
 `, name)
 }
+
+func TestParseTags(t *testing.T) {
+	t.Run("Parse should return each tag from list", func(t *testing.T) {
+		tags := parseTags([]any{"product=tsuru", "slo:low"})
+		require.Equal(t, []string{"product=tsuru", "slo:low"}, tags)
+	})
+	t.Run("Parse tags should not include empty strings", func(t *testing.T) {
+		tags := parseTags([]any{"", "slo:low"})
+		require.Equal(t, []string{"slo:low"}, tags)
+	})
+	t.Run("Parse tags should not break if one of the tags is nil", func(t *testing.T) {
+		tags := parseTags([]any{nil, "slo:low"})
+		require.Equal(t, []string{"slo:low"}, tags)
+	})
+}
