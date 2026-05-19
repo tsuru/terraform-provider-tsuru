@@ -26,7 +26,9 @@ func TestAccTsuruService_basic(t *testing.T) {
 		return c.NoContent(http.StatusCreated)
 	})
 
-	fakeServer.GET("/1.0/services", func(c echo.Context) error {
+	fakeServer.GET("/1.0/services/:name", func(c echo.Context) error {
+		name := c.Param("name")
+		assert.Equal(t, "my-service", name)
 		return c.JSON(http.StatusOK, []map[string]interface{}{
 			{
 				"service":   "my-service",
