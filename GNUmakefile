@@ -2,7 +2,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=tsuru
 NAME=tsuru
 BINARY=terraform-provider-${NAME}
-VERSION=2.15.8
+VERSION=2.17.2
 
 UNAME_S := $(shell uname -s)
 UNAME_P := $(shell uname -p)
