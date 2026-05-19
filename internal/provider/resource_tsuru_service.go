@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/antihax/optional"
@@ -105,20 +106,22 @@ func resourceTsuruServiceRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	name := d.Id()
 
-	services, _, err := provider.TsuruClient.ServiceApi.ServicesList(ctx)
+	_, resp, err := provider.TsuruClient.ServiceApi.ServiceInfo(ctx, name)
 	if err != nil {
-		return diag.Errorf("Could not list tsuru services, err: %s", err.Error())
+		return diag.Errorf("Could not get tsuru service %q, err: %s", name, err.Error())
 	}
 
-	for _, svc := range services {
-		if svc.Service == name {
-			d.Set("name", name)
-			return nil
-		}
+	if resp.StatusCode == http.StatusNotFound {
+		d.SetId("")
+		return nil
 	}
 
-	d.SetId("")
-	return nil
+	if resp.StatusCode == http.StatusOK {
+		d.SetId(name)
+		return nil
+	}
+
+	return diag.Errorf("Unexpected response code %d when getting tsuru service %q", resp.StatusCode, name)
 }
 
 func resourceTsuruServiceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
