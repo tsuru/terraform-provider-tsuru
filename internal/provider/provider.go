@@ -54,6 +54,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			"tsuru_service":                resourceTsuruService(),
 			"tsuru_service_instance_bind":  resourceTsuruServiceInstanceBind(),
 			"tsuru_service_instance_grant": resourceTsuruServiceInstanceGrant(),
 			"tsuru_service_instance":       resourceTsuruServiceInstance(),
