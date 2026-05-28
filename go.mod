@@ -3,21 +3,21 @@ module github.com/tsuru/terraform-provider-tsuru
 go 1.21
 
 require (
+	github.com/antihax/optional v1.0.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.26.1
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
-	github.com/tsuru/go-tsuruclient v0.0.0-20250123194536-680fecb3501a
+	github.com/tsuru/go-tsuruclient v0.4.1
 	github.com/tsuru/tsuru-client v0.0.0-20240325204824-8c0dc602a5be
-	k8s.io/apimachinery v0.26.2
-	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
+	k8s.io/apimachinery v0.27.4
+	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
 )
 
 require (
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/antihax/optional v1.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect

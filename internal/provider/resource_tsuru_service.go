@@ -64,6 +64,12 @@ func resourceTsuruService() *schema.Resource {
 				Required:    true,
 				Description: "Team owner of this service",
 			},
+			"encoding": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "form",
+				Description: "Encoding format used to communicate with the service API backend. Valid options are \"form\" (default) and \"json\".",
+			},
 		},
 	}
 }
@@ -89,6 +95,10 @@ func resourceTsuruServiceCreate(ctx context.Context, d *schema.ResourceData, met
 
 	if d.Get("multi_cluster").(bool) {
 		opts.MultiCluster = optional.NewString("true")
+	}
+
+	if v, ok := d.GetOk("encoding"); ok {
+		opts.Encoding = optional.NewString(v.(string))
 	}
 
 	_, err := provider.TsuruClient.ServiceApi.ServiceCreate(ctx, opts)
@@ -147,6 +157,10 @@ func resourceTsuruServiceUpdate(ctx context.Context, d *schema.ResourceData, met
 		opts.MultiCluster = optional.NewString("true")
 	} else {
 		opts.MultiCluster = optional.NewString("false")
+	}
+
+	if v, ok := d.GetOk("encoding"); ok {
+		opts.Encoding = optional.NewString(v.(string))
 	}
 
 	_, err := provider.TsuruClient.ServiceApi.ServiceUpdate(ctx, name, opts)

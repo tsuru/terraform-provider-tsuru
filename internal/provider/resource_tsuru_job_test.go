@@ -330,7 +330,7 @@ func TestAccResourceTsuruJobComplete(t *testing.T) {
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
 					Schedule: "* * * * *",
-					Container: tsuru.InputJobContainer{
+					Container: tsuru.JobSpecContainer{
 						Image: "tsuru/scratch:latest",
 						Command: []string{
 							"sleep",
@@ -451,7 +451,7 @@ func TestAccResourceTsuruJobMetadataDeletion(t *testing.T) {
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
 					Schedule: "* * * * *",
-					Container: tsuru.InputJobContainer{
+					Container: tsuru.JobSpecContainer{
 						Image: "tsuru/scratch:latest",
 						Command: []string{
 							"sleep",
@@ -483,7 +483,7 @@ func TestAccResourceTsuruJobMetadataDeletion(t *testing.T) {
 				Pool:        "prod",
 				Spec: tsuru.JobSpec{
 					Schedule: "* * * * *",
-					Container: tsuru.InputJobContainer{
+					Container: tsuru.JobSpecContainer{
 						Image: "tsuru/scratch:latest",
 						Command: []string{
 							"sleep",

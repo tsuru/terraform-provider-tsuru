@@ -308,7 +308,7 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 		tags = append(tags, item.(string))
 	}
 
-	var container tsuru_client.InputJobContainer
+	var container tsuru_client.JobSpecContainer
 
 	if m, ok := d.GetOk("container"); ok {
 		container = jobContainerFromResourceData(m)
@@ -352,8 +352,8 @@ func inputJobFromResourceData(ctx context.Context, d *schema.ResourceData, provi
 	return job, nil
 }
 
-func jobContainerFromResourceData(meta interface{}) tsuru_client.InputJobContainer {
-	container := tsuru_client.InputJobContainer{}
+func jobContainerFromResourceData(meta interface{}) tsuru_client.JobSpecContainer {
+	container := tsuru_client.JobSpecContainer{}
 
 	m := meta.([]interface{})
 	if len(m) == 0 || m[0] == nil {
@@ -375,7 +375,7 @@ func jobContainerFromResourceData(meta interface{}) tsuru_client.InputJobContain
 	return container
 }
 
-func flattenJobContainer(container tsuru.InputJobContainer) []interface{} {
+func flattenJobContainer(container tsuru.JobSpecContainer) []interface{} {
 	if container.Image == "" && len(container.Command) == 0 {
 		return []interface{}{}
 	}
