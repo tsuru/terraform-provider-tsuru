@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -146,4 +147,95 @@ resource "tsuru_service" "my_service" {
 	encoding = "json"
 }
 `
+}
+
+func TestAccTsuruService_withEndpointsMap(t *testing.T) {
+	fakeServer := echo.New()
+
+	fakeServer.POST("/1.0/services", func(c echo.Context) error {
+		assert.Equal(t, "my-service", c.FormValue("id"))
+		assert.Equal(t, "my-team", c.FormValue("team"))
+		assert.Equal(t, "", c.FormValue("endpoint"))
+		assert.Equal(t, "https://prod.example.com", c.FormValue("endpoints.production"))
+		assert.Equal(t, "https://c1.example.com", c.FormValue("endpoints.cluster1"))
+		return c.NoContent(http.StatusCreated)
+	})
+
+	fakeServer.GET("/1.0/services/:name", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, []map[string]interface{}{
+			{"service": "my-service", "instances": []string{}},
+		})
+	})
+
+	fakeServer.PUT("/1.0/services/:name", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
+
+	fakeServer.DELETE("/1.0/services/:name", func(c echo.Context) error {
+		return c.NoContent(http.StatusNoContent)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTsuruServiceConfig_withEndpointsMap(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tsuru_service.my_service", "name", "my-service"),
+					resource.TestCheckResourceAttr("tsuru_service.my_service", "endpoints.production", "https://prod.example.com"),
+					resource.TestCheckResourceAttr("tsuru_service.my_service", "endpoints.cluster1", "https://c1.example.com"),
+					resource.TestCheckNoResourceAttr("tsuru_service.my_service", "endpoint"),
+				),
+			},
+		},
+	})
+}
+
+func testAccTsuruServiceConfig_withEndpointsMap() string {
+	return `
+resource "tsuru_service" "my_service" {
+	name = "my-service"
+	team = "my-team"
+	endpoints = {
+		production = "https://prod.example.com"
+		cluster1   = "https://c1.example.com"
+	}
+}
+`
+}
+
+func TestAccTsuruService_endpointAndEndpointsAreMutuallyExclusive(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("server should not be called when validation fails: %s %s", r.Method, r.URL.Path)
+	}))
+	defer server.Close()
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "tsuru_service" "my_service" {
+	name     = "my-service"
+	team     = "my-team"
+	endpoint = "https://api.example.com"
+	endpoints = {
+		production = "https://prod.example.com"
+	}
+}
+`,
+				ExpectError: regexp.MustCompile("only one of"),
+			},
+		},
+	})
 }

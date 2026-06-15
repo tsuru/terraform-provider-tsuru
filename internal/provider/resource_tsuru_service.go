@@ -49,9 +49,17 @@ func resourceTsuruService() *schema.Resource {
 				Description: "Password for service authentication",
 			},
 			"endpoint": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Service endpoint URL",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Single service endpoint URL. The server stores it as endpoints[\"production\"]. Mutually exclusive with \"endpoints\".",
+				ExactlyOneOf: []string{"endpoint", "endpoints"},
+			},
+			"endpoints": {
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				Description:  "Map of endpoint name to URL, e.g. { production = \"https://prod...\" }. Mutually exclusive with \"endpoint\".",
+				ExactlyOneOf: []string{"endpoint", "endpoints"},
 			},
 			"multi_cluster": {
 				Type:        schema.TypeBool,
@@ -80,9 +88,16 @@ func resourceTsuruServiceCreate(ctx context.Context, d *schema.ResourceData, met
 	name := d.Get("name").(string)
 
 	opts := &tsuru.ServiceCreateOpts{
-		Id:       optional.NewString(name),
-		Endpoint: optional.NewString(d.Get("endpoint").(string)),
-		Team:     optional.NewString(d.Get("team").(string)),
+		Id:   optional.NewString(name),
+		Team: optional.NewString(d.Get("team").(string)),
+	}
+
+	if v, ok := d.GetOk("endpoint"); ok {
+		opts.Endpoint = optional.NewString(v.(string))
+	}
+
+	if v, ok := d.GetOk("endpoints"); ok {
+		opts.Endpoints = expandServiceEndpoints(v)
 	}
 
 	if v, ok := d.GetOk("username"); ok {
@@ -140,9 +155,16 @@ func resourceTsuruServiceUpdate(ctx context.Context, d *schema.ResourceData, met
 	name := d.Id()
 
 	opts := &tsuru.ServiceUpdateOpts{
-		Id:       optional.NewString(name),
-		Endpoint: optional.NewString(d.Get("endpoint").(string)),
-		Team:     optional.NewString(d.Get("team").(string)),
+		Id:   optional.NewString(name),
+		Team: optional.NewString(d.Get("team").(string)),
+	}
+
+	if v, ok := d.GetOk("endpoint"); ok {
+		opts.Endpoint = optional.NewString(v.(string))
+	}
+
+	if v, ok := d.GetOk("endpoints"); ok {
+		opts.Endpoints = expandServiceEndpoints(v)
 	}
 
 	if v, ok := d.GetOk("username"); ok {
@@ -169,6 +191,18 @@ func resourceTsuruServiceUpdate(ctx context.Context, d *schema.ResourceData, met
 	}
 
 	return resourceTsuruServiceRead(ctx, d, meta)
+}
+
+func expandServiceEndpoints(v interface{}) map[string]string {
+	raw, ok := v.(map[string]interface{})
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(raw))
+	for k, val := range raw {
+		out[k] = val.(string)
+	}
+	return out
 }
 
 func resourceTsuruServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
