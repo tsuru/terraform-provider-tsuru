@@ -127,7 +127,7 @@ func resourceTsuruJob() *schema.Resource {
 
 			"concurrency_policy": {
 				Type:        schema.TypeString,
-				Description: "Concurrency policy",
+				Description: "Specifies how to treat concurrent executions of a Job. Valid values are: \"Allow\" (default), allows concurrent runs; \"Forbid\", skips a run if the previous one has not finished yet; and \"Replace\", cancels the currently running job and starts a new one. This field is optional.",
 				Optional:    true,
 			},
 		},
