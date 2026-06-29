@@ -62,7 +62,7 @@ resource "tsuru_job" "full-featured-job" {
 ### Optional
 
 - `active_deadline_seconds` (Number) Time a Job can run before its terminated. Defaults is 3600
-- `concurrency_policy` (String) Concurrency policy
+- `concurrency_policy` (String) Specifies how to treat concurrent executions of a Job. Valid values are: "Allow" (default), allows concurrent runs; "Forbid", skips a run if the previous one has not finished yet; and "Replace", cancels the currently running job and starts a new one. This field is optional.
 - `container` (Block List, Max: 1) (see [below for nested schema](#nestedblock--container))
 - `description` (String) Job description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))
