@@ -79,6 +79,7 @@ func Provider() *schema.Provider {
 
 			"tsuru_router":          resourceTsuruRouter(),
 			"tsuru_role":            resourceTsuruRole(),
+			"tsuru_role_default":    resourceTsuruRoleDefault(),
 			"tsuru_plan":            resourceTsuruPlan(),
 			"tsuru_webhook":         resourceTsuruWebhook(),
 			"tsuru_pool_constraint": resourceTsuruPoolConstraint(),
