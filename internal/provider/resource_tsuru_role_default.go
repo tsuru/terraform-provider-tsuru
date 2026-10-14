@@ -144,28 +144,22 @@ func resourceTsuruRoleDefaultUpdate(ctx context.Context, d *schema.ResourceData,
 }
 
 func applyRoleDefaultDiff(ctx context.Context, provider *tsuruProvider, oldUserCreate, newUserCreate, oldTeamCreate, newTeamCreate []string) diag.Diagnostics {
-	removePayload := map[string][]string{}
-	if removed := permissionDifference(oldUserCreate, newUserCreate); len(removed) > 0 {
-		removePayload[roleEventUserCreate] = removed
+	removeValues := roleDefaultValues{
+		UserCreate: permissionDifference(oldUserCreate, newUserCreate),
+		TeamCreate: permissionDifference(oldTeamCreate, newTeamCreate),
 	}
-	if removed := permissionDifference(oldTeamCreate, newTeamCreate); len(removed) > 0 {
-		removePayload[roleEventTeamCreate] = removed
-	}
-	if len(removePayload) > 0 {
-		if err := roleRequest(ctx, provider, http.MethodDelete, "1.0", "/role/default", removePayload, nil); err != nil {
+	if len(removeValues.UserCreate) > 0 || len(removeValues.TeamCreate) > 0 {
+		if err := roleRequest(ctx, provider, http.MethodDelete, "1.0", "/role/default", removeValues, nil); err != nil {
 			return diag.Errorf("Could not remove tsuru default roles: %s", err)
 		}
 	}
 
-	addPayload := map[string][]string{}
-	if added := permissionDifference(newUserCreate, oldUserCreate); len(added) > 0 {
-		addPayload[roleEventUserCreate] = added
+	addValues := roleDefaultValues{
+		UserCreate: permissionDifference(newUserCreate, oldUserCreate),
+		TeamCreate: permissionDifference(newTeamCreate, oldTeamCreate),
 	}
-	if added := permissionDifference(newTeamCreate, oldTeamCreate); len(added) > 0 {
-		addPayload[roleEventTeamCreate] = added
-	}
-	if len(addPayload) > 0 {
-		if err := roleRequest(ctx, provider, http.MethodPost, "1.0", "/role/default", addPayload, nil); err != nil {
+	if len(addValues.UserCreate) > 0 || len(addValues.TeamCreate) > 0 {
+		if err := roleRequest(ctx, provider, http.MethodPost, "1.0", "/role/default", addValues, nil); err != nil {
 			return diag.Errorf("Could not add tsuru default roles: %s", err)
 		}
 	}
@@ -176,22 +170,27 @@ func applyRoleDefaultDiff(ctx context.Context, provider *tsuruProvider, oldUserC
 func resourceTsuruRoleDefaultDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	payload := roleDefaultPayload(d, "user_create", "team_create")
-	if len(payload[roleEventUserCreate]) == 0 && len(payload[roleEventTeamCreate]) == 0 {
+	values := roleDefaultPayload(d, "user_create", "team_create")
+	if len(values.UserCreate) == 0 && len(values.TeamCreate) == 0 {
 		return nil
 	}
 
-	if err := roleRequest(ctx, provider, http.MethodDelete, "1.0", "/role/default", payload, nil); err != nil {
+	if err := roleRequest(ctx, provider, http.MethodDelete, "1.0", "/role/default", values, nil); err != nil {
 		return diag.Errorf("Could not remove tsuru default roles: %s", err)
 	}
 
 	return nil
 }
 
-func roleDefaultPayload(d *schema.ResourceData, userCreateField, teamCreateField string) map[string][]string {
-	return map[string][]string{
-		roleEventUserCreate: permissionSet(d.Get(userCreateField)),
-		roleEventTeamCreate: permissionSet(d.Get(teamCreateField)),
+type roleDefaultValues struct {
+	UserCreate []string `json:"user-create,omitempty"`
+	TeamCreate []string `json:"team-create,omitempty"`
+}
+
+func roleDefaultPayload(d *schema.ResourceData, userCreateField, teamCreateField string) roleDefaultValues {
+	return roleDefaultValues{
+		UserCreate: permissionSet(d.Get(userCreateField)),
+		TeamCreate: permissionSet(d.Get(teamCreateField)),
 	}
 }
 

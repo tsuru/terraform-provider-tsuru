@@ -22,7 +22,7 @@ import (
 
 type roleDefaultRequest struct {
 	Method  string
-	Payload map[string][]string
+	Payload roleDefaultValues
 }
 
 func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
@@ -30,22 +30,22 @@ func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
 	roleEvents := map[string]map[string]bool{}
 	var roleDefaultRequests []roleDefaultRequest
 
-	recordRoleDefaultRequest := func(method string, payload map[string][]string) {
+	recordRoleDefaultRequest := func(method string, payload roleDefaultValues) {
 		mutex.Lock()
 		defer mutex.Unlock()
-		cloned := make(map[string][]string, len(payload))
-		for event, roles := range payload {
-			copied := append([]string(nil), roles...)
-			sort.Strings(copied)
-			cloned[event] = copied
+		cloned := roleDefaultValues{
+			UserCreate: append([]string(nil), payload.UserCreate...),
+			TeamCreate: append([]string(nil), payload.TeamCreate...),
 		}
+		sort.Strings(cloned.UserCreate)
+		sort.Strings(cloned.TeamCreate)
 		roleDefaultRequests = append(roleDefaultRequests, roleDefaultRequest{Method: method, Payload: cloned})
 	}
 
-	applyRoleDefaultPayload := func(payload map[string][]string, add bool) {
+	applyRoleDefaultPayload := func(payload roleDefaultValues, add bool) {
 		mutex.Lock()
 		defer mutex.Unlock()
-		for evtName, roles := range payload {
+		assign := func(evtName string, roles []string) {
 			for _, roleName := range roles {
 				if add {
 					if roleEvents[roleName] == nil {
@@ -57,18 +57,20 @@ func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
 				}
 			}
 		}
+		assign(roleEventUserCreate, payload.UserCreate)
+		assign(roleEventTeamCreate, payload.TeamCreate)
 	}
 
 	fakeServer := echo.New()
 	fakeServer.POST("/1.0/role/default", func(c echo.Context) error {
-		var payload map[string][]string
+		var payload roleDefaultValues
 		require.NoError(t, c.Bind(&payload))
 		recordRoleDefaultRequest(http.MethodPost, payload)
 		applyRoleDefaultPayload(payload, true)
 		return c.NoContent(http.StatusOK)
 	})
 	fakeServer.DELETE("/1.0/role/default", func(c echo.Context) error {
-		var payload map[string][]string
+		var payload roleDefaultValues
 		require.NoError(t, c.Bind(&payload))
 		recordRoleDefaultRequest(http.MethodDelete, payload)
 		applyRoleDefaultPayload(payload, false)
@@ -109,6 +111,16 @@ func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		IDRefreshName:     resourceName,
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(_ *terraform.State) error {
+			mutex.Lock()
+			defer mutex.Unlock()
+			last := roleDefaultRequests[len(roleDefaultRequests)-1]
+			require.Equal(t, http.MethodDelete, last.Method)
+			require.Equal(t, roleDefaultValues{
+				UserCreate: []string{"billing-viewer", "team-member"},
+			}, last.Payload)
+			return nil
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -126,10 +138,8 @@ resource "tsuru_role_default" "this" {
 						mutex.Lock()
 						defer mutex.Unlock()
 						require.Contains(t, roleDefaultRequests, roleDefaultRequest{
-							Method: http.MethodDelete,
-							Payload: map[string][]string{
-								roleEventUserCreate: {"legacy-admin"},
-							},
+							Method:  http.MethodDelete,
+							Payload: roleDefaultValues{UserCreate: []string{"legacy-admin"}},
 						})
 						require.NotContains(t, roleEvents["legacy-admin"], roleEventUserCreate)
 						roleDefaultRequests = nil
@@ -153,16 +163,12 @@ resource "tsuru_role_default" "this" {
 						defer mutex.Unlock()
 						require.Equal(t, []roleDefaultRequest{
 							{
-								Method: http.MethodDelete,
-								Payload: map[string][]string{
-									roleEventTeamCreate: {"team-owner"},
-								},
+								Method:  http.MethodDelete,
+								Payload: roleDefaultValues{TeamCreate: []string{"team-owner"}},
 							},
 							{
-								Method: http.MethodPost,
-								Payload: map[string][]string{
-									roleEventUserCreate: {"billing-viewer"},
-								},
+								Method:  http.MethodPost,
+								Payload: roleDefaultValues{UserCreate: []string{"billing-viewer"}},
 							},
 						}, roleDefaultRequests)
 						return nil
