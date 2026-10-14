@@ -97,6 +97,8 @@ func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
 		t.Errorf("method=%s, path=%s, err=%s", c.Request().Method, c.Path(), err)
 	}
 
+	roleEvents["legacy-admin"] = map[string]bool{roleEventUserCreate: true}
+
 	server := httptest.NewServer(fakeServer)
 	defer server.Close()
 	os.Setenv("TSURU_TARGET", server.URL)
@@ -122,6 +124,13 @@ resource "tsuru_role_default" "this" {
 					func(_ *terraform.State) error {
 						mutex.Lock()
 						defer mutex.Unlock()
+						require.Contains(t, roleDefaultRequests, roleDefaultRequest{
+							Method: http.MethodDelete,
+							Payload: map[string][]string{
+								roleEventUserCreate: {"legacy-admin"},
+							},
+						})
+						require.NotContains(t, roleEvents["legacy-admin"], roleEventUserCreate)
 						roleDefaultRequests = nil
 						return nil
 					},

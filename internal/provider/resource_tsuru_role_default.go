@@ -65,9 +65,16 @@ func resourceTsuruRoleDefault() *schema.Resource {
 func resourceTsuruRoleDefaultCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	payload := roleDefaultPayload(d, "user_create", "team_create")
-	if err := roleRequest(ctx, provider, http.MethodPost, "1.0", "/role/default", payload, nil); err != nil {
-		return diag.Errorf("Could not set tsuru default roles: %s", err)
+	currentUserCreate, currentTeamCreate, err := readRoleDefaults(ctx, provider)
+	if err != nil {
+		return diag.Errorf("Could not read tsuru default roles: %s", err)
+	}
+
+	newUserCreate := permissionSet(d.Get("user_create"))
+	newTeamCreate := permissionSet(d.Get("team_create"))
+
+	if diags := applyRoleDefaultDiff(ctx, provider, currentUserCreate, newUserCreate, currentTeamCreate, newTeamCreate); diags != nil {
+		return diags
 	}
 
 	d.SetId(roleDefaultResourceID)
@@ -78,21 +85,9 @@ func resourceTsuruRoleDefaultCreate(ctx context.Context, d *schema.ResourceData,
 func resourceTsuruRoleDefaultRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	var roles []tsuruRoleWithEvents
-	if err := roleRequest(ctx, provider, http.MethodGet, "1.0", "/role/default", nil, &roles); err != nil {
+	userCreate, teamCreate, err := readRoleDefaults(ctx, provider)
+	if err != nil {
 		return diag.Errorf("Could not read tsuru default roles: %s", err)
-	}
-
-	var userCreate, teamCreate []string
-	for _, role := range roles {
-		for _, evt := range role.Events {
-			switch evt {
-			case roleEventUserCreate:
-				userCreate = append(userCreate, role.Name)
-			case roleEventTeamCreate:
-				teamCreate = append(teamCreate, role.Name)
-			}
-		}
 	}
 
 	if err := d.Set("user_create", userCreate); err != nil {
@@ -107,12 +102,40 @@ func resourceTsuruRoleDefaultRead(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
+func readRoleDefaults(ctx context.Context, provider *tsuruProvider) (userCreate, teamCreate []string, err error) {
+	var roles []tsuruRoleWithEvents
+	if err := roleRequest(ctx, provider, http.MethodGet, "1.0", "/role/default", nil, &roles); err != nil {
+		return nil, nil, err
+	}
+
+	for _, role := range roles {
+		for _, evt := range role.Events {
+			switch evt {
+			case roleEventUserCreate:
+				userCreate = append(userCreate, role.Name)
+			case roleEventTeamCreate:
+				teamCreate = append(teamCreate, role.Name)
+			}
+		}
+	}
+
+	return userCreate, teamCreate, nil
+}
+
 func resourceTsuruRoleDefaultUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
 	oldUserCreate, newUserCreate := permissionChangeField(d, "user_create")
 	oldTeamCreate, newTeamCreate := permissionChangeField(d, "team_create")
 
+	if diags := applyRoleDefaultDiff(ctx, provider, oldUserCreate, newUserCreate, oldTeamCreate, newTeamCreate); diags != nil {
+		return diags
+	}
+
+	return resourceTsuruRoleDefaultRead(ctx, d, meta)
+}
+
+func applyRoleDefaultDiff(ctx context.Context, provider *tsuruProvider, oldUserCreate, newUserCreate, oldTeamCreate, newTeamCreate []string) diag.Diagnostics {
 	removePayload := map[string][]string{}
 	if removed := permissionDifference(oldUserCreate, newUserCreate); len(removed) > 0 {
 		removePayload[roleEventUserCreate] = removed
@@ -139,7 +162,7 @@ func resourceTsuruRoleDefaultUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	return resourceTsuruRoleDefaultRead(ctx, d, meta)
+	return nil
 }
 
 func resourceTsuruRoleDefaultDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
