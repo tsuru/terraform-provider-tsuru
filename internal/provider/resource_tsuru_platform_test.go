@@ -123,6 +123,62 @@ func TestAccTsuruPlatform_basic(t *testing.T) {
 	})
 }
 
+func TestAccTsuruPlatform_disabledOnCreate(t *testing.T) {
+	var createDisabled string
+	putCalls := 0
+
+	fakeServer := echo.New()
+	fakeServer.POST("/1.0/platforms", func(c echo.Context) error {
+		err := c.Request().ParseMultipartForm(10 << 20)
+		require.NoError(t, err)
+		createDisabled = c.Request().FormValue("disabled")
+
+		return writePlatformStreamOK(c)
+	})
+	fakeServer.PUT("/1.0/platforms/:platform", func(c echo.Context) error {
+		putCalls++
+		return writePlatformStreamOK(c)
+	})
+	fakeServer.GET("/1.6/platforms/:platform", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, &tsuru.PlatformInfo{
+			Platform: tsuru.Platform{
+				Name:     c.Param("platform"),
+				Disabled: true,
+			},
+		})
+	})
+	fakeServer.DELETE("/1.0/platforms/:platform", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resourceName := "tsuru_platform.my_platform"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		IDRefreshName:     resourceName,
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTsuruPlatformConfig_basic("my-platform", true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "disabled", "true"),
+					func(s *terraform.State) error {
+						assert.Equal(t, "true", createDisabled, "create request should send disabled=true")
+						assert.Equal(t, 0, putCalls, "no follow-up PUT should be issued when disabled is set at creation")
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
 func testAccTsuruPlatformConfig_basic(name string, disabled bool) string {
 	return fmt.Sprintf(`
 resource "tsuru_platform" "my_platform" {

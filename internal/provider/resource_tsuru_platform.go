@@ -83,6 +83,9 @@ func resourceTsuruPlatform() *schema.Resource {
 func resourceTsuruPlatformCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
+	ctx, cancel := context.WithTimeout(ctx, d.Timeout(schema.TimeoutCreate))
+	defer cancel()
+
 	name := d.Get("name").(string)
 	dockerfile, err := platformDockerfileContent(d)
 	if err != nil {
@@ -92,6 +95,9 @@ func resourceTsuruPlatformCreate(ctx context.Context, d *schema.ResourceData, me
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 	if err := writer.WriteField("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := writer.WriteField("disabled", strconv.FormatBool(d.Get("disabled").(bool))); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := writePlatformDockerfile(writer, dockerfile); err != nil {
@@ -107,12 +113,6 @@ func resourceTsuruPlatformCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	d.SetId(name)
-
-	if d.Get("disabled").(bool) {
-		if dg := setPlatformDisabled(ctx, provider, name, true); dg != nil {
-			return dg
-		}
-	}
 
 	return resourceTsuruPlatformRead(ctx, d, meta)
 }
@@ -140,6 +140,9 @@ func resourceTsuruPlatformRead(ctx context.Context, d *schema.ResourceData, meta
 
 func resourceTsuruPlatformUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
+
+	ctx, cancel := context.WithTimeout(ctx, d.Timeout(schema.TimeoutUpdate))
+	defer cancel()
 
 	name := d.Id()
 
@@ -176,6 +179,9 @@ func resourceTsuruPlatformUpdate(ctx context.Context, d *schema.ResourceData, me
 
 func resourceTsuruPlatformDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
+
+	ctx, cancel := context.WithTimeout(ctx, d.Timeout(schema.TimeoutDelete))
+	defer cancel()
 
 	name := d.Id()
 
