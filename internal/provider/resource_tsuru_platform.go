@@ -180,7 +180,7 @@ func resourceTsuruPlatformDelete(ctx context.Context, d *schema.ResourceData, me
 	name := d.Id()
 
 	_, err := provider.TsuruClient.PlatformApi.PlatformDelete(ctx, name)
-	if err != nil {
+	if err != nil && !isNotFoundError(err) {
 		return diag.Errorf("Could not delete tsuru platform %q, err: %s", name, err.Error())
 	}
 
