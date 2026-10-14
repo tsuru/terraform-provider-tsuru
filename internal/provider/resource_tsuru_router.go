@@ -93,9 +93,6 @@ func resourceTsuruRouterCreate(ctx context.Context, d *schema.ResourceData, meta
 func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	name := d.Get("name").(string)
-	typo := d.Get("type").(string)
-
 	router, _, err := provider.TsuruClient.RouterApi.RouterList(ctx)
 
 	if err != nil {
@@ -103,7 +100,7 @@ func resourceTsuruRouterRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	for _, router := range router {
-		if router.Name != name || router.Type != typo {
+		if router.Name != d.Id() {
 			continue
 		}
 		d.Set("name", router.Name)

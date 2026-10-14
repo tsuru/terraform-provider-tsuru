@@ -74,6 +74,13 @@ func TestAccTsuruRouter_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "type", "router"),
 				),
 			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateId:           "test_router",
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"config"},
+			},
 		},
 	})
 }
