@@ -13,14 +13,33 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+type roleDefaultRequest struct {
+	Method  string
+	Payload map[string][]string
+}
+
 func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
 	var mutex sync.Mutex
 	roleEvents := map[string]map[string]bool{}
+	var roleDefaultRequests []roleDefaultRequest
+
+	recordRoleDefaultRequest := func(method string, payload map[string][]string) {
+		mutex.Lock()
+		defer mutex.Unlock()
+		cloned := make(map[string][]string, len(payload))
+		for event, roles := range payload {
+			copied := append([]string(nil), roles...)
+			sort.Strings(copied)
+			cloned[event] = copied
+		}
+		roleDefaultRequests = append(roleDefaultRequests, roleDefaultRequest{Method: method, Payload: cloned})
+	}
 
 	applyRoleDefaultPayload := func(payload map[string][]string, add bool) {
 		mutex.Lock()
@@ -43,12 +62,14 @@ func TestAccTsuruRoleDefault_lifecycle(t *testing.T) {
 	fakeServer.POST("/1.0/role/default", func(c echo.Context) error {
 		var payload map[string][]string
 		require.NoError(t, c.Bind(&payload))
+		recordRoleDefaultRequest(http.MethodPost, payload)
 		applyRoleDefaultPayload(payload, true)
 		return c.NoContent(http.StatusOK)
 	})
 	fakeServer.DELETE("/1.0/role/default", func(c echo.Context) error {
 		var payload map[string][]string
 		require.NoError(t, c.Bind(&payload))
+		recordRoleDefaultRequest(http.MethodDelete, payload)
 		applyRoleDefaultPayload(payload, false)
 		return c.NoContent(http.StatusOK)
 	})
@@ -98,6 +119,12 @@ resource "tsuru_role_default" "this" {
 					resource.TestCheckTypeSetElemAttr(resourceName, "user_create.*", "team-member"),
 					resource.TestCheckResourceAttr(resourceName, "team_create.#", "1"),
 					resource.TestCheckTypeSetElemAttr(resourceName, "team_create.*", "team-owner"),
+					func(_ *terraform.State) error {
+						mutex.Lock()
+						defer mutex.Unlock()
+						roleDefaultRequests = nil
+						return nil
+					},
 				),
 			},
 			{
@@ -111,6 +138,25 @@ resource "tsuru_role_default" "this" {
 					resource.TestCheckTypeSetElemAttr(resourceName, "user_create.*", "team-member"),
 					resource.TestCheckTypeSetElemAttr(resourceName, "user_create.*", "billing-viewer"),
 					resource.TestCheckResourceAttr(resourceName, "team_create.#", "0"),
+					func(_ *terraform.State) error {
+						mutex.Lock()
+						defer mutex.Unlock()
+						require.Equal(t, []roleDefaultRequest{
+							{
+								Method: http.MethodDelete,
+								Payload: map[string][]string{
+									roleEventTeamCreate: {"team-owner"},
+								},
+							},
+							{
+								Method: http.MethodPost,
+								Payload: map[string][]string{
+									roleEventUserCreate: {"billing-viewer"},
+								},
+							},
+						}, roleDefaultRequests)
+						return nil
+					},
 				),
 			},
 			{
