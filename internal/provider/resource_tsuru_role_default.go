@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -33,7 +34,7 @@ func resourceTsuruRoleDefault() *schema.Resource {
 		UpdateContext: resourceTsuruRoleDefaultUpdate,
 		DeleteContext: resourceTsuruRoleDefaultDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceTsuruRoleDefaultImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"user_create": {
@@ -60,6 +61,13 @@ func resourceTsuruRoleDefault() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceTsuruRoleDefaultImport(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
+	if d.Id() != roleDefaultResourceID {
+		return nil, fmt.Errorf("tsuru_role_default is a singleton resource, the only valid import ID is %q", roleDefaultResourceID)
+	}
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceTsuruRoleDefaultCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {

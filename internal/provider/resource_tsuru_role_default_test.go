@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"sort"
 	"sync"
 	"testing"
@@ -167,6 +168,17 @@ resource "tsuru_role_default" "this" {
 						return nil
 					},
 				),
+			},
+			{
+				Config: `
+resource "tsuru_role_default" "this" {
+	user_create = ["team-member", "billing-viewer"]
+}
+`,
+				ResourceName:  resourceName,
+				ImportState:   true,
+				ImportStateId: "something-else",
+				ExpectError:   regexp.MustCompile(`singleton resource`),
 			},
 			{
 				ResourceName:      resourceName,
