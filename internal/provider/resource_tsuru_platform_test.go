@@ -124,26 +124,34 @@ func TestAccTsuruPlatform_basic(t *testing.T) {
 }
 
 func TestAccTsuruPlatform_disabledOnCreate(t *testing.T) {
-	var createDisabled string
+	// tsuru's platform Create ignores the disabled form field and always stores the
+	// platform as enabled, so the fake server mirrors that: disabled only changes on PUT.
+	disabled := false
 	putCalls := 0
 
 	fakeServer := echo.New()
 	fakeServer.POST("/1.0/platforms", func(c echo.Context) error {
 		err := c.Request().ParseMultipartForm(10 << 20)
 		require.NoError(t, err)
-		createDisabled = c.Request().FormValue("disabled")
 
 		return writePlatformStreamOK(c)
 	})
 	fakeServer.PUT("/1.0/platforms/:platform", func(c echo.Context) error {
+		err := c.Request().ParseMultipartForm(10 << 20)
+		require.NoError(t, err)
+
 		putCalls++
+		if d := c.Request().FormValue("disabled"); d != "" {
+			disabled = d == "true"
+		}
+
 		return writePlatformStreamOK(c)
 	})
 	fakeServer.GET("/1.6/platforms/:platform", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, &tsuru.PlatformInfo{
 			Platform: tsuru.Platform{
 				Name:     c.Param("platform"),
-				Disabled: true,
+				Disabled: disabled,
 			},
 		})
 	})
@@ -169,8 +177,7 @@ func TestAccTsuruPlatform_disabledOnCreate(t *testing.T) {
 					testAccResourceExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "disabled", "true"),
 					func(s *terraform.State) error {
-						assert.Equal(t, "true", createDisabled, "create request should send disabled=true")
-						assert.Equal(t, 0, putCalls, "no follow-up PUT should be issued when disabled is set at creation")
+						assert.Equal(t, 1, putCalls, "create with disabled=true should issue one follow-up PUT since tsuru's API cannot disable a platform atomically on creation")
 						return nil
 					},
 				),

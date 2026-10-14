@@ -97,9 +97,6 @@ func resourceTsuruPlatformCreate(ctx context.Context, d *schema.ResourceData, me
 	if err := writer.WriteField("name", name); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := writer.WriteField("disabled", strconv.FormatBool(d.Get("disabled").(bool))); err != nil {
-		return diag.FromErr(err)
-	}
 	if err := writePlatformDockerfile(writer, dockerfile); err != nil {
 		return diag.FromErr(err)
 	}
@@ -113,6 +110,14 @@ func resourceTsuruPlatformCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	d.SetId(name)
+
+	// tsuru's platform Create ignores the disabled form field (it always stores the
+	// platform as enabled), so disabling it requires a separate request after creation.
+	if d.Get("disabled").(bool) {
+		if dg := setPlatformDisabled(ctx, provider, name, true); dg != nil {
+			return dg
+		}
+	}
 
 	return resourceTsuruPlatformRead(ctx, d, meta)
 }
