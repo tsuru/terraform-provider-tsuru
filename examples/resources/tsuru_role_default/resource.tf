@@ -1,6 +1,6 @@
 resource "tsuru_role" "team_member" {
   name        = "team-member"
-  context     = "team"
+  context     = "global"
   description = "Default role assigned to new users"
 
   permissions = [
