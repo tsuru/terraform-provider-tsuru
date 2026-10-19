@@ -5,6 +5,8 @@
 package provider
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,8 +14,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	echo "github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
 )
 
@@ -161,6 +165,137 @@ func TestAccResourceServiceInstanceJobBind(t *testing.T) {
 				),
 			},
 		},
+	})
+}
+
+func serviceInstanceBindReadTestProvider(t *testing.T, instance tsuru.ServiceInstanceInfo) *tsuruProvider {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/1.0/services/service/instances/db", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(instance)
+	}))
+	t.Cleanup(server.Close)
+	return &tsuruProvider{TsuruClient: tsuru.NewAPIClient(&tsuru.Configuration{
+		BasePath:      server.URL,
+		HTTPClient:    server.Client(),
+		DefaultHeader: map[string]string{},
+	})}
+}
+
+func TestResourceServiceInstanceBindRead(t *testing.T) {
+	t.Run("JobWithSameNameAsApp", func(t *testing.T) {
+		resource := resourceTsuruServiceInstanceBind()
+		data := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{
+			"service_name":     "service",
+			"service_instance": "db",
+			"job":              "shared",
+		})
+		data.SetId("service::db::tsuru-job::shared")
+		provider := serviceInstanceBindReadTestProvider(t, tsuru.ServiceInstanceInfo{
+			Apps: []string{"shared"},
+			Jobs: []string{"shared"},
+		})
+
+		diagnostics := resource.ReadContext(context.Background(), data, provider)
+
+		require.False(t, diagnostics.HasError(), "%v", diagnostics)
+		require.Equal(t, "service::db::tsuru-job::shared", data.Id())
+		require.Equal(t, "shared", data.Get("job"))
+		require.Empty(t, data.Get("app"))
+	})
+
+	t.Run("ClearsAppFromJobState", func(t *testing.T) {
+		resource := resourceTsuruServiceInstanceBind()
+		// Older provider versions could populate both fields when names matched.
+		data := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{
+			"app": "shared",
+			"job": "shared",
+		})
+		data.SetId("service::db::tsuru-job::shared")
+		provider := serviceInstanceBindReadTestProvider(t, tsuru.ServiceInstanceInfo{
+			Apps: []string{"shared"},
+			Jobs: []string{"shared"},
+		})
+
+		diagnostics := resource.ReadContext(context.Background(), data, provider)
+
+		require.False(t, diagnostics.HasError(), "%v", diagnostics)
+		require.Equal(t, "service::db::tsuru-job::shared", data.Id())
+		require.Equal(t, "shared", data.Get("job"))
+		require.Empty(t, data.Get("app"))
+	})
+
+	t.Run("MissingJobWithSameNameAsApp", func(t *testing.T) {
+		resource := resourceTsuruServiceInstanceBind()
+		data := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{
+			"job": "shared",
+		})
+		data.SetId("service::db::tsuru-job::shared")
+		provider := serviceInstanceBindReadTestProvider(t, tsuru.ServiceInstanceInfo{
+			Apps: []string{"shared"},
+		})
+
+		diagnostics := resource.ReadContext(context.Background(), data, provider)
+
+		require.False(t, diagnostics.HasError(), "%v", diagnostics)
+		require.Empty(t, data.Id(), "the app binding must not keep a missing job binding in state")
+	})
+
+	t.Run("MissingAppWithSameNameAsJob", func(t *testing.T) {
+		resource := resourceTsuruServiceInstanceBind()
+		data := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{
+			"app": "shared",
+		})
+		data.SetId("service::db::shared")
+		provider := serviceInstanceBindReadTestProvider(t, tsuru.ServiceInstanceInfo{
+			Jobs: []string{"shared"},
+		})
+
+		diagnostics := resource.ReadContext(context.Background(), data, provider)
+
+		require.False(t, diagnostics.HasError(), "%v", diagnostics)
+		require.Empty(t, data.Id(), "the job binding must not keep a missing app binding in state")
+	})
+
+	t.Run("AppWithSameNameAsJob", func(t *testing.T) {
+		resource := resourceTsuruServiceInstanceBind()
+		data := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{
+			"app": "shared",
+		})
+		data.SetId("service::db::shared")
+		provider := serviceInstanceBindReadTestProvider(t, tsuru.ServiceInstanceInfo{
+			Apps: []string{"shared"},
+			Jobs: []string{"shared"},
+		})
+
+		diagnostics := resource.ReadContext(context.Background(), data, provider)
+
+		require.False(t, diagnostics.HasError(), "%v", diagnostics)
+		require.Equal(t, "service::db::shared", data.Id())
+		require.Equal(t, "shared", data.Get("app"))
+		require.Empty(t, data.Get("job"))
+	})
+
+	t.Run("ImportedJobWithSameNameAsApp", func(t *testing.T) {
+		resource := resourceTsuruServiceInstanceBind()
+		// Import starts with only the ID; read must populate the target attributes.
+		data := schema.TestResourceDataRaw(t, resource.Schema, map[string]interface{}{})
+		data.SetId("service::db::tsuru-job::shared")
+		provider := serviceInstanceBindReadTestProvider(t, tsuru.ServiceInstanceInfo{
+			Apps: []string{"shared"},
+			Jobs: []string{"shared"},
+		})
+
+		diagnostics := resource.ReadContext(context.Background(), data, provider)
+
+		require.False(t, diagnostics.HasError(), "%v", diagnostics)
+		require.Equal(t, "service::db::tsuru-job::shared", data.Id())
+		require.Equal(t, "service", data.Get("service_name"))
+		require.Equal(t, "db", data.Get("service_instance"))
+		require.Equal(t, "shared", data.Get("job"))
+		require.Empty(t, data.Get("app"))
 	})
 }
 
