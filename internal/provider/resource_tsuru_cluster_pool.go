@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"time"
 
@@ -47,23 +48,19 @@ func resourceTsuruClusterPoolSet(ctx context.Context, d *schema.ResourceData, me
 	provider := meta.(*tsuruProvider)
 	clusterName, poolName := getClusterAndPoolFromResource(d)
 
-	cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
-	if err != nil {
-		return diag.Errorf("Could not read tsuru cluster: %q, err: %s", clusterName, err.Error())
-	}
-	found := false
-	for _, foundPool := range cluster.Pools {
-		if foundPool == poolName {
-			found = true
+	err := tsuruRetry(ctx, d, func() error {
+		cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
+		if err != nil {
+			return err
 		}
-	}
-	if !found {
-		cluster.Pools = append(cluster.Pools, poolName)
-	}
-
-	_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, clusterName, cluster)
+		if !slices.Contains(cluster.Pools, poolName) {
+			cluster.Pools = append(cluster.Pools, poolName)
+		}
+		_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, clusterName, cluster)
+		return err
+	})
 	if err != nil {
-		return diag.Errorf("Could not update tsuru cluster: %q, err: %s", clusterName, err.Error())
+		return diag.Errorf("Could not add pool %q to tsuru cluster %q, err: %s", poolName, clusterName, err.Error())
 	}
 
 	d.SetId(clusterName + "/" + poolName)
@@ -76,16 +73,17 @@ func resourceTsuruClusterPoolUnset(ctx context.Context, d *schema.ResourceData, 
 
 	clusterName, poolName := getClusterAndPoolFromResource(d)
 
-	cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
+	err := tsuruRetry(ctx, d, func() error {
+		cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
+		if err != nil {
+			return err
+		}
+		cluster.Pools = removeItemFromSlice(cluster.Pools, poolName)
+		_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, clusterName, cluster)
+		return err
+	})
 	if err != nil {
-		return diag.Errorf("Could not read tsuru cluster: %q, err: %s", clusterName, err.Error())
-	}
-
-	cluster.Pools = removeItemFromSlice(cluster.Pools, poolName)
-
-	_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, clusterName, cluster)
-	if err != nil {
-		return diag.Errorf("Could not update tsuru cluster: %q, err: %s", clusterName, err.Error())
+		return diag.Errorf("Could not remove pool %q from tsuru cluster %q, err: %s", poolName, clusterName, err.Error())
 	}
 
 	return nil
