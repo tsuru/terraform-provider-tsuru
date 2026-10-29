@@ -1,0 +1,28 @@
+# release-please only opens release PRs and creates the vX.Y.Z tag.
+# Publishing (binaries, signing, release) is done by release.yml (goreleaser).
+name: release-please
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # Tags pushed with GITHUB_TOKEN do not trigger other workflows, but workflow_dispatch does.
+      - name: Trigger goreleaser on the new tag
+        if: ${{ steps.release.outputs.release_created }}
+        run: gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref "$TAG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag_name }}
