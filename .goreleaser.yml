@@ -48,7 +48,8 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
-  # If you want to manually examine the release before its live, uncomment this line:
-  # draft: true
+  # release-please creates the tag with a draft release; publish that one
+  # instead of creating a second release for the same tag.
+  use_existing_draft: true
 changelog:
   disable: true
