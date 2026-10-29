@@ -267,7 +267,10 @@ func resourceTsuruClusterCreate(ctx context.Context, d *schema.ResourceData, met
 	cluster := clusterFromResourceData(d)
 	cluster.Pools = initialPools
 
-	_, err := provider.TsuruClient.ClusterApi.ClusterCreate(ctx, cluster)
+	err := tsuruRetry(ctx, d, schema.TimeoutCreate, func() error {
+		_, err := provider.TsuruClient.ClusterApi.ClusterCreate(ctx, cluster)
+		return err
+	})
 
 	if err != nil {
 		return diag.Errorf("Could not create tsuru cluster, err : %s", err.Error())
@@ -314,14 +317,15 @@ func resourceTsuruClusterUpdate(ctx context.Context, d *schema.ResourceData, met
 
 	cluster := clusterFromResourceData(d)
 
-	existentCluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, d.Id())
-
-	if err != nil {
-		return diag.Errorf("Could not read tsuru cluster, err : %s", err.Error())
-	}
-	cluster.Pools = existentCluster.Pools
-
-	_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, d.Id(), cluster)
+	err := tsuruRetry(ctx, d, schema.TimeoutUpdate, func() error {
+		existentCluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, d.Id())
+		if err != nil {
+			return err
+		}
+		cluster.Pools = existentCluster.Pools
+		_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, d.Id(), cluster)
+		return err
+	})
 
 	if err != nil {
 		return diag.Errorf("Could not update tsuru cluster: %q, err: %s", d.Id(), err.Error())
@@ -333,7 +337,10 @@ func resourceTsuruClusterUpdate(ctx context.Context, d *schema.ResourceData, met
 func resourceTsuruClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	_, err := provider.TsuruClient.ClusterApi.ClusterDelete(ctx, d.Id())
+	err := tsuruRetry(ctx, d, schema.TimeoutDelete, func() error {
+		_, err := provider.TsuruClient.ClusterApi.ClusterDelete(ctx, d.Id())
+		return err
+	})
 	if err != nil {
 		return diag.Errorf("Could not delete tsuru cluster, err: %s", err.Error())
 	}

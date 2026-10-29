@@ -46,8 +46,8 @@ func isRetryableError(err []byte) bool {
 	return strings.Contains(e, "event locked")
 }
 
-func tsuruRetry(ctx context.Context, d *schema.ResourceData, f func() error) error {
-	return resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+func tsuruRetry(ctx context.Context, d *schema.ResourceData, timeoutKey string, f func() error) error {
+	return resource.RetryContext(ctx, d.Timeout(timeoutKey), func() *resource.RetryError {
 		err := f()
 		if err != nil {
 			if apiError, ok := errors.AsType[tsuru_client.GenericOpenAPIError](err); ok {

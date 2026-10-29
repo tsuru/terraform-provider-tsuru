@@ -76,7 +76,12 @@ func resourceTsuruPoolConstraintSet(ctx context.Context, d *schema.ResourceData,
 		Blacklist: d.Get("blacklist").(bool),
 	}
 
-	err := tsuruRetry(ctx, d, func() error {
+	timeoutKey := schema.TimeoutUpdate
+	if d.Id() == "" {
+		timeoutKey = schema.TimeoutCreate
+	}
+
+	err := tsuruRetry(ctx, d, timeoutKey, func() error {
 		_, internalErr := provider.TsuruClient.PoolApi.ConstraintSet(ctx, constraint)
 		return internalErr
 	})
@@ -130,7 +135,7 @@ func resourceTsuruPoolConstraintDelete(ctx context.Context, d *schema.ResourceDa
 
 	id := d.Get("pool_expr").(string) + "/" + d.Get("field").(string)
 
-	err := tsuruRetry(ctx, d, func() error {
+	err := tsuruRetry(ctx, d, schema.TimeoutDelete, func() error {
 		_, internalErr := provider.TsuruClient.PoolApi.ConstraintSet(ctx, tsuru.PoolConstraintSet{
 			PoolExpr: d.Get("pool_expr").(string),
 			Field:    d.Get("field").(string),
