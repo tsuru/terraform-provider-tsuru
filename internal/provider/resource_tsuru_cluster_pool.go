@@ -53,9 +53,12 @@ func resourceTsuruClusterPoolSet(ctx context.Context, d *schema.ResourceData, me
 		if err != nil {
 			return err
 		}
-		if !slices.Contains(cluster.Pools, poolName) {
-			cluster.Pools = append(cluster.Pools, poolName)
+
+		if slices.Contains(cluster.Pools, poolName) {
+			return nil
 		}
+
+		cluster.Pools = append(cluster.Pools, poolName)
 		_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, clusterName, cluster)
 		return err
 	})
@@ -78,6 +81,11 @@ func resourceTsuruClusterPoolUnset(ctx context.Context, d *schema.ResourceData, 
 		if err != nil {
 			return err
 		}
+
+		if !slices.Contains(cluster.Pools, poolName) {
+			return nil
+		}
+
 		cluster.Pools = removeItemFromSlice(cluster.Pools, poolName)
 		_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, clusterName, cluster)
 		return err
