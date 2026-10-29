@@ -317,15 +317,13 @@ func resourceTsuruClusterUpdate(ctx context.Context, d *schema.ResourceData, met
 
 	cluster := clusterFromResourceData(d)
 
-	existentCluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, d.Id())
-
-	if err != nil {
-		return diag.Errorf("Could not read tsuru cluster, err : %s", err.Error())
-	}
-	cluster.Pools = existentCluster.Pools
-
-	err = tsuruRetry(ctx, d, func() error {
-		_, err := provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, d.Id(), cluster)
+	err := tsuruRetry(ctx, d, func() error {
+		existentCluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, d.Id())
+		if err != nil {
+			return err
+		}
+		cluster.Pools = existentCluster.Pools
+		_, err = provider.TsuruClient.ClusterApi.ClusterUpdate(ctx, d.Id(), cluster)
 		return err
 	})
 
