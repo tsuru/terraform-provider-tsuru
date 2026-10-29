@@ -48,7 +48,7 @@ func resourceTsuruClusterPoolSet(ctx context.Context, d *schema.ResourceData, me
 	provider := meta.(*tsuruProvider)
 	clusterName, poolName := getClusterAndPoolFromResource(d)
 
-	err := tsuruRetry(ctx, d, func() error {
+	err := tsuruRetry(ctx, d, schema.TimeoutCreate, func() error {
 		cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
 		if err != nil {
 			return err
@@ -73,7 +73,7 @@ func resourceTsuruClusterPoolUnset(ctx context.Context, d *schema.ResourceData, 
 
 	clusterName, poolName := getClusterAndPoolFromResource(d)
 
-	err := tsuruRetry(ctx, d, func() error {
+	err := tsuruRetry(ctx, d, schema.TimeoutDelete, func() error {
 		cluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, clusterName)
 		if err != nil {
 			return err

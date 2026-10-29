@@ -267,7 +267,7 @@ func resourceTsuruClusterCreate(ctx context.Context, d *schema.ResourceData, met
 	cluster := clusterFromResourceData(d)
 	cluster.Pools = initialPools
 
-	err := tsuruRetry(ctx, d, func() error {
+	err := tsuruRetry(ctx, d, schema.TimeoutCreate, func() error {
 		_, err := provider.TsuruClient.ClusterApi.ClusterCreate(ctx, cluster)
 		return err
 	})
@@ -317,7 +317,7 @@ func resourceTsuruClusterUpdate(ctx context.Context, d *schema.ResourceData, met
 
 	cluster := clusterFromResourceData(d)
 
-	err := tsuruRetry(ctx, d, func() error {
+	err := tsuruRetry(ctx, d, schema.TimeoutUpdate, func() error {
 		existentCluster, _, err := provider.TsuruClient.ClusterApi.ClusterInfo(ctx, d.Id())
 		if err != nil {
 			return err
@@ -337,7 +337,7 @@ func resourceTsuruClusterUpdate(ctx context.Context, d *schema.ResourceData, met
 func resourceTsuruClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 
-	err := tsuruRetry(ctx, d, func() error {
+	err := tsuruRetry(ctx, d, schema.TimeoutDelete, func() error {
 		_, err := provider.TsuruClient.ClusterApi.ClusterDelete(ctx, d.Id())
 		return err
 	})
