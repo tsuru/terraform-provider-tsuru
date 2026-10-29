@@ -170,9 +170,13 @@ Contributions are welcome! Here's how you can help:
 2. **Create a feature branch**: `git checkout -b feature/my-improvement`
 3. **Make your changes**
 4. **Test your changes**: `make build` and verify it compiles
-5. **Commit your changes**: `git commit -am 'Add some feature'`
+5. **Commit your changes** using [Conventional Commits](https://www.conventionalcommits.org): `git commit -am 'feat: add some feature'`
 6. **Push to the branch**: `git push origin feature/my-improvement`
 7. **Open a Pull Request**
+
+### Releases
+
+Versions are driven by Conventional Commits (`feat:` → minor, `fix:` → patch, `feat!:`/`BREAKING CHANGE` → major). [release-please](https://github.com/googleapis/release-please) keeps a release PR open on `main`; merging it updates `CHANGELOG.md` and creates the `vX.Y.Z` tag, which triggers GoReleaser to build, sign and publish the release.
 
 ### Good First Issues
 
