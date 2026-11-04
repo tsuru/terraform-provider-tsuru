@@ -87,6 +87,61 @@ func TestAccResourceTsuruAppCName(t *testing.T) {
 	})
 }
 
+func TestAccResourceTsuruAppCNameRemovedOutsideTerraform(t *testing.T) {
+	fakeServer := echo.New()
+
+	cnames := []string{}
+
+	fakeServer.GET("/1.0/apps/:name", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, &tsuru.App{
+			Name:      c.Param("name"),
+			TeamOwner: "myteam",
+			Pool:      "my-pool",
+			Cname:     cnames,
+		})
+	})
+
+	fakeServer.POST("/1.0/apps/:app/cname", func(c echo.Context) error {
+		cname := tsuru.AppCName{}
+		c.Bind(&cname)
+		cnames = append(cnames, cname.Cname...)
+		return c.JSON(http.StatusOK, map[string]interface{}{"ok": "true"})
+	})
+
+	fakeServer.DELETE("/1.0/apps/:app/cname", func(c echo.Context) error {
+		cnames = []string{}
+		return c.NoContent(http.StatusOK)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resourceName := "tsuru_app_cname.cname"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceTsuruAppCName_basic(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "hostname", "myhost.app.tsuru.io"),
+				),
+			},
+			{
+				PreConfig:          func() { cnames = []string{} },
+				Config:             testAccResourceTsuruAppCName_basic(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccResourceTsuruAppCName_basic() string {
 	return `
 	resource "tsuru_app_cname" "cname" {

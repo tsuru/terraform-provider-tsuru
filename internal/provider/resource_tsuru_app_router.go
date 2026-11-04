@@ -131,7 +131,8 @@ func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceD
 		return nil
 	}
 
-	return diag.Errorf("unable to find router %s on app %s", name, appName)
+	d.SetId("")
+	return nil
 }
 
 func resourceTsuruApplicationRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

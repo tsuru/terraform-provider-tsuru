@@ -81,6 +81,62 @@ func TestAccResourceTsuruAppRouter(t *testing.T) {
 	})
 }
 
+func TestAccResourceTsuruAppRouterRemovedOutsideTerraform(t *testing.T) {
+	fakeServer := echo.New()
+
+	routers := []tsuru.AppRouter{}
+
+	fakeServer.GET("/1.3/routers", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, []tsuru.PlanRouter{{Name: "some-router"}})
+	})
+
+	fakeServer.GET("/1.5/apps/:app/routers", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, routers)
+	})
+
+	fakeServer.POST("/1.5/apps/:app/routers", func(c echo.Context) error {
+		router := tsuru.AppRouter{}
+		c.Bind(&router)
+		routers = append(routers, router)
+		return c.JSON(http.StatusOK, map[string]interface{}{"ok": "true"})
+	})
+
+	fakeServer.DELETE("/1.5/apps/:app/routers/:router", func(c echo.Context) error {
+		routers = []tsuru.AppRouter{}
+		return c.NoContent(http.StatusOK)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resourceName := "tsuru_app_router.router"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceTsuruAppRouter_basic(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", "some-router"),
+				),
+			},
+			{
+				PreConfig: func() {
+					routers = []tsuru.AppRouter{{Name: "another-router"}}
+				},
+				Config:             testAccResourceTsuruAppRouter_basic(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccResourceTsuruAppRouter_basic() string {
 	return `
 	resource "tsuru_app_router" "router" {

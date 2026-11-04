@@ -98,10 +98,11 @@ func resourceTsuruApplicationCNameRead(ctx context.Context, d *schema.ResourceDa
 		if hostname == name {
 			d.Set("app", appName)
 			d.Set("hostname", name)
-			break
+			return nil
 		}
 	}
 
+	d.SetId("")
 	return nil
 }
 
