@@ -116,6 +116,70 @@ func TestAccTsuruWebhook_basic(t *testing.T) {
 	})
 }
 
+func TestAccTsuruWebhook_removedOutsideTerraform(t *testing.T) {
+	fakeServer := echo.New()
+
+	deleted := false
+
+	fakeServer.POST("/1.6/events/webhooks", func(c echo.Context) error {
+		deleted = false
+		return nil
+	})
+	fakeServer.GET("/1.6/events/webhooks/:name", func(c echo.Context) error {
+		if deleted {
+			return c.NoContent(http.StatusNotFound)
+		}
+		return c.JSON(http.StatusOK, &tsuru.Webhook{
+			Name:        c.Param("name"),
+			Description: "my event",
+			TeamOwner:   "myteam",
+			EventFilter: tsuru.WebhookEventFilter{
+				TargetTypes:  []string{"target01", "target02"},
+				TargetValues: []string{"targetvalue01", "targetvalue02"},
+				KindNames:    []string{"kind_name"},
+				KindTypes:    []string{"kind_type"},
+				SuccessOnly:  true,
+			},
+			Url:      "http://blah.io/webhook",
+			ProxyUrl: "http://myproxy.com",
+			Headers: map[string][]string{
+				"X-Token": {"my-token"},
+			},
+			Method:   "POST",
+			Body:     "body-test",
+			Insecure: true,
+		})
+	})
+	fakeServer.DELETE("/1.6/events/webhooks/:name", func(c echo.Context) error {
+		deleted = true
+		return c.NoContent(http.StatusNoContent)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTsuruWebhookConfig_basic(),
+				Check:  resource.TestCheckResourceAttr("tsuru_webhook.webhook1", "name", "webhook1"),
+			},
+			{
+				PreConfig:          func() { deleted = true },
+				Config:             testAccTsuruWebhookConfig_basic(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccTsuruWebhookConfig_basic() string {
 	return `
 	resource "tsuru_webhook" "webhook1" {

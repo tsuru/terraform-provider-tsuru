@@ -210,7 +210,10 @@ func resourceTsuruWebhookRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	provider := meta.(*tsuruProvider)
 	webhook, _, err := provider.TsuruClient.EventApi.WebhookGet(ctx, id)
-
+	if isNotFoundError(err) {
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
