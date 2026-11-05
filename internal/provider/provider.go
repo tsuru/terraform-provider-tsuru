@@ -90,7 +90,8 @@ func Provider() *schema.Provider {
 			"tsuru_token":           resourceTsuruToken(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"tsuru_app": dataSourceTsuruApp(),
+			"tsuru_app":  dataSourceTsuruApp(),
+			"tsuru_pool": dataSourceTsuruPool(),
 		},
 	}
 	p.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
