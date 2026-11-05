@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	tsuru_client "github.com/tsuru/go-tsuruclient/pkg/tsuru"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func resourceTsuruApplication() *schema.Resource {
@@ -57,6 +58,20 @@ func resourceTsuruApplication() *schema.Resource {
 				Type:        schema.TypeFloat,
 				Description: "CPU burst factory override",
 				Optional:    true,
+			},
+			"custom_cpu": {
+				Type:             schema.TypeString,
+				Description:      "CPU limit override, such as `500m` or `0.5`. Replaces the CPU defined by the plan",
+				Optional:         true,
+				ValidateFunc:     validateCPUQuantity,
+				DiffSuppressFunc: suppressEquivalentCPU,
+			},
+			"custom_memory": {
+				Type:             schema.TypeString,
+				Description:      "Memory limit override, such as `512Mi` or `1Gi`. Replaces the memory defined by the plan",
+				Optional:         true,
+				ValidateFunc:     validateMemoryQuantity,
+				DiffSuppressFunc: suppressEquivalentMemory,
 			},
 			"team_owner": {
 				Type:        schema.TypeString,
@@ -255,6 +270,23 @@ func resourceTsuruApplicationCreate(ctx context.Context, d *schema.ResourceData,
 
 	d.SetId(app.Name)
 
+	override, err := planOverrideFromResourceData(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if override != (tsuru_client.PlanOverride{}) {
+		resp, err := provider.TsuruClient.AppApi.AppUpdate(ctx, app.Name, tsuru_client.UpdateApp{
+			Planoverride: override,
+			NoRestart:    true,
+		})
+		if err != nil {
+			return diag.Errorf("unable to set plan override on app %s: %v", app.Name, err)
+		}
+		defer resp.Body.Close()
+		logTsuruStream(resp.Body)
+	}
+
 	return resourceTsuruApplicationRead(ctx, d, meta)
 }
 
@@ -289,9 +321,20 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 		Tags:      tags,
 	}
 
-	if cpu_burst, ok := d.GetOk("custom_cpu_burst"); ok {
-		cpuBurstValue := cpu_burst.(float64)
-		app.Planoverride.CpuBurst = &cpuBurstValue
+	override, err := planOverrideFromResourceData(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	app.Planoverride = override
+
+	if d.HasChange("custom_cpu") && app.Planoverride.Cpumilli == nil {
+		unset := 0
+		app.Planoverride.Cpumilli = &unset
+	}
+
+	if d.HasChange("custom_memory") && app.Planoverride.Memory == nil {
+		var unset int64
+		app.Planoverride.Memory = &unset
 	}
 
 	if d.HasChange("metadata") {
@@ -353,6 +396,67 @@ func resourceTsuruApplicationUpdate(ctx context.Context, d *schema.ResourceData,
 	return resourceTsuruApplicationRead(ctx, d, meta)
 }
 
+func planOverrideFromResourceData(d *schema.ResourceData) (tsuru_client.PlanOverride, error) {
+	override := tsuru_client.PlanOverride{}
+
+	if cpuBurst, ok := d.GetOk("custom_cpu_burst"); ok {
+		cpuBurstValue := cpuBurst.(float64)
+		override.CpuBurst = &cpuBurstValue
+	}
+
+	if cpu, ok := d.GetOk("custom_cpu"); ok {
+		cpuMilli, err := parseCPUMilli(cpu.(string))
+		if err != nil {
+			return override, err
+		}
+		override.Cpumilli = &cpuMilli
+	}
+
+	if memory, ok := d.GetOk("custom_memory"); ok {
+		memoryBytes, err := parseMemoryQuantity(memory.(string))
+		if err != nil {
+			return override, fmt.Errorf("invalid custom_memory %q: %w", memory, err)
+		}
+		override.Memory = &memoryBytes
+	}
+
+	return override, nil
+}
+
+func parseCPUMilli(cpu string) (int, error) {
+	quantity, err := resource.ParseQuantity(cpu)
+	if err != nil {
+		return 0, fmt.Errorf("invalid custom_cpu %q: %w", cpu, err)
+	}
+	return int(quantity.MilliValue()), nil
+}
+
+func validateCPUQuantity(v interface{}, k string) ([]string, []error) {
+	if _, err := parseCPUMilli(v.(string)); err != nil {
+		return nil, []error{err}
+	}
+	return nil, nil
+}
+
+func validateMemoryQuantity(v interface{}, k string) ([]string, []error) {
+	if _, err := parseMemoryQuantity(v.(string)); err != nil {
+		return nil, []error{fmt.Errorf("invalid %s %q: %w", k, v, err)}
+	}
+	return nil, nil
+}
+
+func suppressEquivalentCPU(k, old, new string, d *schema.ResourceData) bool {
+	oldMilli, oldErr := parseCPUMilli(old)
+	newMilli, newErr := parseCPUMilli(new)
+	return oldErr == nil && newErr == nil && oldMilli == newMilli
+}
+
+func suppressEquivalentMemory(k, old, new string, d *schema.ResourceData) bool {
+	oldBytes, oldErr := parseMemoryQuantity(old)
+	newBytes, newErr := parseMemoryQuantity(new)
+	return oldErr == nil && newErr == nil && oldBytes == newBytes
+}
+
 func validateProcessesOrder(processes []tsuru_client.AppProcess) error {
 	for i := 1; i < len(processes); i++ {
 		if processes[i-1].Name > processes[i].Name {
@@ -384,6 +488,18 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 
 	if app.Plan.Override.CpuBurst != nil {
 		d.Set("custom_cpu_burst", app.Plan.Override.CpuBurst)
+	}
+
+	if app.Plan.Override.Cpumilli != nil {
+		d.Set("custom_cpu", cpuMillisToString(int32(*app.Plan.Override.Cpumilli)))
+	} else {
+		d.Set("custom_cpu", "")
+	}
+
+	if app.Plan.Override.Memory != nil {
+		d.Set("custom_memory", memoryBytesToString(*app.Plan.Override.Memory))
+	} else {
+		d.Set("custom_memory", "")
 	}
 
 	if app.Description != "" {

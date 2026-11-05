@@ -22,6 +22,9 @@ resource "tsuru_app" "my-app" {
   team_owner  = "admin"
   tags        = ["a", "b"]
 
+  custom_cpu    = "500m"
+  custom_memory = "512Mi"
+
   metadata {
     labels = {
       "label1"     = "1"
@@ -50,7 +53,9 @@ resource "tsuru_app" "my-app" {
 
 ### Optional
 
+- `custom_cpu` (String) CPU limit override, such as `500m` or `0.5`. Replaces the CPU defined by the plan
 - `custom_cpu_burst` (Number) CPU burst factory override
+- `custom_memory` (String) Memory limit override, such as `512Mi` or `1Gi`. Replaces the memory defined by the plan
 - `default_router` (String) Default router at creation of app
 - `description` (String) Application description
 - `metadata` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metadata))

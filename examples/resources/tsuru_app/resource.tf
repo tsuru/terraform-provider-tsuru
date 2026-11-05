@@ -7,6 +7,9 @@ resource "tsuru_app" "my-app" {
   team_owner  = "admin"
   tags        = ["a", "b"]
 
+  custom_cpu    = "500m"
+  custom_memory = "512Mi"
+
   metadata {
     labels = {
       "label1"     = "1"

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	echo "github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/tsuru/go-tsuruclient/pkg/tsuru"
@@ -217,6 +218,13 @@ func TestAccResourceTsuruApp(t *testing.T) {
 	})
 
 	fakeServer.PUT("/1.0/apps/:name", func(c echo.Context) error {
+		app := tsuru.UpdateApp{}
+		c.Bind(&app)
+		if app.Plan == "" {
+			assert.Equal(t, 1.5, *app.Planoverride.CpuBurst)
+			assert.True(t, app.NoRestart)
+			return c.JSON(http.StatusOK, nil)
+		}
 		iterationCount++
 		return c.JSON(http.StatusOK, nil)
 	})
@@ -410,4 +418,138 @@ func testAccResourceTsuruApp_invalidProcessOrder() string {
 		}
 	}
     `
+}
+
+func TestAccResourceTsuruApp_planOverride(t *testing.T) {
+	fakeServer := echo.New()
+
+	created := false
+	override := tsuru.PlanOverride{}
+	updates := []tsuru.UpdateApp{}
+
+	fakeServer.GET("/1.0/platforms", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, []tsuru.Platform{{Name: "python"}})
+	})
+
+	fakeServer.GET("/1.0/pools", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, []tsuru.Pool{{Name: "prod"}})
+	})
+
+	fakeServer.GET("/1.0/plans", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, []tsuru.Plan{{Name: "c2m4"}})
+	})
+
+	fakeServer.POST("/1.0/apps", func(c echo.Context) error {
+		created = true
+		return c.JSON(http.StatusOK, tsuru.AppCreateResponse{Status: "created"})
+	})
+
+	fakeServer.GET("/1.0/apps/:name", func(c echo.Context) error {
+		if !created {
+			return c.JSON(http.StatusNotFound, nil)
+		}
+		return c.JSON(http.StatusOK, &tsuru.App{
+			Name:      c.Param("name"),
+			TeamOwner: "my-team",
+			Platform:  "python",
+			Plan:      tsuru.Plan{Name: "c2m4", Override: override},
+			Pool:      "prod",
+		})
+	})
+
+	fakeServer.PUT("/1.0/apps/:name", func(c echo.Context) error {
+		app := tsuru.UpdateApp{}
+		if err := c.Bind(&app); err != nil {
+			return err
+		}
+		updates = append(updates, app)
+
+		if app.Plan != "" {
+			override = tsuru.PlanOverride{}
+		}
+		if v := app.Planoverride.Cpumilli; v != nil {
+			override.Cpumilli = v
+			if *v == 0 {
+				override.Cpumilli = nil
+			}
+		}
+		if v := app.Planoverride.Memory; v != nil {
+			override.Memory = v
+			if *v == 0 {
+				override.Memory = nil
+			}
+		}
+		return c.JSON(http.StatusOK, nil)
+	})
+
+	fakeServer.DELETE("/1.0/apps/:name", func(c echo.Context) error {
+		created = false
+		return c.NoContent(http.StatusNoContent)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resourceName := "tsuru_app.app"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceTsuruApp_planOverride(`
+		custom_memory = "lots"`),
+				ExpectError: regexp.MustCompile(`invalid custom_memory "lots"`),
+			},
+			{
+				Config: testAccResourceTsuruApp_planOverride(`
+		custom_cpu    = "0.5"
+		custom_memory = "1024Mi"`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccResourceExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "custom_cpu", "500m"),
+					resource.TestCheckResourceAttr(resourceName, "custom_memory", "1Gi"),
+					func(s *terraform.State) error {
+						assert.Len(t, updates, 1)
+						assert.Equal(t, "", updates[0].Plan)
+						assert.True(t, updates[0].NoRestart)
+						assert.Equal(t, 500, *updates[0].Planoverride.Cpumilli)
+						assert.Equal(t, int64(1073741824), *updates[0].Planoverride.Memory)
+						return nil
+					},
+				),
+			},
+			{
+				Config: testAccResourceTsuruApp_planOverride(`
+		custom_cpu = "1"`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "custom_cpu", "1000m"),
+					resource.TestCheckResourceAttr(resourceName, "custom_memory", ""),
+					func(s *terraform.State) error {
+						last := updates[len(updates)-1]
+						assert.Equal(t, "c2m4", last.Plan)
+						assert.Equal(t, 1000, *last.Planoverride.Cpumilli)
+						assert.Equal(t, int64(0), *last.Planoverride.Memory)
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
+func testAccResourceTsuruApp_planOverride(override string) string {
+	return `
+	resource "tsuru_app" "app" {
+		name       = "app01"
+		platform   = "python"
+		plan       = "c2m4"
+		team_owner = "my-team"
+		pool       = "prod"
+` + override + `
+	}
+`
 }
