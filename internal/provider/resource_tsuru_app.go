@@ -395,9 +395,22 @@ func resourceTsuruApplicationRead(ctx context.Context, d *schema.ResourceData, m
 	d.Set("metadata", flattenMetadata(app.Metadata))
 	d.Set("internal_address", flattenInternalAddresses(app.InternalAddresses))
 	d.Set("router", flattenRouters(app.Routers))
-	d.Set("process", flattenProcesses(app.Processes))
+	d.Set("process", flattenProcesses(managedProcesses(app.Processes)))
 
 	return nil
+}
+
+// managedProcesses drops processes that tsuru API (>= 1.32) reports only from the running
+// deployments, i.e. without a stored plan or metadata.
+func managedProcesses(processes []tsuru_client.AppProcess) []tsuru_client.AppProcess {
+	managed := make([]tsuru_client.AppProcess, 0, len(processes))
+	for _, p := range processes {
+		if (p.Plan == "" || p.Plan == "$default") && len(p.Metadata.Labels) == 0 && len(p.Metadata.Annotations) == 0 {
+			continue
+		}
+		managed = append(managed, p)
+	}
+	return managed
 }
 
 func resourceTsuruApplicationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
