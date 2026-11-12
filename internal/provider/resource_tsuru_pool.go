@@ -87,15 +87,23 @@ func resourceTsuruPoolCreate(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	_, diags := readTsuruPool(ctx, d, meta)
+	return diags
+}
+
+// readTsuruPool reads the pool named by d.Id() into the attributes shared by
+// the tsuru_pool resource and data source. When the pool does not exist, it
+// clears the ID and returns a nil pool.
+func readTsuruPool(ctx context.Context, d *schema.ResourceData, meta interface{}) (*tsuru.Pool, diag.Diagnostics) {
 	provider := meta.(*tsuruProvider)
 
 	pool, _, err := provider.TsuruClient.PoolApi.PoolGet(ctx, d.Id())
 	if err != nil {
 		if isNotFoundError(err) {
 			d.SetId("")
-			return nil
+			return nil, nil
 		}
-		return diag.Errorf("Could not read tsuru pool: %q, err: %s", d.Id(), err.Error())
+		return nil, diag.Errorf("Could not read tsuru pool: %q, err: %s", d.Id(), err.Error())
 	}
 	d.Set("name", pool.Name)
 	d.Set("tsuru_provisioner", pool.Provisioner)
@@ -103,7 +111,7 @@ func resourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta int
 	d.Set("public", pool.Public)
 	d.Set("labels", pool.Labels)
 
-	return nil
+	return &pool, nil
 }
 
 func resourceTsuruPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
