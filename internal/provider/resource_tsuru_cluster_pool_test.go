@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"sync"
 	"testing"
 
@@ -186,6 +187,31 @@ func TestResourceTsuruClusterPool_skipsUpdateWhenNoOp(t *testing.T) {
 			assert.Equal(t, tt.wantUpdates, updates)
 		})
 	}
+}
+
+func TestAccTsuruClusterPool_importInvalidID(t *testing.T) {
+	fakeServer := echo.New()
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("method=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+
+	server := httptest.NewServer(fakeServer)
+	defer server.Close()
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:        testAccTsuruClusterPoolConfig_basic(server.URL, "my-cluster", "my-pool"),
+				ResourceName:  "tsuru_cluster_pool.cluster-pool",
+				ImportState:   true,
+				ImportStateId: "my-cluster",
+				ExpectError:   regexp.MustCompile(`invalid ID "my-cluster", expected "cluster/pool"`),
+			},
+		},
+	})
 }
 
 func testAccTsuruClusterPoolConfig_basic(fakeServer, cluster, pool string) string {

@@ -98,6 +98,9 @@ func resourceTsuruPoolConstraintSet(ctx context.Context, d *schema.ResourceData,
 func resourceTsuruPoolConstraintRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 	parts := strings.SplitN(d.Id(), "/", 2)
+	if len(parts) != 2 {
+		return diag.Errorf("invalid ID %q, expected %q", d.Id(), "pool_expr/field")
+	}
 
 	poolExpr := parts[0]
 	field := parts[1]

@@ -100,6 +100,9 @@ func resourceTsuruClusterPoolUnset(ctx context.Context, d *schema.ResourceData, 
 func resourceTsuruClusterPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	provider := meta.(*tsuruProvider)
 	parts := strings.SplitN(d.Id(), "/", 2)
+	if len(parts) != 2 {
+		return diag.Errorf("invalid ID %q, expected %q", d.Id(), "cluster/pool")
+	}
 
 	clusterName := parts[0]
 	poolName := parts[1]

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -63,6 +64,31 @@ func TestAccTsuruPoolConstraint_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("tsuru_pool_constraint.test_routers", "pool_expr", "my-pool"),
 					resource.TestCheckResourceAttr("tsuru_pool_constraint.test_routers", "field", "router"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccTsuruPoolConstraint_importInvalidID(t *testing.T) {
+	fakeServer := echo.New()
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("method=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+
+	server := httptest.NewServer(fakeServer)
+	defer server.Close()
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:        testAccTsuruPoolConstraintConfig_basic(server.URL, "my-pool"),
+				ResourceName:  "tsuru_pool_constraint.test_routers",
+				ImportState:   true,
+				ImportStateId: "my-pool",
+				ExpectError:   regexp.MustCompile(`invalid ID "my-pool", expected "pool_expr/field"`),
 			},
 		},
 	})
