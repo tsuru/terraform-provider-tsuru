@@ -77,6 +77,12 @@ func TestAccResourceTsuruAppRouter(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", "some-router"),
 				),
 			},
+			{
+				PreConfig:          func() { iterationCount++ },
+				Config:             testAccResourceTsuruAppRouter_basic(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }

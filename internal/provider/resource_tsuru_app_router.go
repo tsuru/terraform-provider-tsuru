@@ -91,7 +91,11 @@ func resourceTsuruApplicationRouterCreate(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	return resourceTsuruApplicationRouterRead(ctx, d, meta)
+	diags := resourceTsuruApplicationRouterRead(ctx, d, meta)
+	if !diags.HasError() && d.Id() == "" {
+		return diag.Errorf("router %s was added but is not listed on app %s", name, appName)
+	}
+	return diags
 }
 
 func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -120,18 +124,18 @@ func resourceTsuruApplicationRouterRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("unable to get app %s: %v", appName, err)
 	}
 
-	d.Set("app", appName)
-
 	for _, router := range routers {
 		if name != router.Name {
 			continue
 		}
+		d.Set("app", appName)
 		d.Set("name", name)
 		d.Set("options", router.Opts)
 		return nil
 	}
 
-	return diag.Errorf("unable to find router %s on app %s", name, appName)
+	d.SetId("")
+	return nil
 }
 
 func resourceTsuruApplicationRouterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

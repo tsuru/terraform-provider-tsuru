@@ -72,7 +72,11 @@ func resourceTsuruApplicationCNameCreate(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceTsuruApplicationCNameRead(ctx, d, meta)
+	diags := resourceTsuruApplicationCNameRead(ctx, d, meta)
+	if !diags.HasError() && d.Id() == "" {
+		return diag.Errorf("cname %s was created but is not listed on app %s", hostname, app)
+	}
+	return diags
 }
 
 func resourceTsuruApplicationCNameRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -98,10 +102,11 @@ func resourceTsuruApplicationCNameRead(ctx context.Context, d *schema.ResourceDa
 		if hostname == name {
 			d.Set("app", appName)
 			d.Set("hostname", name)
-			break
+			return nil
 		}
 	}
 
+	d.SetId("")
 	return nil
 }
 

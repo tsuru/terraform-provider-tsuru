@@ -83,6 +83,12 @@ func TestAccResourceTsuruAppCName(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "hostname", "myhost.app.tsuru.io"),
 				),
 			},
+			{
+				PreConfig:          func() { iterationCount++ },
+				Config:             testAccResourceTsuruAppCName_basic(),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
