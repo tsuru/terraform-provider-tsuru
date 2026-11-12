@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
@@ -174,4 +175,65 @@ func testAccResourceTsuruToken_complete() string {
 		regenerate_on_update = "true"
 	}
 `
+}
+
+func TestAccResourceTsuruToken_updateConnectionError(t *testing.T) {
+	fakeServer := echo.New()
+
+	created := false
+
+	fakeServer.POST("/1.6/tokens", func(c echo.Context) error {
+		created = true
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"status":   "success",
+			"token_id": "my-simple-token",
+		})
+	})
+
+	fakeServer.GET("/1.7/tokens/:token", func(c echo.Context) error {
+		if !created {
+			return c.JSON(http.StatusNotFound, nil)
+		}
+		return c.JSON(http.StatusOK, tsuru.TeamToken{
+			Token:       "string-token",
+			TokenId:     c.Param("token"),
+			Description: "My description",
+			Team:        "team-dev",
+		})
+	})
+
+	fakeServer.PUT("/1.6/tokens/:token", func(c echo.Context) error {
+		conn, _, err := http.NewResponseController(c.Response().Writer).Hijack()
+		if err != nil {
+			return err
+		}
+		return conn.Close()
+	})
+
+	fakeServer.DELETE("/1.6/tokens/:token", func(c echo.Context) error {
+		created = false
+		return c.NoContent(http.StatusNoContent)
+	})
+
+	fakeServer.HTTPErrorHandler = func(err error, c echo.Context) {
+		t.Errorf("methods=%s, path=%s, err=%s", c.Request().Method, c.Path(), err.Error())
+	}
+
+	server := httptest.NewServer(fakeServer)
+	os.Setenv("TSURU_TARGET", server.URL)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      nil,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceTsuruToken_basic(),
+			},
+			{
+				Config:      testAccResourceTsuruToken_complete(),
+				ExpectError: regexp.MustCompile("unable to update token my-simple-token"),
+			},
+		},
+	})
 }

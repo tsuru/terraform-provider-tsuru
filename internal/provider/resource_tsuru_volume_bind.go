@@ -179,8 +179,8 @@ func resourceTsuruVolumeBindDelete(ctx context.Context, d *schema.ResourceData, 
 				if isRetryableError(apiError.Body()) {
 					return resource.RetryableError(err)
 				}
-				return resource.NonRetryableError(err)
 			}
+			return resource.NonRetryableError(err)
 		}
 		return nil
 	})

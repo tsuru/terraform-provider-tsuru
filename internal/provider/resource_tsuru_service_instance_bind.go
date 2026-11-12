@@ -207,8 +207,8 @@ func resourceTsuruServiceInstanceBindDelete(ctx context.Context, d *schema.Resou
 				if isRetryableError(apiError.Body()) {
 					return resource.RetryableError(err)
 				}
-				return resource.NonRetryableError(err)
 			}
+			return resource.NonRetryableError(err)
 		}
 		return nil
 	})
