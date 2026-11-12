@@ -75,20 +75,18 @@ func dataSourceTsuruPool() *schema.Resource {
 }
 
 func dataSourceTsuruPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	provider := meta.(*tsuruProvider)
 	name := d.Get("name").(string)
-
-	pool, _, err := provider.TsuruClient.PoolApi.PoolGet(ctx, name)
-	if err != nil {
-		return diag.Errorf("unable to read pool %q: %v", name, err)
-	}
 	d.SetId(name)
 
-	d.Set("tsuru_provisioner", pool.Provisioner)
-	d.Set("default", pool.Default)
-	d.Set("public", pool.Public)
+	pool, diags := readTsuruPool(ctx, d, meta)
+	if diags.HasError() {
+		return diags
+	}
+	if pool == nil {
+		return diag.Errorf("tsuru pool %q not found", name)
+	}
+
 	d.Set("teams", pool.Teams)
-	d.Set("labels", pool.Labels)
 	d.Set("allowed", flattenPoolAllowed(pool.Allowed))
 
 	return nil

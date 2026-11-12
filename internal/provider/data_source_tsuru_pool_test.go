@@ -20,6 +20,9 @@ func TestAccDatasourceTsuruPool_basic(t *testing.T) {
 	fakeServer := echo.New()
 	fakeServer.GET("/pools/:name", func(c echo.Context) error {
 		name := c.Param("name")
+		if name == "broken-pool" {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "boom"})
+		}
 		if name != "my-pool" {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": "pool not found"})
 		}
@@ -81,7 +84,15 @@ data "tsuru_pool" "pool" {
 	name = "missing-pool"
 }
 `,
-				ExpectError: regexp.MustCompile(`unable to read pool "missing-pool"`),
+				ExpectError: regexp.MustCompile(`tsuru pool "missing-pool" not found`),
+			},
+			{
+				Config: `
+data "tsuru_pool" "pool" {
+	name = "broken-pool"
+}
+`,
+				ExpectError: regexp.MustCompile(`Could not read tsuru pool: "broken-pool"`),
 			},
 		},
 	})
